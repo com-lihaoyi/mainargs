@@ -4,7 +4,16 @@ package mainargs
  * Represents what comes out of an attempt to invoke an [[EntryPoint]].
  * Could succeed with a value, but could fail in many different ways.
  */
-sealed trait Result[+T]
+sealed trait Result[+T]{
+  def map[V](f: T => V): Result[V] = this match{
+    case Result.Success(v) => Result.Success(f(v))
+    case e: Result.Error => e
+  }
+  def flatMap[V](f: T => Result[V]): Result[V] = this match{
+    case Result.Success(v) => f(v)
+    case e: Result.Error => e
+  }
+}
 object Result{
 
   /**
@@ -31,7 +40,8 @@ object Result{
      */
     case class MismatchedArguments(missing: Seq[ArgSig[_]],
                                    unknown: Seq[String],
-                                   duplicate: Seq[(ArgSig[_], Seq[String])]) extends Error
+                                   duplicate: Seq[(ArgSig[_], Seq[String])],
+                                   incomplete: Option[ArgSig[_]]) extends Error
     /**
      * Invoking the [[EntryPoint]] failed because there were problems
      * deserializing/parsing individual arguments

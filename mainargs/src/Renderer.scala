@@ -103,7 +103,7 @@ object Renderer {
     result match{
       case Result.Success(x) => Right(x)
       case Result.Error.Exception(x) => Left(x.getStackTrace.mkString("\n"))
-      case Result.Error.MismatchedArguments(missing, unknown, duplicate) =>
+      case Result.Error.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""
           else {
@@ -136,10 +136,17 @@ object Renderer {
             lines.mkString
 
           }
+        val incompleteStr = incomplete match{
+          case None => ""
+          case Some(sig) =>
+            s"Option (--${sig.name}: ${sig.typeString}) is missing a corresponding value" +
+              Renderer.newLine
+
+        }
 
         Left(
           Renderer.normalizeNewlines(
-            s"""$missingStr$unknownStr$duplicateStr
+            s"""$missingStr$unknownStr$duplicateStr$incompleteStr
                |Arguments provided did not match expected signature:
                |
                |$expectedMsg

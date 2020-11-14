@@ -1,13 +1,21 @@
 package mainargs
 object Main {
-  def runMains[T](target: T, mains: EntryPoints[T], args: Array[String]): Either[String, Any] = {
+  def runMains[T](target: T,
+                  mains: EntryPoints[T],
+                  args: Array[String],
+                  allowPositional: Boolean): Either[String, Any] = {
 
 
     mains.value match{
       case Seq() => Left("No @main methods declared")
       case Seq(main) =>
-        for(groupedArgs <- Grouping.groupArgs(args.toList, main.argSigs))
-        yield Renderer.renderResult(target, main, main.invoke(target, groupedArgs))
+        val res = Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
+          .flatMap(main.invoke(target, _))
+        Renderer.renderResult(
+          target,
+          main,
+          res
+        )
       case multiple =>
         lazy val suffix = Renderer.formatMainMethods(target, multiple)
         args.toList match{
@@ -22,8 +30,12 @@ object Main {
               multiple.find(_.name == head) match{
                 case None => Left(s"Unable to find subcommand: " + head + suffix)
                 case Some(main) =>
-                  for(groupedArgs <- Grouping.groupArgs(tail.toList, main.argSigs))
-                  yield Renderer.renderResult(target, main, main.invoke(target, groupedArgs))
+                  Renderer.renderResult(
+                    target,
+                    main,
+                    Grouping.groupArgs(tail, main.argSigs, allowPositional)
+                      .flatMap(main.invoke(target, _))
+                  )
               }
             }
         }

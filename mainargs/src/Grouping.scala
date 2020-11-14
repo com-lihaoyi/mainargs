@@ -3,40 +3,71 @@ package mainargs
 
 import scala.annotation.tailrec
 
-case class Grouping[T](grouped: List[(ArgSig[T], Option[String])],
-                       remaining: List[String])
+case class Grouping[T](remaining: List[String],
+                       grouped: Map[ArgSig[T], String])
 object Grouping{
   def groupArgs[T](flatArgs: List[String],
-                   argSigs: Seq[ArgSig[T]]): Either[String, Grouping[T]] = {
+                   argSigs: Seq[ArgSig[T]],
+                   allowPositional: Boolean): Result[Grouping[T]] = {
 
-    val argsMap0: Seq[(String, ArgSig[T])] = argSigs
+    val keywordArgMap = argSigs
+      .filter(!_.varargs) // varargs can only be passed positionally
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
+      .toMap
 
-    val argsMap = argsMap0.toMap
+    def appendMap[K, V](current: Map[K, Vector[V]], k: K, v: V): Map[K, Vector[V]] = {
+      if(current.contains(k)) current + (k -> (current(k) :+ v))
+      else current + (k -> Vector(v))
+    }
+    @tailrec def rec(remaining: List[String],
+                     current: Map[ArgSig[T], Vector[String]]): Result[Grouping[T]] = {
+      remaining match{
+        case head :: rest  =>
+          if (head(0) == '-'){
+            keywordArgMap.get(if(head(1) == '-') head.drop(2) else head.drop(1)) match {
+              case Some(cliArg) =>
+                if (cliArg.flag) {
+                  rec(rest, appendMap(current, cliArg, ""))
+                } else rest match{
+                  case next :: rest2 =>
+                    rec(rest2, appendMap(current, cliArg, next))
+                  case Nil =>
+                    Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+                }
 
-    @tailrec def rec(keywordTokens: List[String],
-                     current: Grouping[T]): Either[String, Grouping[T]] = {
-      keywordTokens match{
-        case head :: rest if head(0) == '-' =>
-          val realName = if(head(1) == '-') head.drop(2) else head.drop(1)
+              case None => complete(remaining, current)
+            }
+          }else if (allowPositional){
 
-          argsMap.get(realName) match {
-            case Some(cliArg) =>
-              if (cliArg.flag) {
-                rec(rest, Grouping((cliArg -> None) :: current.grouped, Nil))
-              } else rest match{
-                case next :: rest2 =>
-                  rec(rest2, Grouping((cliArg -> Some(next)) :: current.grouped, Nil))
-                case Nil => Left(s"Expected a value after argument $head")
-              }
+            keywordArgMap.values.find(as => !current.exists(_._1 == as)) match{
+              case Some(nextInLine) =>
+                rec(rest, appendMap(current, nextInLine, head))
+              case None => complete(remaining, current)
+            }
+          } else complete(remaining, current)
 
-            case None => Right(Grouping(current.grouped, keywordTokens))
-          }
-
-        case _ => Right(Grouping(current.grouped, keywordTokens))
+        case _ => complete(remaining, current)
 
       }
     }
-    rec(flatArgs, Grouping(Nil, Nil))
+    def complete(remaining: List[String],
+                 current: Map[ArgSig[T], Vector[String]]): Result[Grouping[T]] = {
+
+      val duplicates = current.filter(_._2.size > 1).toSeq
+      val missing = argSigs.filter(x =>
+        x.default.isEmpty && !current.contains(x) && !x.varargs
+      )
+      val unknown = if (argSigs.exists(_.varargs)) Nil else remaining
+      if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty){
+        Result.Error.MismatchedArguments(
+          missing = missing,
+          unknown = unknown,
+          duplicate = duplicates,
+          incomplete = None
+        )
+      } else Result.Success(Grouping(remaining, current.map{case (k, Seq(v)) => (k, v)}))
+
+    }
+    rec(flatArgs, Map())
   }
 }

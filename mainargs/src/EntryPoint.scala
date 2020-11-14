@@ -1,7 +1,5 @@
 package mainargs
 
-import scala.collection.mutable
-
 case class EntryPoints[T](value: Seq[EntryPoint[T]])
 
 /**
@@ -18,38 +16,11 @@ case class EntryPoint[T](name: String,
                          doc: Option[String],
                          varargs: Boolean,
                          invoke0: (T, Map[String, String], Seq[String]) => Result[Any]){
-  def invoke(target: T,
-             grouped: Grouping[T]): Result[Any] = {
-
-    val groupedArgSigs = grouped.grouped.groupBy(_._1).mapValues(_.map(_._2.getOrElse(""))).toMap
-    val missing0 = argSigs.filter(!groupedArgSigs.contains(_)).filter(_.default.isEmpty)
-    val missing = if(varargs) missing0.filter(_ != argSigs.last) else missing0
-    val duplicates = groupedArgSigs.toSeq.filter(_._2.size > 1)
-
-    if (
-      missing.nonEmpty ||
-      duplicates.nonEmpty ||
-      (grouped.remaining.nonEmpty && !varargs)
-    ){
-      Result.Error.MismatchedArguments(
-        missing = missing,
-        unknown = grouped.remaining,
-        duplicate = duplicates
-      )
-    } else {
-      val mapping = grouped.grouped
-        .map{case (k, b) => (k.name, b.getOrElse(""))}
-        .toMap
-
-      try invoke0(target, mapping, grouped.remaining)
-      catch{case e: Throwable =>
-        Result.Error.Exception(e)
-      }
-    }
+  def invoke(target: T, grouped: Grouping[T]): Result[Any] = {
+    try invoke0(target, grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining)
+    catch{case e: Throwable => Result.Error.Exception(e)}
   }
 }
-
-
 
 /**
  * Models what is known by the router about a single argument: that it has
