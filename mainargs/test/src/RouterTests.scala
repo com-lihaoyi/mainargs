@@ -23,6 +23,8 @@ object RouterTests extends TestSuite{
         def foo() = 1
         @main
         def bar(i: Int) = i
+
+        @doc("Qux is a function that does stuff")
         @main
         def qux(i: Int,
                 @doc("Pass in a custom `s` to override it")

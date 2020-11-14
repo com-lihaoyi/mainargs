@@ -67,7 +67,7 @@ object Renderer {
           s"$leftIndentStr  $lhsPadded  $rhsPadded"
         }
     val mainDocSuffix = main.doc match{
-      case Some(d) => newLine + leftIndentStr + softWrap(d, leftIndent, 80)
+      case Some(d) => newLine + softWrap(d, leftIndent, 80)
       case None => ""
     }
 
