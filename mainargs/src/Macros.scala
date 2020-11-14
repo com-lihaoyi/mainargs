@@ -1,7 +1,13 @@
 package mainargs
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
-
+/**
+ * More or less a minimal version of Autowire's Server that lets you generate
+ * a set of "routes" from the methods defined in an object, and call them
+ * using passing in name/args/kwargs via Java reflection, without having to
+ * generate/compile code or use Scala reflection. This saves us spinning up
+ * the Scala compiler and greatly reduces the startup time of cached scripts.
+ */
 class Macros(val c: Context) {
   def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[EntryPoints[T]] = {
     import c.universe._
@@ -115,7 +121,7 @@ class Macros(val c: Context) {
           val $argVal = $instantiateArg
           _root_.mainargs.ArgSig[$curCls](
             scala.Option($argVal.name).getOrElse(${arg.name.toString}),
-            scala.Option($argVal.short),
+            $argVal.short match{ case '\u0000' => None; case c => Some(c)},
             ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
             scala.Option($argVal.doc),
             $defaultOpt,
@@ -127,12 +133,12 @@ class Macros(val c: Context) {
 
       val reader =
         if(vararg) q"""
-          mainargs.Router.makeReadVarargsCall[$varargUnwrappedType](
+          _root_.mainargs.MacroHelpers.makeReadVarargsCall[$varargUnwrappedType](
             $argSigVal,
             $extrasSymbol
           )
         """ else q"""
-          mainargs.Router.makeReadCall[$varargUnwrappedType](
+          _root_.mainargs.MacroHelpers.makeReadCall[$varargUnwrappedType](
             $argListSymbol,
             $default,
             $argSigVal
@@ -159,18 +165,18 @@ class Macros(val c: Context) {
     val res = q"""{
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
-    mainargs.EntryPoint(
+    _root_.mainargs.EntryPoint(
       scala.Option($methVal.name).getOrElse($methodName),
       scala.Seq(..$argSigVals),
       scala.Option($methVal.doc),
       ${varargs.contains(true)},
       ($baseArgSym: $curCls, $argListSymbol: Map[String, String], $extrasSymbol: Seq[String]) =>
-        mainargs.Router.validate(Seq(..$readArgs)) match{
-          case mainargs.Result.Success(List(..$argNames)) =>
-            mainargs.Result.Success(
+        _root_.mainargs.MacroHelpers.validate(Seq(..$readArgs)) match{
+          case _root_.mainargs.Result.Success(List(..$argNames)) =>
+            _root_.mainargs.Result.Success(
               $baseArgSym.${TermName(methodName)}(..$argNameCasts)
             )
-          case x: mainargs.Result.Error => x
+          case x: _root_.mainargs.Result.Error => x
         }
     )
     }"""

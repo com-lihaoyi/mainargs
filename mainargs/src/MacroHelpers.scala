@@ -1,14 +1,7 @@
 package mainargs
 
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox.Context
-/**
-  * More or less a minimal version of Autowire's Server that lets you generate
-  * a set of "routes" from the methods defined in an object, and call them
-  * using passing in name/args/kwargs via Java reflection, without having to
-  * generate/compile code or use Scala reflection. This saves us spinning up
-  * the Scala compiler and greatly reduces the startup time of cached scripts.
-  */
+
 object MacroHelpers{
 
   def readVarargs[T](arg: ArgSig[_],
