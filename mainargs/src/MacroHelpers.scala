@@ -9,7 +9,7 @@ import scala.reflect.macros.blackbox.Context
   * generate/compile code or use Scala reflection. This saves us spinning up
   * the Scala compiler and greatly reduces the startup time of cached scripts.
   */
-object Router{
+object MacroHelpers{
 
   def readVarargs[T](arg: ArgSig[_],
                      values: Seq[String],

@@ -2,7 +2,7 @@ package mainargs
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
 
-class RouterMacros(val c: Context) {
+class Macros(val c: Context) {
   def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[EntryPoints[T]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[T])

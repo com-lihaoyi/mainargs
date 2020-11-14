@@ -1,7 +1,7 @@
 import scala.language.experimental.macros
 package object mainargs{
-  implicit def generateRoutes[T]: EntryPoints[T] = macro RouterMacros.generateRoutesImpl[T]
-  def generateClassRoute[T, C]: EntryPoint[C] = macro RouterMacros.generateClassRouteImpl[T, C]
+  implicit def generateRoutes[T]: EntryPoints[T] = macro Macros.generateRoutesImpl[T]
+  def generateClassRoute[T, C]: EntryPoint[C] = macro Macros.generateClassRouteImpl[T, C]
 
   def parseArgsIntoClsOrExit[T](args: Array[String]): T = ???
   def parseArgsIntoClsOrThrow[T](args: Array[String]): T = ???
