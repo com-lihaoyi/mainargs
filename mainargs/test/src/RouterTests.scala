@@ -24,10 +24,9 @@ object RouterTests extends TestSuite{
         @main
         def bar(i: Int) = i
 
-        @doc("Qux is a function that does stuff")
-        @main
+        @main(doc = "Qux is a function that does stuff")
         def qux(i: Int,
-                @doc("Pass in a custom `s` to override it")
+                @arg(doc = "Pass in a custom `s` to override it")
                 s: String  = "lols") = s * i
         @main
         def ex() = throw MyException
@@ -40,7 +39,7 @@ object RouterTests extends TestSuite{
         def pureVariadic(nums: Int*) = nums.sum
 
         @main
-        def mixedVariadic(@short('f') first: Int, args: String*) = first + args.mkString
+        def mixedVariadic(@arg(short = 'f') first: Int, args: String*) = first + args.mkString
       }
       val routes = generateRoutes[Target.type]
 

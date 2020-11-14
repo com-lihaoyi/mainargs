@@ -2,7 +2,7 @@ import mill._
 import mill.scalalib.publish.{Developer, License, PomSettings, VersionControl}
 import scalalib._
 
-object mainargs extends Cross[MainArgsModule]("2.12.6", "2.13.0")
+object mainargs extends Cross[MainArgsModule]("2.12.12", "2.13.3")
 class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule with PublishModule {
   def publishVersion = "0.1.0"
   def artifactName = "mainargs"

@@ -1,11 +1,11 @@
 
 package mainargs
 
-import scala.annotation.StaticAnnotation
+import scala.annotation.{ClassfileAnnotation, StaticAnnotation}
 
-class doc(s: String) extends StaticAnnotation
-class short(c: Char) extends StaticAnnotation
-class main extends StaticAnnotation
+class arg(val name: String = null, val short: Char = 0, val doc: String = null) extends ClassfileAnnotation
+
+class main(val name: String = null, val doc: String = null) extends ClassfileAnnotation
 
 
 /**

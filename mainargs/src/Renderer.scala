@@ -22,12 +22,9 @@ object Renderer {
       case Some(f) => " (default " + Util.literalize(f(base).toString) + ")"
       case None => ""
     }
-    val docSuffix = arg.doc match{
-      case Some(d) => ": " + d
-      case None => ""
-    }
+    val docSuffix = arg.doc.getOrElse("")
     val wrapped = softWrap(
-      arg.typeString + suffix + docSuffix,
+      suffix + docSuffix,
       leftOffset,
       wrappedWidth - leftOffset
     )

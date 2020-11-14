@@ -2,18 +2,29 @@ package mainargs
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
 
-object RouterMacros{
-  def generateRoutesImpl[T: c.WeakTypeTag](c: Context): c.Expr[Seq[EntryPoint[T]]] = {
+class RouterMacros(val c: Context) {
+  def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[Seq[EntryPoint[T]]] = {
     import c.universe._
-    val r = new RouterMacros(c)
-    val allRoutes = r.getAllRoutesForClass(
-      weakTypeOf[T].asInstanceOf[r.c.Type]
-    ).asInstanceOf[Iterable[c.Tree]]
+    val allRoutes = getAllRoutesForClass(weakTypeOf[T])
 
     c.Expr[Seq[EntryPoint[T]]](q"_root_.scala.Seq(..$allRoutes)")
   }
-}
-class RouterMacros [C <: Context](val c: C) {
+  def generateClassRouteImpl[T: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[EntryPoint[C]] = {
+    import c.universe._
+
+    val cls = weakTypeOf[T].typeSymbol.asClass
+    val companionObj = weakTypeOf[T].typeSymbol.companion
+    val constructor = cls.primaryConstructor.asMethod
+    val route = extractMethod(
+      "apply",
+      constructor.paramLists.flatten,
+      constructor.pos,
+      cls.annotations.find(_.tpe =:= typeOf[main]).head,
+      companionObj.typeSignature
+    )
+
+    c.Expr[EntryPoint[C]](route.asInstanceOf[c.Tree])
+  }
   import c.universe._
   def getValsOrMeths(curCls: Type): Iterable[MethodSymbol] = {
     def isAMemberOfAnyRef(member: Symbol) = {
@@ -38,11 +49,16 @@ class RouterMacros [C <: Context](val c: C) {
     }
   }
 
-  def extractMethod(meth: MethodSymbol, curCls: c.universe.Type): c.universe.Tree = {
+  def extractMethod(methodName: String,
+                    flattenedArgLists: Seq[Symbol],
+                    methodPos: Position,
+                    mainAnnotation: Annotation,
+                    curCls: c.universe.Type): c.universe.Tree = {
+
     val baseArgSym = TermName(c.freshName())
-    val flattenedArgLists = meth.paramss.flatten
+
     def hasDefault(i: Int) = {
-      val defaultName = s"${meth.name}$$default$$${i + 1}"
+      val defaultName = s"${methodName}$$default$$${i + 1}"
       if (curCls.members.exists(_.name.toString == defaultName)) Some(defaultName)
       else None
     }
@@ -52,27 +68,6 @@ class RouterMacros [C <: Context](val c: C) {
     val defaults = for ((arg, i) <- flattenedArgLists.zipWithIndex) yield {
       val arg = TermName(c.freshName())
       hasDefault(i).map(defaultName => q"($arg: $curCls) => $arg.${newTermName(defaultName)}")
-    }
-
-    def getDocAnnotation(annotations: List[Annotation]) = {
-      val (docTrees, remaining) = annotations.partition(_.tpe =:= typeOf[doc])
-      val docValues = for {
-        doc <- docTrees
-        if doc.scalaArgs.head.isInstanceOf[Literal]
-        l =  doc.scalaArgs.head.asInstanceOf[Literal]
-        if l.value.value.isInstanceOf[String]
-      } yield l.value.value.asInstanceOf[String]
-      (remaining, docValues.headOption)
-    }
-    def getShortAnnotation(annotations: List[Annotation]) = {
-      val (docTrees, remaining) = annotations.partition(_.tpe =:= typeOf[short])
-      val docValues = for {
-        doc <- docTrees
-        if doc.scalaArgs.head.isInstanceOf[Literal]
-        l =  doc.scalaArgs.head.asInstanceOf[Literal]
-        if l.value.value.isInstanceOf[Char]
-      } yield l.value.value.asInstanceOf[Char]
-      (remaining, docValues.headOption)
     }
 
     def unwrapVarargType(arg: Symbol) = {
@@ -85,7 +80,7 @@ class RouterMacros [C <: Context](val c: C) {
     }
 
 
-    val (_, methodDoc) = getDocAnnotation(meth.annotations)
+
     val readArgSigs = for(
       ((arg, defaultOpt), i) <- flattenedArgLists.zip(defaults).zipWithIndex
     ) yield {
@@ -98,48 +93,56 @@ class RouterMacros [C <: Context](val c: C) {
           case Some(defaultExpr) => q"scala.Some($defaultExpr($baseArgSym))"
           case None => q"scala.None"
         }
+      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
 
-      val (_, docOpt) = getDocAnnotation(arg.annotations)
-      val (_, shortOpt) = getShortAnnotation(arg.annotations)
 
-      val docTree = docOpt match{
-        case None => q"scala.None"
-        case Some(s) => q"scala.Some($s)"
+
+
+      val instantiateArg = argAnnotation match{
+        case Some(annot) =>
+          val annotArgs =
+            for(t <- annot.tree.children.tail if t.symbol != null) {
+//              c.internal.changeOwner(t, t.symbol.owner, meth.owner)
+            }
+
+          q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
+        case _ => q"new _root_.mainargs.arg()"
       }
-      val shortTree = shortOpt match{
-        case None => q"scala.None"
-        case Some(c) => q"scala.Some($c)"
-      }
-
+      val argVal = TermName(c.freshName("arg"))
+      val argSigVal = TermName(c.freshName("argSig"))
       val argSig = q"""
-        mainargs.ArgSig(
-          ${arg.name.toString},
-          $shortTree,
-          ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
-          $docTree,
-          $defaultOpt,
-          $vararg
-        )
+        val $argSigVal = {
+          val $argVal = $instantiateArg
+          _root_.mainargs.ArgSig[$curCls](
+            scala.Option($argVal.name).getOrElse(${arg.name.toString}),
+            scala.Option($argVal.short),
+            ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
+            scala.Option($argVal.doc),
+            $defaultOpt,
+            $vararg
+          )
+        }
       """
 
       val reader =
         if(vararg) q"""
           mainargs.Router.makeReadVarargsCall[$varargUnwrappedType](
-            $argSig,
+            $argSigVal,
             $extrasSymbol
           )
         """ else q"""
-        mainargs.Router.makeReadCall[$varargUnwrappedType](
-          $argListSymbol,
-          $default,
-          $argSig
-        )
+          mainargs.Router.makeReadCall[$varargUnwrappedType](
+            $argListSymbol,
+            $default,
+            $argSigVal
+          )
         """
-      c.internal.setPos(reader, meth.pos)
-      (reader, argSig, vararg)
+      c.internal.setPos(reader, methodPos)
+      (reader, argSig, (argSigVal, vararg))
     }
 
-    val (readArgs, argSigs, varargs) = readArgSigs.unzip3
+    val (readArgs, argSigs, argSigValVarargs) = readArgSigs.unzip3
+    val (argSigVals, varargs) = argSigValVarargs.unzip
     val (argNames, argNameCasts) = flattenedArgLists.map { arg =>
       val (vararg, unwrappedType) = unwrapVarargType(arg)
       (
@@ -151,25 +154,28 @@ class RouterMacros [C <: Context](val c: C) {
     }.unzip
 
 
-    q"""
+    val methVal = TermName(c.freshName("arg"))
+    val res = q"""{
+    val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
+    ..$argSigs
     mainargs.EntryPoint(
-      ${meth.name.toString},
-      scala.Seq(..$argSigs),
-      ${methodDoc match{
-        case None => q"scala.None"
-        case Some(s) => q"scala.Some($s)"
-      }},
+      scala.Option($methVal.name).getOrElse($methodName),
+      scala.Seq(..$argSigVals),
+      scala.Option($methVal.doc),
       ${varargs.contains(true)},
       ($baseArgSym: $curCls, $argListSymbol: Map[String, String], $extrasSymbol: Seq[String]) =>
         mainargs.Router.validate(Seq(..$readArgs)) match{
           case mainargs.Result.Success(List(..$argNames)) =>
             mainargs.Result.Success(
-              $baseArgSym.${meth.name.toTermName}(..$argNameCasts)
+              $baseArgSym.${TermName(methodName)}(..$argNameCasts)
             )
           case x: mainargs.Result.Error => x
         }
     )
-    """
+    }"""
+
+//    println(showCode(res))
+    res
   }
 
   def hasMainAnnotation(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[main])
@@ -177,7 +183,15 @@ class RouterMacros [C <: Context](val c: C) {
                            pred: MethodSymbol => Boolean = hasMainAnnotation)
                             : Iterable[c.universe.Tree] = {
     for(t <- getValsOrMeths(curCls) if pred(t))
-    yield extractMethod(t, curCls)
+    yield {
+      extractMethod(
+        t.name.toString,
+        t.paramss.flatten,
+        t.pos,
+        t.annotations.find(_.tpe =:= typeOf[main]).head,
+        curCls
+      )
+    }
   }
 }
 
