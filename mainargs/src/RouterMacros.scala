@@ -64,6 +64,16 @@ class RouterMacros [C <: Context](val c: C) {
       } yield l.value.value.asInstanceOf[String]
       (remaining, docValues.headOption)
     }
+    def getShortAnnotation(annotations: List[Annotation]) = {
+      val (docTrees, remaining) = annotations.partition(_.tpe =:= typeOf[short])
+      val docValues = for {
+        doc <- docTrees
+        if doc.scalaArgs.head.isInstanceOf[Literal]
+        l =  doc.scalaArgs.head.asInstanceOf[Literal]
+        if l.value.value.isInstanceOf[Char]
+      } yield l.value.value.asInstanceOf[Char]
+      (remaining, docValues.headOption)
+    }
 
     def unwrapVarargType(arg: Symbol) = {
       val vararg = arg.typeSignature.typeSymbol == definitions.RepeatedParamClass
@@ -89,37 +99,37 @@ class RouterMacros [C <: Context](val c: C) {
           case None => q"scala.None"
         }
 
-      val (docUnwrappedType, docOpt) = varargUnwrappedType match{
-        case t: AnnotatedType =>
-          import compat._
-          val (remaining, docValue) = getDocAnnotation(t.annotations)
-          if (remaining.isEmpty) (t.underlying, docValue)
-          else (c.universe.AnnotatedType(remaining, t.underlying), docValue)
-
-        case t => (t, None)
-      }
+      val (_, docOpt) = getDocAnnotation(arg.annotations)
+      val (_, shortOpt) = getShortAnnotation(arg.annotations)
 
       val docTree = docOpt match{
         case None => q"scala.None"
         case Some(s) => q"scala.Some($s)"
       }
+      val shortTree = shortOpt match{
+        case None => q"scala.None"
+        case Some(c) => q"scala.Some($c)"
+      }
+
       val argSig = q"""
         mainargs.ArgSig(
           ${arg.name.toString},
-          ${docUnwrappedType.toString + (if(vararg) "*" else "")},
+          $shortTree,
+          ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
           $docTree,
-          $defaultOpt
+          $defaultOpt,
+          $vararg
         )
       """
 
       val reader =
         if(vararg) q"""
-          mainargs.Router.makeReadVarargsCall[$docUnwrappedType](
+          mainargs.Router.makeReadVarargsCall[$varargUnwrappedType](
             $argSig,
             $extrasSymbol
           )
         """ else q"""
-        mainargs.Router.makeReadCall[$docUnwrappedType](
+        mainargs.Router.makeReadCall[$varargUnwrappedType](
           $argListSymbol,
           $default,
           $argSig

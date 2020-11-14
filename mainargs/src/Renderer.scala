@@ -8,13 +8,18 @@ object Renderer {
       case x => x.max
     }
   }
-  def renderArgShort[T](arg: ArgSig[T]) = "--" + arg.name
+  def renderArgShort[T](arg: ArgSig[T]) = {
+    val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
+    if (arg.varargs) s"[${arg.name} ...]"
+    else if (arg.default.nonEmpty) s"[$shortPrefix--${arg.name}]"
+    else s"$shortPrefix--${arg.name}"
+  }
   def renderArg[T](base: T,
                    arg: ArgSig[T],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val suffix = arg.default match{
-      case Some(f) => " (default " + f(base) + ")"
+      case Some(f) => " (default " + Util.literalize(f(base).toString) + ")"
       case None => ""
     }
     val docSuffix = arg.doc match{
@@ -35,7 +40,7 @@ object Renderer {
 
       val methods =
         for(main <- mainMethods)
-          yield formatMainMethodSignature(base, main, 2, leftColWidth)
+        yield formatMainMethodSignature(base, main, 2, leftColWidth)
 
       normalizeNewlines(
         s"""

@@ -5,8 +5,7 @@ import utest._
 
 object RouterTests extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
-    val grouped = Util.groupArgs(input)
-    entryPoint.invoke(base, grouped)
+    entryPoint.invoke(base, Util.groupArgs(input))
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],
@@ -15,8 +14,8 @@ object RouterTests extends TestSuite{
     val result = parseInvoke(base, entryPoint, input)
     assert(result == expected)
   }
+
   val tests = Tests {
-    println("UnitTests")
     test("router"){
       case object MyException extends Exception
       object Target{
@@ -26,7 +25,8 @@ object RouterTests extends TestSuite{
         def bar(i: Int) = i
         @main
         def qux(i: Int,
-                s: String @doc("Pass in a custom `s` to override it") = "lols") = s * i
+                @doc("Pass in a custom `s` to override it")
+                s: String  = "lols") = s * i
         @main
         def ex() = throw MyException
 
@@ -38,18 +38,21 @@ object RouterTests extends TestSuite{
         def pureVariadic(nums: Int*) = nums.sum
 
         @main
-        def mixedVariadic(first: Int, args: String*) = first + args.mkString
+        def mixedVariadic(@short('f') first: Int, args: String*) = first + args.mkString
       }
-      val routes = Router.generateRoutes[Target.type]
+      val routes = generateRoutes[Target.type]
 
+      test("formatMainMethods"){
+        Renderer.formatMainMethods(Target, routes)
+      }
       test("basicModelling") {
         val names = routes.map(_.name)
         assert(
           names == List("foo", "bar", "qux", "ex", "pureVariadic", "mixedVariadic")
         )
         val evaledArgs = routes.map(_.argSignatures.map{
-          case ArgSig(name, tpe, docs, None) => (name, tpe, docs, None)
-          case ArgSig(name, tpe, docs, Some(default)) =>
+          case ArgSig(name, s, tpe, docs, None, _) => (name, tpe, docs, None)
+          case ArgSig(name, s, tpe, docs, Some(default), _) =>
             (name, tpe, docs, Some(default(Target)))
         })
         assert(
@@ -92,12 +95,13 @@ object RouterTests extends TestSuite{
           assertMatch(invoked){
             case Result.Error.InvalidArguments(List(
             Result.ParamError.Invalid(
-            ArgSig("nums", "Int*", _, _),
+            ArgSig("nums", _, "Int*", _, _, true),
             "--nums",
             _: NumberFormatException
             )
             ))=>
           }
+
           check(
             Target, routes(5), List("1", "--args", "foo"),
             Result.Success("1--argsfoo")
@@ -106,7 +110,7 @@ object RouterTests extends TestSuite{
           assertMatch(parseInvoke(Target, routes(4), List("1", "2", "3", "--nums", "4"))){
             case Result.Error.InvalidArguments(List(
             Result.ParamError.Invalid(
-            ArgSig("nums", "Int*", _, _),
+            ArgSig("nums", _, "Int*", _, _, true),
             "--nums",
             _: NumberFormatException
             )
@@ -116,22 +120,22 @@ object RouterTests extends TestSuite{
 
         test("notEnoughNormalArgsStillFails"){
           assertMatch(parseInvoke(Target, routes(5), List())){
-            case Result.Error.MismatchedArguments(List(ArgSig("first", _, _, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(List(ArgSig("first", _, _, _, _, false)), Nil, Nil, None) =>
           }
         }
         test("multipleVarargParseFailures"){
           assertMatch(parseInvoke(Target, routes(4), List("aa", "bb", "3"))){
             case Result.Error.InvalidArguments(
             List(
-              Result.ParamError.Invalid(ArgSig("nums", "Int*", _, _), "aa", _: NumberFormatException),
-              Result.ParamError.Invalid(ArgSig("nums", "Int*", _, _), "bb", _: NumberFormatException)
+              Result.ParamError.Invalid(ArgSig("nums", _, "Int*", _, _, true), "aa", _: NumberFormatException),
+              Result.ParamError.Invalid(ArgSig("nums", _, "Int*", _, _, true), "bb", _: NumberFormatException)
             )
             )=>
           }
           assertMatch(parseInvoke(Target, routes(5), List("aa", "bb", "3"))){
             case Result.Error.InvalidArguments(
             List(
-              Result.ParamError.Invalid(ArgSig("first", "Int", _, _), "aa", _: NumberFormatException)
+              Result.ParamError.Invalid(ArgSig("first", _, "Int", _, _, false), "aa", _: NumberFormatException)
             )
             )=>
           }
@@ -141,15 +145,15 @@ object RouterTests extends TestSuite{
       test("failures"){
         test("missingParams"){
           assertMatch(parseInvoke(Target, routes(1), List.empty)){
-            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _, _, false)), Nil, Nil, None) =>
           }
           assertMatch(parseInvoke(Target, routes(2), List("--s", "omg"))){
-            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _, _, false)), Nil, Nil, None) =>
           }
         }
         test("invalidParams") - assertMatch(parseInvoke(Target, routes(1), List("lol"))){
           case Result.Error.InvalidArguments(
-          List(Result.ParamError.Invalid(ArgSig("i", _, _, _), "lol", _))
+          List(Result.ParamError.Invalid(ArgSig("i", _, _, _, _, _), "lol", _))
           ) =>
         }
 
@@ -163,7 +167,7 @@ object RouterTests extends TestSuite{
           val parsed = parseInvoke(Target, routes(2), List("1", "--i", "2"))
           assertMatch(parsed){
             case Result.Error.MismatchedArguments(
-            Nil, Nil, Seq((ArgSig("i", _, _, _), Seq("1", "2"))), None
+              Nil, Nil, Seq((ArgSig("i", _, _, _, _, false), Seq("1", "2"))), None
             ) =>
           }
         }

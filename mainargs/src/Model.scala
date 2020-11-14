@@ -4,6 +4,7 @@ package mainargs
 import scala.annotation.StaticAnnotation
 
 class doc(s: String) extends StaticAnnotation
+class short(c: Char) extends StaticAnnotation
 class main extends StaticAnnotation
 
 
@@ -14,7 +15,9 @@ class main extends StaticAnnotation
  * possible a function that can compute its default value
  */
 case class ArgSig[T](name: String,
+                     shortName: Option[Char],
                      typeString: String,
                      doc: Option[String],
-                     default: Option[T => Any])
+                     default: Option[T => Any],
+                     varargs: Boolean)
 
