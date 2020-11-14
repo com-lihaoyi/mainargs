@@ -1,7 +1,7 @@
 
 package mainargs
 
-import scala.annotation.switch
+import scala.annotation.{switch, tailrec}
 
 object Util{
   def literalize(s: IndexedSeq[Char], unicode: Boolean = false) = {
@@ -28,21 +28,7 @@ object Util{
 
     sb.result()
   }
-  def groupArgs(flatArgs: List[String]): Seq[(String, Option[String])] = {
-    var keywordTokens = flatArgs
-    var scriptArgs = Vector.empty[(String, Option[String])]
 
-    while(keywordTokens.nonEmpty) keywordTokens match{
-      case List(head, next, rest@_*) if head.startsWith("-") =>
-        scriptArgs = scriptArgs :+ (head, Some(next))
-        keywordTokens = rest.toList
-      case List(head, rest@_*) =>
-        scriptArgs = scriptArgs :+ (head, None)
-        keywordTokens = rest.toList
-
-    }
-    scriptArgs
-  }
   def stripDashes(s: String) = {
     if (s.startsWith("--")) s.drop(2)
     else if (s.startsWith("-")) s.drop(1)

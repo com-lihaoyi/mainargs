@@ -3,11 +3,11 @@ import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
 
 class RouterMacros(val c: Context) {
-  def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[Seq[EntryPoint[T]]] = {
+  def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[EntryPoints[T]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[T])
 
-    c.Expr[Seq[EntryPoint[T]]](q"_root_.scala.Seq(..$allRoutes)")
+    c.Expr[EntryPoints[T]](q"_root_.mainargs.EntryPoints(_root_.scala.Seq(..$allRoutes))")
   }
   def generateClassRouteImpl[T: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[EntryPoint[C]] = {
     import c.universe._
@@ -119,7 +119,8 @@ class RouterMacros(val c: Context) {
             ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
             scala.Option($argVal.doc),
             $defaultOpt,
-            $vararg
+            $vararg,
+            $argVal.flag,
           )
         }
       """

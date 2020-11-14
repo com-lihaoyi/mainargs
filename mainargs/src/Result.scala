@@ -31,8 +31,7 @@ object Result{
      */
     case class MismatchedArguments(missing: Seq[ArgSig[_]],
                                    unknown: Seq[String],
-                                   duplicate: Seq[(ArgSig[_], Seq[String])],
-                                   incomplete: Option[ArgSig[_]]) extends Error
+                                   duplicate: Seq[(ArgSig[_], Seq[String])]) extends Error
     /**
      * Invoking the [[EntryPoint]] failed because there were problems
      * deserializing/parsing individual arguments

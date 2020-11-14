@@ -52,7 +52,7 @@ case class Config(@arg(name = "predef-code",
 
 object AmmoniteTests extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
-    entryPoint.invoke(base, Util.groupArgs(input))
+    entryPoint.invoke(base, Grouping.groupArgs(input, entryPoint.argSigs).right.get)
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],

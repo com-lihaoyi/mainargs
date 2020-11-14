@@ -19,7 +19,7 @@ object Renderer {
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val suffix = arg.default match{
-      case Some(f) => " (default " + Util.literalize(f(base).toString) + ")"
+      case Some(f) => "(default " + Util.literalize(f(base).toString) + ") "
       case None => ""
     }
     val docSuffix = arg.doc.getOrElse("")
@@ -33,7 +33,7 @@ object Renderer {
   def formatMainMethods[T](base: T, mainMethods: Seq[EntryPoint[T]]) = {
     if (mainMethods.isEmpty) ""
     else{
-      val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSignatures))
+      val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSigs))
 
       val methods =
         for(main <- mainMethods)
@@ -53,7 +53,7 @@ object Renderer {
                                    leftIndent: Int,
                                    leftColWidth: Int) = {
     // +2 for space on right of left col
-    val args = main.argSignatures.map(renderArg(base, _, leftColWidth + leftIndent + 2 + 2, 80))
+    val args = main.argSigs.map(renderArg(base, _, leftColWidth + leftIndent + 2 + 2, 80))
 
     val leftIndentStr = " " * leftIndent
     val argStrings =
@@ -91,6 +91,86 @@ object Renderer {
       }
     }
     output.mkString
+  }
+
+  def pluralize(s: String, n: Int) = {
+    if (n == 1) s else s + "s"
+  }
+  def renderResult[T](base: T, main: EntryPoint[T], result: Result[_]) = {
+    val leftColWidth = Renderer.getLeftColWidth(main.argSigs)
+
+    val expectedMsg = Renderer.formatMainMethodSignature(base: T, main, 0, leftColWidth)
+    result match{
+      case Result.Success(x) => Right(x)
+      case Result.Error.Exception(x) => Left(x.getStackTrace.mkString("\n"))
+      case Result.Error.MismatchedArguments(missing, unknown, duplicate) =>
+        val missingStr =
+          if (missing.isEmpty) ""
+          else {
+            val chunks =
+              for (x <- missing)
+                yield "--" + x.name + ": " + x.typeString
+
+            val argumentsStr = pluralize("argument", chunks.length)
+            s"Missing $argumentsStr: (${chunks.mkString(", ")})" + Renderer.newLine
+          }
+
+
+        val unknownStr =
+          if (unknown.isEmpty) ""
+          else {
+            val argumentsStr = pluralize("argument", unknown.length)
+            s"Unknown $argumentsStr: " + unknown.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
+          }
+
+        val duplicateStr =
+          if (duplicate.isEmpty) ""
+          else {
+            val lines =
+              for ((sig, options) <- duplicate)
+                yield {
+                  s"Duplicate arguments for (--${sig.name}: ${sig.typeString}): " +
+                    options.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
+                }
+
+            lines.mkString
+
+          }
+
+        Left(
+          Renderer.normalizeNewlines(
+            s"""$missingStr$unknownStr$duplicateStr
+               |Arguments provided did not match expected signature:
+               |
+               |$expectedMsg
+               |""".stripMargin
+          )
+        )
+
+      case Result.Error.InvalidArguments(x) =>
+        val argumentsStr = pluralize("argument", x.length)
+        val thingies = x.map{
+          case Result.ParamError.Invalid(p, v, ex) =>
+            val literalV = Util.literalize(v)
+            val rendered = {Renderer.renderArgShort(p)}
+            s"$rendered: ${p.typeString} = $literalV failed to parse with $ex"
+          case Result.ParamError.DefaultFailed(p, ex) =>
+            s"${Renderer.renderArgShort(p)}'s default value failed to evaluate with $ex"
+        }
+
+        Left(
+          Renderer.normalizeNewlines(
+            s"""The following $argumentsStr failed to parse:
+               |
+               |${thingies.mkString(Renderer.newLine)}
+               |
+               |expected signature:
+               |
+               |$expectedMsg
+            """.stripMargin
+          )
+        )
+    }
   }
 
 }
