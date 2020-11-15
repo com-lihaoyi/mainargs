@@ -78,4 +78,3 @@ object PositionalEnabledTests extends TestSuite{
     }
   }
 }
-

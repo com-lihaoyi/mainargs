@@ -3,7 +3,6 @@ package mainargs
 import scala.language.experimental.macros
 
 object MacroHelpers{
-
   def readVarargs[T](arg: ArgSig[_],
                      values: Seq[String],
                      thunk: String => Either[String, T]): Either[Seq[Result.ParamError], Seq[T]] = {
@@ -61,4 +60,3 @@ object MacroHelpers{
     readVarargs[T](arg, values, implicitly[ArgParser[T]].read(None, _)).map(Computed(_))
   }
 }
-

@@ -194,4 +194,3 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
     }
   }
 }
-

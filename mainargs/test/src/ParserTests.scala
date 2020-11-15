@@ -1,7 +1,6 @@
 package mainargs
 import utest._
 
-
 object ParserTests extends TestSuite{
 
   val tests = Tests {

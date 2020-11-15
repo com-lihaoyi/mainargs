@@ -1,4 +1,5 @@
 package mainargs
+
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
 
@@ -28,7 +29,7 @@ class Macros(val c: Context) {
       "apply",
       constructor.paramLists.flatten,
       constructor.pos,
-      cls.annotations.find(_.tpe =:= typeOf[main]).head,
+      cls.annotations.find(_.tpe =:= typeOf[MainAnnotation]).head,
       companionObj.typeSignature
     )
 
@@ -46,7 +47,7 @@ class Macros(val c: Context) {
       "apply",
       constructor.paramLists.flatten,
       constructor.pos,
-      cls.annotations.find(_.tpe =:= typeOf[main]).head,
+      cls.annotations.find(_.tpe =:= typeOf[MainAnnotation]).head,
       companionObj.typeSignature
     )
 
@@ -108,8 +109,6 @@ class Macros(val c: Context) {
       (vararg, unwrappedType)
     }
 
-
-
     val readArgSigs = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
       val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
@@ -120,7 +119,7 @@ class Macros(val c: Context) {
           case Some(defaultExpr) => q"scala.Some($defaultExpr($baseArgSym))"
           case None => q"scala.None"
         }
-      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
+      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[ArgAnnotation]).headOption
 
       val instantiateArg = argAnnotation match{
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
@@ -195,7 +194,7 @@ class Macros(val c: Context) {
     res
   }
 
-  def hasMainAnnotation(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[main])
+  def hasMainAnnotation(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[MainAnnotation])
   def getAllRoutesForClass(curCls: Type,
                            pred: MethodSymbol => Boolean = hasMainAnnotation)
                             : Iterable[c.universe.Tree] = {
@@ -205,7 +204,7 @@ class Macros(val c: Context) {
         t.name.toString,
         t.paramss.flatten,
         t.pos,
-        t.annotations.find(_.tpe =:= typeOf[main]).head,
+        t.annotations.find(_.tpe =:= typeOf[MainAnnotation]).head,
         curCls
       )
     }
