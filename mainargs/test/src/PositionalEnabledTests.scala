@@ -6,6 +6,7 @@ object PositionalEnabledTests extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
     Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = true)
       .flatMap(entryPoint.invoke(base, _))
+      .map(_.value)
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],
@@ -17,7 +18,6 @@ object PositionalEnabledTests extends TestSuite{
 
   val tests = Tests {
     test("router"){
-
       val routes = generateRoutes[Target.type].value
 
       test("invoke"){
@@ -46,8 +46,12 @@ object PositionalEnabledTests extends TestSuite{
           test - assertMatch(parseInvoke(Target, routes(5), List("aa", "bb", "3"))){
             case Result.Error.InvalidArguments(
             List(
-            Result.ParamError.Invalid(ArgSig("first", _, "Int", _, _, fals, _), "aa", _: NumberFormatException)
-            )
+              Result.ParamError.Failed(
+                ArgSig("first", _, "Int", _, _, fals, _),
+                "aa",
+                "java.lang.NumberFormatException: For input string: \"aa\""
+                )
+              )
             )=>
           }
         }
@@ -56,11 +60,9 @@ object PositionalEnabledTests extends TestSuite{
       test("failures"){
         test("invalidParams") - assertMatch(parseInvoke(Target, routes(1), List("lol"))){
           case Result.Error.InvalidArguments(
-          List(Result.ParamError.Invalid(ArgSig("i", _, _, _, _, _, _), "lol", _))
+          List(Result.ParamError.Failed(ArgSig("i", _, _, _, _, _, _), "lol", _))
           ) =>
         }
-
-
 
         test("redundantParams"){
           val parsed = parseInvoke(Target, routes(2), List("1", "--i", "2"))
@@ -74,3 +76,4 @@ object PositionalEnabledTests extends TestSuite{
     }
   }
 }
+

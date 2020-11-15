@@ -54,6 +54,7 @@ object AmmoniteTests extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
     Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = true)
       .flatMap(entryPoint.invoke(base, _))
+      .map(_.value)
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],

@@ -1,12 +1,13 @@
 package mainargs
 
-import mainargs.Result.Error.{InvalidArguments, MismatchedArguments}
+import mainargs.Result.Error.MismatchedArguments
 import utest._
 
 object PositionalDisabledTests extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
     Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = false)
       .flatMap(entryPoint.invoke(base, _))
+      .map(_.value)
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],

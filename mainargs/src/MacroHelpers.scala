@@ -6,43 +6,65 @@ object MacroHelpers{
 
   def readVarargs[T](arg: ArgSig[_],
                      values: Seq[String],
-                     thunk: String => T) = {
+                     thunk: String => Either[String, T]): Either[Seq[Result.ParamError], Seq[T]] = {
     val attempts =
-      for(item <- values)
-      yield Util.tryEither(thunk(item), Result.ParamError.Invalid(arg, item, _))
+      for(token <- values)
+      yield Util.tryEither(thunk(token), Result.ParamError.Exception(arg, token, _)) match{
+        case Left(x) => Left(x)
+        case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, token, errMsg))
+        case Right(Right(v)) => Right(v)
+      }
 
-    val bad = attempts.collect{ case Left(x) => x}
-    if (bad.nonEmpty) Left(bad)
-    else Right(attempts.collect{case Right(x) => x})
+    attempts.collect{ case Left(x) => x} match{
+      case Nil => Right(attempts.collect{case Right(x) => x})
+      case bad => Left(bad)
+    }
   }
-  def read[T](dict: Map[String, String],
-              default: => Option[Any],
-              arg: ArgSig[_],
-              thunk: String => T): Util.FailMaybe = {
+  def readSingleArg[T](dict: Map[String, String],
+                       default: => Option[Computed[T]],
+                       arg: ArgSig[_],
+                       thunk: String => Either[String, Computed[T]]): Util.FailMaybe = {
     dict.get(arg.name) match{
       case None =>
-        Util.tryEither(default.get, Result.ParamError.DefaultFailed(arg, _)).left.map(Seq(_))
+        Util.tryEither(
+          Right(default.get),
+          Result.ParamError.DefaultFailed(arg, _)
+        ) match{
+          case Left(ex) => Left(Seq(ex))
+          case Right(Right(v)) => Right(v)
+        }
 
-      case Some(x) =>
-        Util.tryEither(thunk(x), Result.ParamError.Invalid(arg, x, _)).left.map(Seq(_))
+      case Some(token) =>
+        Util.tryEither(
+          thunk(token),
+          Result.ParamError.Exception(arg, token, _)
+        ) match{
+          case Left(ex) => Left(Seq(ex))
+          case Right(Left(errMsg)) => Left(Seq(Result.ParamError.Failed(arg, token, errMsg)))
+          case Right(Right(v)) => Right(v)
+        }
+
     }
   }
 
 
-  def validate(args: Seq[Util.FailMaybe]): Result[Seq[Any]] = {
+  def validate(args: Seq[Util.FailMaybe]): Result[Seq[Computed[Any]]] = {
     val lefts = args.collect{case Left(x) => x}.flatten
     if (lefts.nonEmpty) Result.Error.InvalidArguments(lefts)
     else Result.Success(args.collect{case Right(x) => x})
   }
 
   def makeReadCall[T: Read](dict: Map[String, String],
-                            default: => Option[Any],
-                            arg: ArgSig[_]) = {
-    read[T](dict, default, arg, implicitly[Read[T]].read(None, _))
+                            default: => Option[T],
+                            arg: ArgSig[_]): Util.FailMaybe = {
+    readSingleArg[T](
+      dict, default.map(Computed(_)), arg,
+      implicitly[Read[T]].read(None, _).map(Computed(_))
+    )
   }
   def makeReadVarargsCall[T: Read](arg: ArgSig[_],
-                                   values: Seq[String]) = {
-    readVarargs[T](arg, values, implicitly[Read[T]].read(None, _))
+                                   values: Seq[String]): Util.FailMaybe = {
+    readVarargs[T](arg, values, implicitly[Read[T]].read(None, _)).map(Computed(_))
   }
 }
 

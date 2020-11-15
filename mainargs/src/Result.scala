@@ -52,10 +52,14 @@ object Result{
   sealed trait ParamError
   object ParamError{
     /**
+     * Something went wrong trying to de-serialize the input parameter
+     */
+    case class Failed(arg: ArgSig[_], token: String, errMsg: String) extends ParamError
+    /**
      * Something went wrong trying to de-serialize the input parameter;
      * the thrown exception is stored in [[ex]]
      */
-    case class Invalid(arg: ArgSig[_], value: String, ex: Throwable) extends ParamError
+    case class Exception(arg: ArgSig[_], token: String, ex: Throwable) extends ParamError
     /**
      * Something went wrong trying to evaluate the default value
      * for this input parameter

@@ -15,10 +15,14 @@ case class EntryPoint[T](name: String,
                          argSigs: Seq[ArgSig[T]],
                          doc: Option[String],
                          varargs: Boolean,
-                         invoke0: (T, Map[String, String], Seq[String]) => Result[Any]){
-  def invoke(target: T, grouped: Grouping[T]): Result[Any] = {
-    try invoke0(target, grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining)
-    catch{case e: Throwable => Result.Error.Exception(e)}
+                         invoke0: (T, Map[String, String], Seq[String]) => Result[Computed[Any]]){
+  def invoke(target: T, grouped: Grouping[T]): Result[Computed[Any]] = {
+    try {
+      invoke0(
+        target,
+        grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining
+      )
+    } catch{case e: Throwable => Result.Error.Exception(e)}
   }
 }
 

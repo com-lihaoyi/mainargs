@@ -73,7 +73,9 @@ class Macros(val c: Context) {
     val extrasSymbol = q"${c.fresh[TermName](TermName("extras"))}"
     val defaults = for ((arg, i) <- flattenedArgLists.zipWithIndex) yield {
       val arg = TermName(c.freshName())
-      hasDefault(i).map(defaultName => q"($arg: $curCls) => $arg.${newTermName(defaultName)}")
+      hasDefault(i).map(defaultName =>
+        q"($arg: $curCls) => $arg.${newTermName(defaultName)}"
+      )
     }
 
     def unwrapVarargType(arg: Symbol) = {
@@ -87,9 +89,7 @@ class Macros(val c: Context) {
 
 
 
-    val readArgSigs = for(
-      ((arg, defaultOpt), i) <- flattenedArgLists.zip(defaults).zipWithIndex
-    ) yield {
+    val readArgSigs = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
       val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
 
@@ -105,13 +105,7 @@ class Macros(val c: Context) {
 
 
       val instantiateArg = argAnnotation match{
-        case Some(annot) =>
-          val annotArgs =
-            for(t <- annot.tree.children.tail if t.symbol != null) {
-//              c.internal.changeOwner(t, t.symbol.owner, meth.owner)
-            }
-
-          q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
+        case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
         case _ => q"new _root_.mainargs.arg()"
       }
       val argVal = TermName(c.freshName("arg"))
@@ -154,8 +148,8 @@ class Macros(val c: Context) {
       val (vararg, unwrappedType) = unwrapVarargType(arg)
       (
         pq"${arg.name.toTermName}",
-        if (!vararg) q"${arg.name.toTermName}.asInstanceOf[$unwrappedType]"
-        else q"${arg.name.toTermName}.asInstanceOf[Seq[$unwrappedType]]: _*"
+        if (!vararg) q"${arg.name.toTermName}.value.asInstanceOf[$unwrappedType]"
+        else q"${arg.name.toTermName}.value.asInstanceOf[Seq[$unwrappedType]]: _*"
 
       )
     }.unzip
@@ -166,21 +160,20 @@ class Macros(val c: Context) {
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
     _root_.mainargs.EntryPoint(
-      scala.Option($methVal.name).getOrElse($methodName),
-      scala.Seq(..$argSigVals),
-      scala.Option($methVal.doc),
+      _root_.scala.Option($methVal.name).getOrElse($methodName),
+      _root_.scala.Seq(..$argSigVals),
+      _root_.scala.Option($methVal.doc),
       ${varargs.contains(true)},
       ($baseArgSym: $curCls, $argListSymbol: Map[String, String], $extrasSymbol: Seq[String]) =>
-        _root_.mainargs.MacroHelpers.validate(Seq(..$readArgs)) match{
-          case _root_.mainargs.Result.Success(List(..$argNames)) =>
+        _root_.mainargs.MacroHelpers.validate(Seq(..$readArgs)).flatMap{
+          case _root_.scala.List(..$argNames) =>
             _root_.mainargs.Result.Success(
-              $baseArgSym.${TermName(methodName)}(..$argNameCasts)
+              _root_.mainargs.Computed($baseArgSym.${TermName(methodName)}(..$argNameCasts))
             )
-          case x: _root_.mainargs.Result.Error => x
         }
     )
     }"""
-
+    println(res)
     res
   }
 
@@ -200,4 +193,3 @@ class Macros(val c: Context) {
     }
   }
 }
-

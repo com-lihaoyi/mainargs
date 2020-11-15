@@ -35,14 +35,20 @@ object Util{
     else s
   }
 
-  def tryEither[T](t: => T, error: Throwable => Result.ParamError) = {
+  def tryEither[T](t: => T,
+                   error: Throwable => Result.ParamError): Either[Result.ParamError, T] = {
     try Right(t)
     catch{ case e: Throwable => Left(error(e))}
   }
 
 
 
-  type FailMaybe = Either[Seq[Result.ParamError], Any]
-  type FailAll = Either[Seq[Result.ParamError], Seq[Any]]
+  type FailMaybe = Either[Seq[Result.ParamError], Computed[Any]]
+  type FailAll = Either[Seq[Result.ParamError], Seq[Computed[Any]]]
 
 }
+
+/**
+ * A simple box to make passing around `Any`s less dangerous
+ */
+case class Computed[+T](value: T)

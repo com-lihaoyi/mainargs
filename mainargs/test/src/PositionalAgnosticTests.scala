@@ -8,6 +8,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
   def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
     Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = allowPositional)
       .flatMap(entryPoint.invoke(base, _))
+      .map(_.value)
   }
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],
@@ -49,7 +50,6 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
         )
       }
 
-
       test("invoke"){
         test - check(Target, routes(0), List(), Result.Success(1))
         test - check(Target, routes(1), List("--i", "2"), Result.Success(2))
@@ -68,20 +68,20 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           val invoked = parseInvoke(Target, routes(4), List("--nums", "31337"))
           test - assertMatch(invoked){
             case Result.Error.InvalidArguments(List(
-            Result.ParamError.Invalid(
-            ArgSig("nums", _, "Int*", _, _, true, _),
-            "--nums",
-            _: NumberFormatException
+              Result.ParamError.Failed(
+              ArgSig("nums", _, "Int*", _, _, true, _),
+              "--nums",
+              """java.lang.NumberFormatException: For input string: "--nums""""
             )
             ))=>
           }
 
           test - assertMatch(parseInvoke(Target, routes(4), List("1", "2", "3", "--nums", "4"))){
             case Result.Error.InvalidArguments(List(
-            Result.ParamError.Invalid(
+            Result.ParamError.Failed(
             ArgSig("nums", _, "Int*", _, _, true, _),
             "--nums",
-            _: NumberFormatException
+            "java.lang.NumberFormatException: For input string: \"--nums\""
             )
             ))=>
           }
@@ -96,8 +96,8 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           test - assertMatch(parseInvoke(Target, routes(4), List("aa", "bb", "3"))){
             case Result.Error.InvalidArguments(
             List(
-            Result.ParamError.Invalid(ArgSig("nums", _, "Int*", _, _, true, _), "aa", _: NumberFormatException),
-            Result.ParamError.Invalid(ArgSig("nums", _, "Int*", _, _, true, _), "bb", _: NumberFormatException)
+            Result.ParamError.Failed(ArgSig("nums", _, "Int*", _, _, true, _), "aa", "java.lang.NumberFormatException: For input string: \"aa\""),
+            Result.ParamError.Failed(ArgSig("nums", _, "Int*", _, _, true, _), "bb", "java.lang.NumberFormatException: For input string: \"bb\"")
             )
             )=>
           }
