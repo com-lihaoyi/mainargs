@@ -1,9 +1,23 @@
 package mainargs
 object MainUtils {
+  def construct[T](cep: ClassMains[T],
+                   args: Seq[String],
+                   allowPositional: Boolean) = {
+    Grouping.groupArgs(args, cep.main.argSigs, allowPositional)
+      .flatMap(invoke(cep.companion(), cep.main, _))
+      .map(_.value.asInstanceOf[T])
+  }
+  def invoke[B](target: B,
+                main: MainData[B],
+                grouping: Grouping[B]): Result[Computed[Any]] = {
+    try main.invoke0(
+      target,
+      grouping.grouped.map{case (k, b) => (k.name, b)}, grouping.remaining
+    ) catch{case e: Throwable => Result.Error.Exception(e)}
+  }
   def runMains[T](mains: Mains[T],
                   args: Seq[String],
-                  allowPositional: Boolean,
-                  totalWidth: Int): Either[Result.Error.Early, (Main[T], Result[Computed[Any]])] = {
+                  allowPositional: Boolean): Either[Result.Error.Early, (MainData[T], Result[Computed[Any]])] = {
 
     mains.value match{
       case Seq() => Left(Result.Error.Early.NoMainMethodsDetected())
@@ -11,7 +25,7 @@ object MainUtils {
         Right(
           main,
           Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
-            .flatMap(main.invoke(mains.base(), _))
+            .flatMap(MainUtils.invoke(mains.base(), main, _))
         )
 
       case multiple =>
@@ -28,7 +42,7 @@ object MainUtils {
                     main,
                     Grouping
                       .groupArgs(tail, main.argSigs, allowPositional)
-                      .flatMap(main.invoke(mains.base(), _))
+                      .flatMap(MainUtils.invoke(mains.base(), main, _))
                   )
 
               }

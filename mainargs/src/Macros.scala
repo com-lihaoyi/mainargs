@@ -1,5 +1,5 @@
 package mainargs
-
+import acyclic.skipped
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
 
@@ -36,12 +36,12 @@ class Macros(val c: Context) {
       "apply",
       constructor.paramLists.flatten,
       constructor.pos,
-      cls.annotations.find(_.tpe =:= typeOf[MainAnnotation]).head,
+      cls.annotations.find(_.tpe =:= typeOf[main]).head,
       companionObj.typeSignature
     )
 
     c.Expr[ClassMains[T]](
-      q"_root_.mainargs.ClassMains[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.Main[Any]], () => $companionObj)"
+      q"_root_.mainargs.ClassMains[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.MainData[Any]], () => $companionObj)"
     )
   }
   import c.universe._
@@ -110,7 +110,7 @@ class Macros(val c: Context) {
           case Some(defaultExpr) => q"scala.Some($defaultExpr($baseArgSym))"
           case None => q"scala.None"
         }
-      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[ArgAnnotation]).headOption
+      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
 
       val instantiateArg = argAnnotation match{
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
@@ -167,7 +167,7 @@ class Macros(val c: Context) {
     val res = q"""{
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
-    _root_.mainargs.Main[$curCls](
+    _root_.mainargs.MainData[$curCls](
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),
@@ -185,9 +185,9 @@ class Macros(val c: Context) {
     res
   }
 
-  def hasMainAnnotation(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[MainAnnotation])
+  def hasmain(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[main])
   def getAllRoutesForClass(curCls: Type,
-                           pred: MethodSymbol => Boolean = hasMainAnnotation)
+                           pred: MethodSymbol => Boolean = hasmain)
                             : Iterable[c.universe.Tree] = {
     for(t <- getValsOrMeths(curCls) if pred(t))
     yield {
@@ -195,7 +195,7 @@ class Macros(val c: Context) {
         t.name.toString,
         t.paramss.flatten,
         t.pos,
-        t.annotations.find(_.tpe =:= typeOf[MainAnnotation]).head,
+        t.annotations.find(_.tpe =:= typeOf[main]).head,
         curCls
       )
     }

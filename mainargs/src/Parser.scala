@@ -28,10 +28,7 @@ case class Parser(args: Seq[String],
     )
   }
   def constructRaw[T: ClassMains]: Result[T] = {
-    val cep = implicitly[ClassMains[T]]
-    Grouping.groupArgs(args, cep.main.argSigs, allowPositional)
-      .flatMap(cep.main.invoke(cep.companion(), _))
-      .map(_.value.asInstanceOf[T])
+    MainUtils.construct[T](implicitly[ClassMains[T]], args, allowPositional)
   }
 
   def runOrExit[B: Mains]: Any = runEither[B] match{
@@ -58,10 +55,8 @@ case class Parser(args: Seq[String],
     case Right((main, res)) => res
   }
 
-  def runRaw0[B: Mains]: Either[Result.Error.Early, (Main[B], Result[Any])] = {
-    for {
-      tuple <- MainUtils.runMains(implicitly[Mains[B]], args, allowPositional, totalWidth)
-    } yield {
+  def runRaw0[B: Mains]: Either[Result.Error.Early, (MainData[B], Result[Any])] = {
+    for (tuple <- MainUtils.runMains(implicitly[Mains[B]], args, allowPositional)) yield {
       val (errMsg, res) = tuple
       (errMsg, res.map(_.value))
     }
@@ -79,7 +74,7 @@ case class Parser(args: Seq[String],
   def runRaw[B: BareMains](b: B): Result[Any] = {
     runRaw[B](Mains(implicitly[BareMains[B]].value, () => b))
   }
-  def runRaw0[B: BareMains](b: B): Either[Result.Error.Early, (Main[B], Result[Any])] = {
+  def runRaw0[B: BareMains](b: B): Either[Result.Error.Early, (MainData[B], Result[Any])] = {
     runRaw0[B](Mains(implicitly[BareMains[B]].value, () => b))
   }
 }

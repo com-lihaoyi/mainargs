@@ -26,7 +26,7 @@ object Renderer {
     (renderArgShort(arg, Some(base)), wrapped)
   }
 
-  def formatMainMethods[B](base: B, mainMethods: Seq[Main[B]], totalWidth: Int) = {
+  def formatMainMethods[B](base: B, mainMethods: Seq[MainData[B]], totalWidth: Int) = {
     if (mainMethods.isEmpty) ""
     else{
 
@@ -45,7 +45,7 @@ object Renderer {
   }
 
   def formatMainMethodSignature[B](base: B,
-                                   main: Main[B],
+                                   main: MainData[B],
                                    leftIndent: Int,
                                    totalWidth: Int) = {
     // +2 for space on right of left col
@@ -100,7 +100,7 @@ object Renderer {
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
   def renderResult[B, T](base: () => B,
-                         main: Main[B],
+                         main: MainData[B],
                          result: Result[T],
                          totalWidth: Int): Either[String, T] = {
 
