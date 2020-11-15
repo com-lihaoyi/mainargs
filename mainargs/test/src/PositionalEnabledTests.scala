@@ -3,7 +3,7 @@ package mainargs
 import utest._
 
 object PositionalEnabledTests extends TestSuite{
-  val check = new Checker[MultiTarget.type](allowPositional = true)
+  val check = new Checker(MultiTarget, allowPositional = true)
 
   val tests = Tests {
     test("invoke"){
@@ -27,12 +27,10 @@ object PositionalEnabledTests extends TestSuite{
         )
       }
       test("varargsAreAlwaysPositional"){
-
         test - check(
           List("mixedVariadic", "1", "--args", "foo"),
           Result.Success("1--argsfoo")
         )
-
       }
 
       test("multipleVarargParseFailures"){

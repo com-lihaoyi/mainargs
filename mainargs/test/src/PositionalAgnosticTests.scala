@@ -6,7 +6,7 @@ object PositionalAgnosticEnabledTests extends PositionalAgnosticTests(true)
 object PositionalAgnosticDisabledTests extends PositionalAgnosticTests(false)
 
 class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
-  val check = new Checker[MultiTarget.type](allowPositional = allowPositional)
+  val check = new Checker(MultiTarget, allowPositional = allowPositional)
 
   val tests = Tests {
     test("formatMainMethods"){
@@ -126,7 +126,6 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
         }
       }
     }
-
 
     test("flags"){
       test - check(

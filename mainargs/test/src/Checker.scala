@@ -1,9 +1,9 @@
 package mainargs
 
-class Checker[B: Mains](allowPositional: Boolean){
+class Checker[B: Mains](b: B, allowPositional: Boolean){
   val mains = implicitly[Mains[B]]
   def parseInvoke(input: List[String]) = {
-    Parser(input, allowPositional = allowPositional).runRaw[B]
+    Parser(input, allowPositional = allowPositional).runRaw(b)
   }
   def apply[B, T](input: List[String],
                   expected: Result[T]) = {

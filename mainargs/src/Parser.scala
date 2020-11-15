@@ -31,50 +31,50 @@ case class Parser(args: Seq[String],
     MainUtils.construct[T](implicitly[ClassMains[T]], args, allowPositional)
   }
 
-  def runOrExit[B: Mains]: Any = runEither[B] match{
+  def runOrExit[B: BasedMains]: Any = runEither[B] match{
     case Left(msg) =>
       stderr.println(msg)
       sys.exit(1)
     case Right(v) => v
   }
-  def runOrThrow[B: Mains]: Any = runEither[B] match{
+  def runOrThrow[B: BasedMains]: Any = runEither[B] match{
     case Left(msg) => throw new Exception(msg)
     case Right(v) => v
   }
-  def runEither[B: Mains]: Either[String, Any] = {
+  def runEither[B: BasedMains]: Either[String, Any] = {
     runRaw0[B] match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         Renderer.renderResult(
-          implicitly[Mains[B]].base, main, res, totalWidth
+          implicitly[BasedMains[B]].base, main, res, totalWidth
         )
     }
   }
-  def runRaw[B: Mains]: Result[Any] = runRaw0[B] match{
+  def runRaw[B: BasedMains]: Result[Any] = runRaw0[B] match{
     case Left(err) => err
     case Right((main, res)) => res
   }
 
-  def runRaw0[B: Mains]: Either[Result.Error.Early, (MainData[B], Result[Any])] = {
-    for (tuple <- MainUtils.runMains(implicitly[Mains[B]], args, allowPositional)) yield {
+  def runRaw0[B: BasedMains]: Either[Result.Error.Early, (MainData[B], Result[Any])] = {
+    for (tuple <- MainUtils.runMains(implicitly[BasedMains[B]], args, allowPositional)) yield {
       val (errMsg, res) = tuple
       (errMsg, res.map(_.value))
     }
   }
 
-  def runOrExit[B: BareMains](b: B): Any = {
-    runOrExit[B](Mains(implicitly[BareMains[B]].value, () => b))
+  def runOrExit[B: Mains](b: => B): Any = {
+    runOrExit[B](BasedMains(implicitly[Mains[B]].value, () => b))
   }
-  def runOrThrow[B: BareMains](b: B): Any = {
-    runOrThrow[B](Mains(implicitly[BareMains[B]].value, () => b))
+  def runOrThrow[B: Mains](b: => B): Any = {
+    runOrThrow[B](BasedMains(implicitly[Mains[B]].value, () => b))
   }
-  def runEither[B: BareMains](b: B): Either[String, Any] = {
-    runEither[B](Mains(implicitly[BareMains[B]].value, () => b))
+  def runEither[B: Mains](b: => B): Either[String, Any] = {
+    runEither[B](BasedMains(implicitly[Mains[B]].value, () => b))
   }
-  def runRaw[B: BareMains](b: B): Result[Any] = {
-    runRaw[B](Mains(implicitly[BareMains[B]].value, () => b))
+  def runRaw[B: Mains](b: => B): Result[Any] = {
+    runRaw[B](BasedMains(implicitly[Mains[B]].value, () => b))
   }
-  def runRaw0[B: BareMains](b: B): Either[Result.Error.Early, (MainData[B], Result[Any])] = {
-    runRaw0[B](Mains(implicitly[BareMains[B]].value, () => b))
+  def runRaw0[B: Mains](b: => B): Either[Result.Error.Early, (MainData[B], Result[Any])] = {
+    runRaw0[B](BasedMains(implicitly[Mains[B]].value, () => b))
   }
 }

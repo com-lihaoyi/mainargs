@@ -15,7 +15,7 @@ object MainUtils {
       grouping.grouped.map{case (k, b) => (k.name, b)}, grouping.remaining
     ) catch{case e: Throwable => Result.Error.Exception(e)}
   }
-  def runMains[T](mains: Mains[T],
+  def runMains[T](mains: BasedMains[T],
                   args: Seq[String],
                   allowPositional: Boolean): Either[Result.Error.Early, (MainData[T], Result[Computed[Any]])] = {
 

@@ -4,7 +4,7 @@ import mainargs.Result.Error.MismatchedArguments
 import utest._
 
 object PositionalDisabledTests extends TestSuite{
-  val check = new Checker[MultiTarget.type](allowPositional = false)
+  val check = new Checker(MultiTarget, allowPositional = false)
 
   val tests = Tests {
     test("invoke"){

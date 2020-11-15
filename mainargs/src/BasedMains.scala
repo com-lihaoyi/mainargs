@@ -2,15 +2,15 @@ package mainargs
 import acyclic.skipped
 import scala.language.experimental.macros
 
-case class BareMains[B](value: Seq[MainData[B]])
-object BareMains{
-  implicit def generate[B]: BareMains[B] = macro Macros.generateBareMains[B]
+case class Mains[B](value: Seq[MainData[B]])
+object Mains{
+  implicit def generate[B]: Mains[B] = macro Macros.generateBareMains[B]
 
 }
 
-case class Mains[B](value: Seq[MainData[B]], base: () => B)
-object Mains{
-  implicit def generate[B]: Mains[B] = macro Macros.generateMains[B]
+case class BasedMains[B](value: Seq[MainData[B]], base: () => B)
+object BasedMains{
+  implicit def generate[B]: BasedMains[B] = macro Macros.generateMains[B]
 }
 
 case class ClassMains[T](main: MainData[Any], companion: () => Any)

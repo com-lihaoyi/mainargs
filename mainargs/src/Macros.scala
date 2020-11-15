@@ -11,19 +11,19 @@ import scala.reflect.macros.blackbox.Context
  * the Scala compiler and greatly reduces the startup time of cached scripts.
  */
 class Macros(val c: Context) {
-  def generateBareMains[B: c.WeakTypeTag]: c.Expr[BareMains[B]] = {
+  def generateBareMains[B: c.WeakTypeTag]: c.Expr[Mains[B]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
-    c.Expr[BareMains[B]](
-      q"_root_.mainargs.BareMains(_root_.scala.Seq(..$allRoutes))"
+    c.Expr[Mains[B]](
+      q"_root_.mainargs.Mains(_root_.scala.Seq(..$allRoutes))"
     )
   }
-  def generateMains[B: c.WeakTypeTag]: c.Expr[Mains[B]] = {
+  def generateMains[B: c.WeakTypeTag]: c.Expr[BasedMains[B]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
     val obj = weakTypeOf[B].termSymbol
-    c.Expr[Mains[B]](
-      q"_root_.mainargs.Mains(_root_.scala.Seq(..$allRoutes), () => $obj)"
+    c.Expr[BasedMains[B]](
+      q"_root_.mainargs.BasedMains(_root_.scala.Seq(..$allRoutes), () => $obj)"
     )
   }
   def genereateClassMains[T: c.WeakTypeTag]: c.Expr[ClassMains[T]] = {
