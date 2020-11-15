@@ -2,13 +2,13 @@ package mainargs
 
 import scala.annotation.tailrec
 
-case class Grouping[B](remaining: List[String],
-                       grouped: Map[ArgSig[B], String])
+case class TokenGrouping[B](remaining: List[String],
+                            grouped: Map[ArgSig[B], String])
 
-object Grouping{
+object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
                    argSigs: Seq[ArgSig[B]],
-                   allowPositional: Boolean): Result[Grouping[B]] = {
+                   allowPositional: Boolean): Result[TokenGrouping[B]] = {
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
@@ -17,7 +17,7 @@ object Grouping{
       .toMap
 
     @tailrec def rec(remaining: List[String],
-                     current: Map[ArgSig[B], Vector[String]]): Result[Grouping[B]] = {
+                     current: Map[ArgSig[B], Vector[String]]): Result[TokenGrouping[B]] = {
       remaining match{
         case head :: rest  =>
           if (head.startsWith("-")){
@@ -45,7 +45,7 @@ object Grouping{
       }
     }
     def complete(remaining: List[String],
-                 current: Map[ArgSig[B], Vector[String]]): Result[Grouping[B]] = {
+                 current: Map[ArgSig[B], Vector[String]]): Result[TokenGrouping[B]] = {
 
       val duplicates = current.filter(_._2.size > 1).toSeq
       val missing = argSigs.filter(x =>
@@ -59,7 +59,7 @@ object Grouping{
           duplicate = duplicates,
           incomplete = None
         )
-      } else Result.Success(Grouping(remaining, current.map{case (k, Seq(v)) => (k, v)}))
+      } else Result.Success(TokenGrouping(remaining, current.map{case (k, Seq(v)) => (k, v)}))
 
     }
     rec(flatArgs, Map())

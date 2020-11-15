@@ -3,13 +3,13 @@ object MainUtils {
   def construct[T](cep: ClassMains[T],
                    args: Seq[String],
                    allowPositional: Boolean) = {
-    Grouping.groupArgs(args, cep.main.argSigs, allowPositional)
+    TokenGrouping.groupArgs(args, cep.main.argSigs, allowPositional)
       .flatMap(invoke(cep.companion(), cep.main, _))
       .map(_.value.asInstanceOf[T])
   }
   def invoke[B](target: B,
                 main: MainData[B],
-                grouping: Grouping[B]): Result[Computed[Any]] = {
+                grouping: TokenGrouping[B]): Result[Computed[Any]] = {
     try main.invoke0(
       target,
       grouping.grouped.map{case (k, b) => (k.name, b)}, grouping.remaining
@@ -24,7 +24,7 @@ object MainUtils {
       case Seq(main) =>
         Right(
           main,
-          Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
+          TokenGrouping.groupArgs(args.toList, main.argSigs, allowPositional)
             .flatMap(MainUtils.invoke(mains.base(), main, _))
         )
 
@@ -40,7 +40,7 @@ object MainUtils {
                 case Some(main) =>
                   Right(
                     main,
-                    Grouping
+                    TokenGrouping
                       .groupArgs(tail, main.argSigs, allowPositional)
                       .flatMap(MainUtils.invoke(mains.base(), main, _))
                   )
