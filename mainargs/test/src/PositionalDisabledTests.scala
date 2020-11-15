@@ -9,7 +9,7 @@ object PositionalDisabledTests extends TestSuite{
   val tests = Tests {
     test("router"){
 
-      val routes = generateRoutes[MultiTarget.type]
+      val routes = generateEntryPoints[MultiTarget.type]
 
       test("invoke"){
         test - check(

@@ -11,11 +11,11 @@ object Main {
         Right(
           main,
           Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
-            .flatMap(main.invoke(mains.target(), _))
+            .flatMap(main.invoke(mains.base(), _))
         )
 
       case multiple =>
-        lazy val suffix = Renderer.formatMainMethods(mains.target(), multiple, totalWidth)
+        lazy val suffix = Renderer.formatMainMethods(mains.base(), multiple, totalWidth)
         args.toList match{
           case List() => Left(Result.Error.Early.SubcommandNotSpecified(multiple.map(_.name)))
           case head :: tail =>
@@ -29,7 +29,7 @@ object Main {
                     main,
                     Grouping
                       .groupArgs(tail, main.argSigs, allowPositional)
-                      .flatMap(main.invoke(mains.target(), _))
+                      .flatMap(main.invoke(mains.base(), _))
                   )
 
               }

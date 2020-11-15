@@ -7,7 +7,7 @@ object PositionalEnabledTests extends TestSuite{
 
   val tests = Tests {
     test("router"){
-      val routes = generateRoutes[MultiTarget.type]
+      val routes = generateEntryPoints[MultiTarget.type]
 
       test("invoke"){
         test - check(MultiTarget, routes, List("bar", "2"), Result.Success(2))

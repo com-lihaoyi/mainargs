@@ -55,13 +55,13 @@ object AmmoniteTests extends TestSuite{
   val tests = Tests {
     test("router"){
 
-      val routes = generateClassRoute[Config, Config.type]
+      val routes = genereateClassEntryPoints[Config].main
 
       test("formatMainMethods"){
         Renderer.formatMainMethodSignature(Config, routes, 0, 95)
       }
       test("parseInvoke"){
-        Parser(Array("--code", "println(1)")).constructEither[Config](generateClassRoute[Config]) ==>
+        Parser(Array("--code", "println(1)")).constructEither[Config] ==>
           Right(Config(code = Some("println(1)")))
       }
     }

@@ -49,7 +49,7 @@ case class Parser(args: Seq[String],
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         Renderer.renderResult(
-          implicitly[EntryPoints[B]].target, main, res, totalWidth
+          implicitly[EntryPoints[B]].base, main, res, totalWidth
         )
     }
   }
@@ -65,5 +65,21 @@ case class Parser(args: Seq[String],
       val (errMsg, res) = tuple
       (errMsg, res.map(_.value))
     }
+  }
+
+  def runOrExit[B: BareEntryPoints](b: B): Any = {
+    runOrExit[B](EntryPoints(implicitly[BareEntryPoints[B]].value, () => b))
+  }
+  def runOrThrow[B: BareEntryPoints](b: B): Any = {
+    runOrThrow[B](EntryPoints(implicitly[BareEntryPoints[B]].value, () => b))
+  }
+  def runEither[B: BareEntryPoints](b: B): Either[String, Any] = {
+    runEither[B](EntryPoints(implicitly[BareEntryPoints[B]].value, () => b))
+  }
+  def runRaw[B: BareEntryPoints](b: B): Result[Any] = {
+    runRaw[B](EntryPoints(implicitly[BareEntryPoints[B]].value, () => b))
+  }
+  def runRaw0[B: BareEntryPoints](b: B): Either[Result.Error.Early, (EntryPoint[B], Result[Any])] = {
+    runRaw0[B](EntryPoints(implicitly[BareEntryPoints[B]].value, () => b))
   }
 }

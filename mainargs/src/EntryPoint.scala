@@ -2,7 +2,8 @@ package mainargs
 
 import scala.annotation.tailrec
 
-case class EntryPoints[B](value: Seq[EntryPoint[B]], target: () => B)
+case class BareEntryPoints[B](value: Seq[EntryPoint[B]])
+case class EntryPoints[B](value: Seq[EntryPoint[B]], base: () => B)
 
 case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
 
