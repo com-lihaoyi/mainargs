@@ -5,7 +5,6 @@ object Renderer {
   def getLeftColWidth[T](items: Seq[ArgSig[T]]) = {
     items.map(x =>
       x.name.length + 2 + // name and --
-      (if (x.default.nonEmpty) 2 else 0) + // [ ] wrapper
       x.shortName.fold(0)(_ => 3) // -c and the separating whitespace
     ) match{
       case Nil => 0
@@ -14,8 +13,8 @@ object Renderer {
   }
   def renderArgShort[T](arg: ArgSig[T]) = {
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
-    if (arg.varargs) s"[${arg.name} ...]"
-    else if (arg.default.nonEmpty) s"[$shortPrefix--${arg.name}]"
+    if (arg.varargs) s"${arg.name} ..."
+    else if (arg.default.nonEmpty) s"$shortPrefix--${arg.name}"
     else s"$shortPrefix--${arg.name}"
   }
   def renderArg[T](base: T,
