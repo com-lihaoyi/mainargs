@@ -12,7 +12,6 @@ object ParserTests extends TestSuite{
       test {
         Parser(Array("foo")).runEither(MultiTarget) ==> Right(1)
       }
-
       test {
         Parser(Array("f")).runEither[MultiTarget.type].left.exists(
           _.contains("Unable to find subcommand: f")
@@ -37,7 +36,6 @@ object ParserTests extends TestSuite{
         Parser(Array("--code", "println(1)")).constructEither[ClassTarget] ==>
           Right(ClassTarget(code = Some("println(1)")))
       }
-
     }
   }
 }
