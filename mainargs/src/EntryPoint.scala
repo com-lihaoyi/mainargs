@@ -2,7 +2,7 @@ package mainargs
 
 import scala.annotation.tailrec
 
-case class EntryPoints[T](value: Seq[EntryPoint[T]], target: () => T)
+case class EntryPoints[B](value: Seq[EntryPoint[B]], target: () => B)
 
 case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
 
@@ -15,12 +15,12 @@ case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
  * instead, which provides a nicer API to call it that mimmicks the API of
  * calling a Scala method.
  */
-case class EntryPoint[T](name: String,
-                         argSigs: Seq[ArgSig[T]],
+case class EntryPoint[B](name: String,
+                         argSigs: Seq[ArgSig[B]],
                          doc: Option[String],
                          varargs: Boolean,
-                         invoke0: (T, Map[String, String], Seq[String]) => Result[Computed[Any]]){
-  def invoke(target: T, grouped: Grouping[T]): Result[Computed[Any]] = {
+                         invoke0: (B, Map[String, String], Seq[String]) => Result[Computed[Any]]){
+  def invoke(target: B, grouped: Grouping[B]): Result[Computed[Any]] = {
     try invoke0(
       target,
       grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining
@@ -28,13 +28,12 @@ case class EntryPoint[T](name: String,
   }
 }
 
-
-case class Grouping[T](remaining: List[String],
-                       grouped: Map[ArgSig[T], String])
+case class Grouping[B](remaining: List[String],
+                       grouped: Map[ArgSig[B], String])
 object Grouping{
-  def groupArgs[T](flatArgs0: Seq[String],
-                   argSigs: Seq[ArgSig[T]],
-                   allowPositional: Boolean): Result[Grouping[T]] = {
+  def groupArgs[B](flatArgs0: Seq[String],
+                   argSigs: Seq[ArgSig[B]],
+                   allowPositional: Boolean): Result[Grouping[B]] = {
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
@@ -42,21 +41,17 @@ object Grouping{
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
       .toMap
 
-    def appendMap[K, V](current: Map[K, Vector[V]], k: K, v: V): Map[K, Vector[V]] = {
-      if(current.contains(k)) current + (k -> (current(k) :+ v))
-      else current + (k -> Vector(v))
-    }
     @tailrec def rec(remaining: List[String],
-                     current: Map[ArgSig[T], Vector[String]]): Result[Grouping[T]] = {
+                     current: Map[ArgSig[B], Vector[String]]): Result[Grouping[B]] = {
       remaining match{
         case head :: rest  =>
           if (head.startsWith("-")){
             keywordArgMap.get(if(head.startsWith("--")) head.drop(2) else head.drop(1)) match {
               case Some(cliArg) =>
                 if (cliArg.flag) {
-                  rec(rest, appendMap(current, cliArg, ""))
+                  rec(rest, Util.appendMap(current, cliArg, ""))
                 } else rest match{
-                  case next :: rest2 => rec(rest2, appendMap(current, cliArg, next))
+                  case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
                   case Nil => Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
                 }
 
@@ -65,7 +60,7 @@ object Grouping{
           }else if (allowPositional){
 
             keywordArgMap.values.find(as => !current.exists(_._1 == as)) match{
-              case Some(nextInLine) => rec(rest, appendMap(current, nextInLine, head))
+              case Some(nextInLine) => rec(rest, Util.appendMap(current, nextInLine, head))
               case None => complete(remaining, current)
             }
           } else complete(remaining, current)
@@ -75,7 +70,7 @@ object Grouping{
       }
     }
     def complete(remaining: List[String],
-                 current: Map[ArgSig[T], Vector[String]]): Result[Grouping[T]] = {
+                 current: Map[ArgSig[B], Vector[String]]): Result[Grouping[B]] = {
 
       val duplicates = current.filter(_._2.size > 1).toSeq
       val missing = argSigs.filter(x =>

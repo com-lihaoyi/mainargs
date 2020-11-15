@@ -2,7 +2,7 @@ package mainargs
 object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort[T](arg: ArgSig[T], base: Option[T]) = {
+  def renderArgShort[B](arg: ArgSig[B], base: Option[B]) = {
     val defaultSuffix = (base, arg.default) match{
       case (Some(b), Some(f)) => " (default " + Util.literalize(f(b).toString) + ") "
       case _ => ""
@@ -13,8 +13,8 @@ object Renderer {
     else s"$shortPrefix--${arg.name}$typeSuffix$defaultSuffix"
   }
 
-  def renderArg[T](base: T,
-                   arg: ArgSig[T],
+  def renderArg[B](base: B,
+                   arg: ArgSig[B],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val docSuffix = arg.doc.getOrElse("")
@@ -26,7 +26,7 @@ object Renderer {
     (renderArgShort(arg, Some(base)), wrapped)
   }
 
-  def formatMainMethods[T](base: T, mainMethods: Seq[EntryPoint[T]], totalWidth: Int) = {
+  def formatMainMethods[B](base: B, mainMethods: Seq[EntryPoint[B]], totalWidth: Int) = {
     if (mainMethods.isEmpty) ""
     else{
 
@@ -44,8 +44,8 @@ object Renderer {
     }
   }
 
-  def formatMainMethodSignature[T](base: T,
-                                   main: EntryPoint[T],
+  def formatMainMethodSignature[B](base: B,
+                                   main: EntryPoint[B],
                                    leftIndent: Int,
                                    totalWidth: Int) = {
     // +2 for space on right of left col
@@ -99,10 +99,10 @@ object Renderer {
         "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
-  def renderResult[T, V](base: () => T,
-                         main: EntryPoint[T],
-                         result: Result[V],
-                         totalWidth: Int): Either[String, V] = {
+  def renderResult[B, T](base: () => B,
+                         main: EntryPoint[B],
+                         result: Result[T],
+                         totalWidth: Int): Either[String, T] = {
 
     def expectedMsg() = {
       Renderer.formatMainMethodSignature(base(), main, 0, totalWidth)

@@ -11,11 +11,11 @@ import scala.reflect.macros.blackbox.Context
  * the Scala compiler and greatly reduces the startup time of cached scripts.
  */
 class Macros(val c: Context) {
-  def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[EntryPoints[T]] = {
+  def generateRoutesImpl[B: c.WeakTypeTag]: c.Expr[EntryPoints[B]] = {
     import c.universe._
-    val allRoutes = getAllRoutesForClass(weakTypeOf[T])
-    val obj = weakTypeOf[T].termSymbol
-    c.Expr[EntryPoints[T]](
+    val allRoutes = getAllRoutesForClass(weakTypeOf[B])
+    val obj = weakTypeOf[B].termSymbol
+    c.Expr[EntryPoints[B]](
       q"_root_.mainargs.EntryPoints(_root_.scala.Seq(..$allRoutes), () => $obj)"
     )
   }
@@ -37,7 +37,7 @@ class Macros(val c: Context) {
       q"_root_.mainargs.ClassEntryPoint[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.EntryPoint[Any]], () => $companionObj)"
     )
   }
-  def generateClassRouteImpl[T: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[EntryPoint[C]] = {
+  def generateClassRouteImpl[T: c.WeakTypeTag, B: c.WeakTypeTag]: c.Expr[EntryPoint[B]] = {
     import c.universe._
 
     val cls = weakTypeOf[T].typeSymbol.asClass
@@ -51,7 +51,7 @@ class Macros(val c: Context) {
       companionObj.typeSignature
     )
 
-    c.Expr[EntryPoint[C]](route)
+    c.Expr[EntryPoint[B]](route)
   }
   import c.universe._
   def getValsOrMeths(curCls: Type): Iterable[MethodSymbol] = {

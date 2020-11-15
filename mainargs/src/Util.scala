@@ -42,6 +42,10 @@ object Util{
   }
 
 
+  def appendMap[K, V](current: Map[K, Vector[V]], k: K, v: V): Map[K, Vector[V]] = {
+    if(current.contains(k)) current + (k -> (current(k) :+ v))
+    else current + (k -> Vector(v))
+  }
 
   type FailMaybe = Either[Seq[Result.ParamError], Computed[Any]]
   type FailAll = Either[Seq[Result.ParamError], Seq[Computed[Any]]]

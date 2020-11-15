@@ -7,11 +7,11 @@ import scala.annotation.tailrec
  * (just for logging and reading, not a replacement for a `TypeTag`) and
  * possible a function that can compute its default value
  */
-case class ArgSig[T](name: String,
+case class ArgSig[B](name: String,
                      shortName: Option[Char],
                      typeString: String,
                      doc: Option[String],
-                     default: Option[T => Any],
+                     default: Option[B => Any],
                      varargs: Boolean,
                      flag: Boolean)
 

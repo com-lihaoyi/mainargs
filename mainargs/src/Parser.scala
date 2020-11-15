@@ -34,33 +34,33 @@ case class Parser(args: Seq[String],
       .map(_.value.asInstanceOf[T])
   }
 
-  def runOrExit[T: EntryPoints]: Any = runEither[T] match{
+  def runOrExit[B: EntryPoints]: Any = runEither[B] match{
     case Left(msg) =>
       stderr.println(msg)
       sys.exit(1)
     case Right(v) => v
   }
-  def runOrThrow[T: EntryPoints]: Any = runEither[T] match{
+  def runOrThrow[B: EntryPoints]: Any = runEither[B] match{
     case Left(msg) => throw new Exception(msg)
     case Right(v) => v
   }
-  def runEither[T: EntryPoints]: Either[String, Any] = {
-    runRaw0[T] match {
+  def runEither[B: EntryPoints]: Either[String, Any] = {
+    runRaw0[B] match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         Renderer.renderResult(
-          implicitly[EntryPoints[T]].target, main, res, totalWidth
+          implicitly[EntryPoints[B]].target, main, res, totalWidth
         )
     }
   }
-  def runRaw[T: EntryPoints]: Result[Any] = runRaw0[T] match{
+  def runRaw[B: EntryPoints]: Result[Any] = runRaw0[B] match{
     case Left(err) => err
     case Right((main, res)) => res
   }
 
-  def runRaw0[T: EntryPoints]: Either[Result.Error.Early, (EntryPoint[T], Result[Any])] = {
+  def runRaw0[B: EntryPoints]: Either[Result.Error.Early, (EntryPoint[B], Result[Any])] = {
     for {
-      tuple <- Main.runMains(implicitly[EntryPoints[T]], args, allowPositional, totalWidth)
+      tuple <- Main.runMains(implicitly[EntryPoints[B]], args, allowPositional, totalWidth)
     } yield {
       val (errMsg, res) = tuple
       (errMsg, res.map(_.value))
