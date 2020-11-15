@@ -31,7 +31,8 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
       test("basicModelling") {
         val names = routes0.map(_.name)
         assert(
-          names == List("foo", "bar", "qux", "ex", "pureVariadic", "mixedVariadic", "flaggy")
+          names ==
+          List("foo", "bar", "qux", "ex", "pureVariadic", "mixedVariadic", "flaggy")
         )
         val evaledArgs = routes0.map(_.argSigs.map{
           case ArgSig(name, s, tpe, docs, None, _, _) => (name, tpe, docs, None)
@@ -60,21 +61,35 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
       }
 
       test("invoke"){
-        test - check(MultiTarget, routes("foo"), List(), Result.Success(1))
-        test - check(MultiTarget, routes("bar"), List("--i", "2"), Result.Success(2))
-        test - check(MultiTarget, routes("qux"), List("--i", "2"), Result.Success("lolslols"))
-        test - check(MultiTarget, routes("qux"), List("--i", "3", "--s", "x"), Result.Success("xxx"))
+        test - check(
+          MultiTarget, routes("foo"), List(), Result.Success(1)
+        )
+        test - check(
+          MultiTarget, routes("bar"), List("--i", "2"), Result.Success(2)
+        )
+        test - check(
+          MultiTarget, routes("qux"), List("--i", "2"), Result.Success("lolslols")
+        )
+        test - check(
+          MultiTarget, routes("qux"), List("--i", "3", "--s", "x"), Result.Success("xxx")
+        )
       }
       test("varargs"){
         test("happyPathPasses"){
-          test - check(MultiTarget, routes("pureVariadic"), List("1", "2", "3"), Result.Success(6))
+          test - check(
+            MultiTarget, routes("pureVariadic"), List("1", "2", "3"), Result.Success(6)
+          )
         }
         test("emptyVarargsPasses"){
           test - check(MultiTarget, routes("pureVariadic"), List(), Result.Success(0))
-          test - check(MultiTarget, routes("mixedVariadic"), List("-f", "1"), Result.Success("1"))
+          test - check(
+            MultiTarget, routes("mixedVariadic"), List("-f", "1"), Result.Success("1")
+          )
         }
         test("varargsAreAlwaysPositional"){
-          val invoked = parseInvoke(MultiTarget, routes("pureVariadic"), List("--nums", "31337"))
+          val invoked = parseInvoke(
+            MultiTarget, routes("pureVariadic"), List("--nums", "31337")
+          )
           test - assertMatch(invoked){
             case Result.Error.InvalidArguments(List(
               Result.ParamError.Failed(
@@ -85,7 +100,13 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
             ))=>
           }
 
-          test - assertMatch(parseInvoke(MultiTarget, routes("pureVariadic"), List("1", "2", "3", "--nums", "4"))){
+          test - assertMatch(
+            parseInvoke(
+              MultiTarget,
+              routes("pureVariadic"),
+              List("1", "2", "3", "--nums", "4")
+            )
+          ){
             case Result.Error.InvalidArguments(List(
             Result.ParamError.Failed(
             ArgSig("nums", _, "int", _, _, true, _),
@@ -98,37 +119,76 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
 
         test("notEnoughNormalArgsStillFails"){
           assertMatch(parseInvoke(MultiTarget, routes("mixedVariadic"), List())){
-            case Result.Error.MismatchedArguments(List(ArgSig("first", _, _, _, _, false, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(
+              List(ArgSig("first", _, _, _, _, false, _)),
+              Nil,
+              Nil,
+              None
+            ) =>
           }
         }
         test("multipleVarargParseFailures"){
-          test - assertMatch(parseInvoke(MultiTarget, routes("pureVariadic"), List("aa", "bb", "3"))){
-            case Result.Error.InvalidArguments(
-            List(
-            Result.ParamError.Failed(ArgSig("nums", _, "int", _, _, true, _), "aa", "java.lang.NumberFormatException: For input string: \"aa\""),
-            Result.ParamError.Failed(ArgSig("nums", _, "int", _, _, true, _), "bb", "java.lang.NumberFormatException: For input string: \"bb\"")
-            )
-            )=>
+          test - assertMatch(
+            parseInvoke(MultiTarget, routes("pureVariadic"), List("aa", "bb", "3"))
+          ){
+            case Result.Error.InvalidArguments(List(
+              Result.ParamError.Failed(
+                ArgSig("nums", _, "int", _, _, true, _),
+                "aa",
+                "java.lang.NumberFormatException: For input string: \"aa\""
+              ),
+              Result.ParamError.Failed(
+                ArgSig("nums", _, "int", _, _, true, _),
+                "bb",
+                "java.lang.NumberFormatException: For input string: \"bb\""
+              )
+            ))=>
           }
         }
       }
 
 
       test("flags"){
-        test - check(MultiTarget, routes("flaggy"), List("--b", "true"), Result.Success(true))
-        test - check(MultiTarget, routes("flaggy"), List("--b", "false"), Result.Success(false))
-        test - check(MultiTarget, routes("flaggy"), List("--a", "--b", "false"), Result.Success(true))
-        test - check(MultiTarget, routes("flaggy"), List("--c", "--b", "false"), Result.Success(true))
-        test - check(MultiTarget, routes("flaggy"), List("--a", "--c", "--b", "false"), Result.Success(true))
+        test - check(
+          MultiTarget, routes("flaggy"), List("--b", "true"), Result.Success(true)
+        )
+        test - check(
+          MultiTarget, routes("flaggy"), List("--b", "false"), Result.Success(false)
+        )
+
+        test - check(
+          MultiTarget, routes("flaggy"), List("--a", "--b", "false"), Result.Success(true)
+        )
+
+        test - check(
+          MultiTarget, routes("flaggy"), List("--c", "--b", "false"), Result.Success(true)
+        )
+
+        test - check(
+          MultiTarget,
+          routes("flaggy"),
+          List("--a", "--c", "--b", "false"), Result.Success(true)
+        )
+
       }
 
       test("failures"){
         test("missingParams"){
           test - assertMatch(parseInvoke(MultiTarget, routes("bar"), List.empty)){
-            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _, _, false, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(
+              List(ArgSig("i", _, _, _, _, false, _)),
+              Nil,
+              Nil,
+              None
+            ) =>
           }
           test - assertMatch(parseInvoke(MultiTarget, routes("qux"), List("--s", "omg"))){
-            case Result.Error.MismatchedArguments(List(ArgSig("i", _, _, _, _, false, _)), Nil, Nil, None) =>
+            case Result.Error.MismatchedArguments(
+            List(ArgSig("i", _, _, _, _, false, _)),
+              Nil,
+              Nil,
+              None
+            ) =>
           }
         }
 

@@ -25,14 +25,23 @@ object PositionalEnabledTests extends TestSuite{
         test - check(MultiTarget, routes("bar"), List("2"), Result.Success(2))
         test - check(MultiTarget, routes("qux"), List("2"), Result.Success("lolslols"))
         test - check(MultiTarget, routes("qux"), List("3", "x"), Result.Success("xxx"))
-        test - check(MultiTarget, routes("qux"), List("--i", "3", "x"), Result.Success("xxx"))
+        test - check(
+          MultiTarget, routes("qux"), List("--i", "3", "x"), Result.Success("xxx")
+        )
       }
       test("varargs"){
         test("happyPathPasses"){
-          test - check(MultiTarget, routes("mixedVariadic"), List("1", "2", "3", "4", "5"), Result.Success("12345"))
+          test - check(
+            MultiTarget,
+            routes("mixedVariadic"),
+            List("1", "2", "3", "4", "5"),
+            Result.Success("12345")
+          )
         }
         test("emptyVarargsPasses"){
-          test - check(MultiTarget, routes("mixedVariadic"), List("1"), Result.Success("1"))
+          test - check(
+            MultiTarget, routes("mixedVariadic"), List("1"), Result.Success("1")
+          )
         }
         test("varargsAreAlwaysPositional"){
 
@@ -44,7 +53,9 @@ object PositionalEnabledTests extends TestSuite{
         }
 
         test("multipleVarargParseFailures"){
-          test - assertMatch(parseInvoke(MultiTarget, routes("mixedVariadic"), List("aa", "bb", "3"))){
+          test - assertMatch(
+            parseInvoke(MultiTarget, routes("mixedVariadic"), List("aa", "bb", "3"))
+          ){
             case Result.Error.InvalidArguments(
             List(
               Result.ParamError.Failed(
@@ -59,7 +70,9 @@ object PositionalEnabledTests extends TestSuite{
       }
 
       test("failures"){
-        test("invalidParams") - assertMatch(parseInvoke(MultiTarget, routes("bar"), List("lol"))){
+        test("invalidParams") - assertMatch(
+          parseInvoke(MultiTarget, routes("bar"), List("lol"))
+        ){
           case Result.Error.InvalidArguments(
           List(Result.ParamError.Failed(ArgSig("i", _, _, _, _, _, _), "lol", _))
           ) =>
