@@ -98,7 +98,7 @@ object Renderer {
     }
     result match{
       case Result.Success(x) => Right(x)
-      case Result.Error.Exception(x) => Left(x.getStackTrace.mkString("\n"))
+      case Result.Error.Exception(x) => Left(x.toString + "\n" + x.getStackTrace.mkString("\n"))
       case Result.Error.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""

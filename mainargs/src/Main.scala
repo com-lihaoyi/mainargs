@@ -3,14 +3,17 @@ object Main {
   def runMains[T](mains: EntryPoints[T],
                   args: Array[String],
                   allowPositional: Boolean,
-                  totalWidth: Int): Either[String, Any] = {
+                  totalWidth: Int): Either[String, (EntryPoint[T], Result[Computed[Any]])] = {
 
     mains.value match{
       case Seq() => Left("No @main methods declared")
       case Seq(main) =>
-        val grouped = Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
-          .flatMap(main.invoke(mains.target(), _))
-        Renderer.renderResult(mains.target, main, grouped, totalWidth)
+        Right(
+          main,
+          Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
+            .flatMap(main.invoke(mains.target(), _))
+        )
+
       case multiple =>
         lazy val suffix = Renderer.formatMainMethods(mains.target(), multiple, totalWidth)
         args.toList match{
@@ -25,10 +28,13 @@ object Main {
               multiple.find(_.name == head) match{
                 case None => Left(s"Unable to find subcommand: " + head + suffix)
                 case Some(main) =>
-                  val grouped = Grouping
-                    .groupArgs(tail, main.argSigs, allowPositional)
-                    .flatMap(main.invoke(mains.target(), _))
-                  Renderer.renderResult(mains.target, main, grouped, totalWidth)
+                  Right(
+                    main,
+                    Grouping
+                      .groupArgs(tail, main.argSigs, allowPositional)
+                      .flatMap(main.invoke(mains.target(), _))
+                  )
+
               }
             }
         }

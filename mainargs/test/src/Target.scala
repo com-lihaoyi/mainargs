@@ -1,7 +1,7 @@
 package mainargs
 
 case object MyException extends Exception
-object Target{
+object MultiTarget{
   @main
   def foo() = 1
   @main
@@ -30,3 +30,12 @@ object Target{
              @arg(flag = true) c: Boolean = false) = a || b || c
 }
 
+object SingleTarget{
+  @main(doc = "Qux is a function that does stuff")
+  def run(i: Int,
+          @arg(doc = "Pass in a custom `s` to override it")
+          s: String  = "lols") = s * i
+}
+
+@main
+case class ClassTarget(code: Option[String] = None)

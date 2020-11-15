@@ -33,7 +33,7 @@ class Macros(val c: Context) {
     )
 
     c.Expr[ClassEntryPoint[T]](
-      q"_root_.mainargs.ClassEntryPoint(${route.asInstanceOf[c.Tree]}, () => $companionObj)"
+      q"_root_.mainargs.ClassEntryPoint[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.EntryPoint[Any]], () => $companionObj)"
     )
   }
   def generateClassRouteImpl[T: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[EntryPoint[C]] = {
@@ -50,7 +50,7 @@ class Macros(val c: Context) {
       companionObj.typeSignature
     )
 
-    c.Expr[EntryPoint[C]](route.asInstanceOf[c.Tree])
+    c.Expr[EntryPoint[C]](route)
   }
   import c.universe._
   def getValsOrMeths(curCls: Type): Iterable[MethodSymbol] = {
@@ -122,9 +122,6 @@ class Macros(val c: Context) {
         }
       val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
 
-
-
-
       val instantiateArg = argAnnotation match{
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
         case _ => q"new _root_.mainargs.arg()"
@@ -180,7 +177,7 @@ class Macros(val c: Context) {
     val res = q"""{
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
-    _root_.mainargs.EntryPoint(
+    _root_.mainargs.EntryPoint[$curCls](
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),

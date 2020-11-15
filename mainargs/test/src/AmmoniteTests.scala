@@ -73,9 +73,8 @@ object AmmoniteTests extends TestSuite{
         Renderer.formatMainMethodSignature(Config, routes, 0, 95)
       }
       test("parseInvoke"){
-        val parsed = parseInvoke(Config, routes, List("--code", "println(1)"))
-        val expected = Result.Success(Config(code = Some("println(1)")))
-        assert(parsed == expected)
+        Parser(Array("--code", "println(1)")).constructEither[Config](generateClassRoute[Config]) ==>
+          Right(Config(code = Some("println(1)")))
       }
     }
   }
