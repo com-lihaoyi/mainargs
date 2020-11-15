@@ -48,7 +48,7 @@ object PositionalEnabledTests extends TestSuite{
             case Result.Error.InvalidArguments(
             List(
               Result.ParamError.Failed(
-                ArgSig("first", _, "Int", _, _, fals, _),
+                ArgSig("first", _, "int", _, _, fals, _),
                 "aa",
                 "java.lang.NumberFormatException: For input string: \"aa\""
                 )
@@ -77,4 +77,3 @@ object PositionalEnabledTests extends TestSuite{
     }
   }
 }
-

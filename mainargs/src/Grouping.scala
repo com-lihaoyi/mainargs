@@ -6,10 +6,11 @@ import scala.annotation.tailrec
 case class Grouping[T](remaining: List[String],
                        grouped: Map[ArgSig[T], String])
 object Grouping{
-  def groupArgs[T](flatArgs: List[String],
+  def groupArgs[T](flatArgs0: Seq[String],
                    argSigs: Seq[ArgSig[T]],
                    allowPositional: Boolean): Result[Grouping[T]] = {
 
+    val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
       .filter(!_.varargs) // varargs can only be passed positionally
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}

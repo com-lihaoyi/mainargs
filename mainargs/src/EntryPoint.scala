@@ -1,6 +1,8 @@
 package mainargs
 
-case class EntryPoints[T](value: Seq[EntryPoint[T]])
+case class EntryPoints[T](value: Seq[EntryPoint[T]], target: () => T)
+
+case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
 
 /**
  * What is known about a single endpoint for our routes. It has a [[name]],
@@ -17,12 +19,10 @@ case class EntryPoint[T](name: String,
                          varargs: Boolean,
                          invoke0: (T, Map[String, String], Seq[String]) => Result[Computed[Any]]){
   def invoke(target: T, grouped: Grouping[T]): Result[Computed[Any]] = {
-    try {
-      invoke0(
-        target,
-        grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining
-      )
-    } catch{case e: Throwable => Result.Error.Exception(e)}
+    try invoke0(
+      target,
+      grouped.grouped.map{case (k, b) => (k.name, b)}, grouped.remaining
+    ) catch{case e: Throwable => Result.Error.Exception(e)}
   }
 }
 

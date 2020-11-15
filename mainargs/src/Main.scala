@@ -1,23 +1,18 @@
 package mainargs
 object Main {
-  def runMains[T](target: T,
-                  mains: EntryPoints[T],
+  def runMains[T](mains: EntryPoints[T],
                   args: Array[String],
-                  allowPositional: Boolean): Either[String, Any] = {
-
+                  allowPositional: Boolean,
+                  totalWidth: Int): Either[String, Any] = {
 
     mains.value match{
       case Seq() => Left("No @main methods declared")
       case Seq(main) =>
-        val res = Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
-          .flatMap(main.invoke(target, _))
-        Renderer.renderResult(
-          target,
-          main,
-          res
-        )
+        val grouped = Grouping.groupArgs(args.toList, main.argSigs, allowPositional)
+          .flatMap(main.invoke(mains.target(), _))
+        Renderer.renderResult(mains.target, main, grouped, totalWidth)
       case multiple =>
-        lazy val suffix = Renderer.formatMainMethods(target, multiple)
+        lazy val suffix = Renderer.formatMainMethods(mains.target(), multiple, totalWidth)
         args.toList match{
           case List() => Left("Need to specify a sub command: " + multiple.map(_.name).mkString(", "))
           case head :: tail =>
@@ -30,12 +25,10 @@ object Main {
               multiple.find(_.name == head) match{
                 case None => Left(s"Unable to find subcommand: " + head + suffix)
                 case Some(main) =>
-                  Renderer.renderResult(
-                    target,
-                    main,
-                    Grouping.groupArgs(tail, main.argSigs, allowPositional)
-                      .flatMap(main.invoke(target, _))
-                  )
+                  val grouped = Grouping
+                    .groupArgs(tail, main.argSigs, allowPositional)
+                    .flatMap(main.invoke(mains.target(), _))
+                  Renderer.renderResult(mains.target, main, grouped, totalWidth)
               }
             }
         }

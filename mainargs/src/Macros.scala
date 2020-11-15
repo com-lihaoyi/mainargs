@@ -1,6 +1,7 @@
 package mainargs
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox.Context
+
 /**
  * More or less a minimal version of Autowire's Server that lets you generate
  * a set of "routes" from the methods defined in an object, and call them
@@ -12,8 +13,28 @@ class Macros(val c: Context) {
   def generateRoutesImpl[T: c.WeakTypeTag]: c.Expr[EntryPoints[T]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[T])
+    val obj = weakTypeOf[T].termSymbol
+    c.Expr[EntryPoints[T]](
+      q"_root_.mainargs.EntryPoints(_root_.scala.Seq(..$allRoutes), () => $obj)"
+    )
+  }
+  def generateClassImplicitImpl[T: c.WeakTypeTag]: c.Expr[ClassEntryPoint[T]] = {
+    import c.universe._
 
-    c.Expr[EntryPoints[T]](q"_root_.mainargs.EntryPoints(_root_.scala.Seq(..$allRoutes))")
+    val cls = weakTypeOf[T].typeSymbol.asClass
+    val companionObj = weakTypeOf[T].typeSymbol.companion
+    val constructor = cls.primaryConstructor.asMethod
+    val route = extractMethod(
+      "apply",
+      constructor.paramLists.flatten,
+      constructor.pos,
+      cls.annotations.find(_.tpe =:= typeOf[main]).head,
+      companionObj.typeSignature
+    )
+
+    c.Expr[ClassEntryPoint[T]](
+      q"_root_.mainargs.ClassEntryPoint(${route.asInstanceOf[c.Tree]}, () => $companionObj)"
+    )
   }
   def generateClassRouteImpl[T: c.WeakTypeTag, C: c.WeakTypeTag]: c.Expr[EntryPoint[C]] = {
     import c.universe._
@@ -116,7 +137,7 @@ class Macros(val c: Context) {
           _root_.mainargs.ArgSig[$curCls](
             scala.Option($argVal.name).getOrElse(${arg.name.toString}),
             $argVal.short match{ case '\u0000' => None; case c => Some(c)},
-            ${varargUnwrappedType.toString + (if(vararg) "*" else "")},
+            _root_.mainargs.MacroHelpers.getShortName[$varargUnwrappedType],
             scala.Option($argVal.doc),
             $defaultOpt,
             $vararg,

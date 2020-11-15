@@ -2,45 +2,37 @@ package mainargs
 object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def getLeftColWidth[T](items: Seq[ArgSig[T]]) = {
-    items.map(x =>
-      x.name.length + 2 + // name and --
-      x.shortName.fold(0)(_ => 3) // -c and the separating whitespace
-    ) match{
-      case Nil => 0
-      case x => x.max
+  def renderArgShort[T](arg: ArgSig[T], base: Option[T]) = {
+    val defaultSuffix = (base, arg.default) match{
+      case (Some(b), Some(f)) => " (default " + Util.literalize(f(b).toString) + ") "
+      case _ => ""
     }
-  }
-  def renderArgShort[T](arg: ArgSig[T]) = {
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
+    val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
     if (arg.varargs) s"${arg.name} ..."
-    else if (arg.default.nonEmpty) s"$shortPrefix--${arg.name}"
-    else s"$shortPrefix--${arg.name}"
+    else s"$shortPrefix--${arg.name}$typeSuffix$defaultSuffix"
   }
+
   def renderArg[T](base: T,
                    arg: ArgSig[T],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
-    val suffix = arg.default match{
-      case Some(f) => "(default " + Util.literalize(f(base).toString) + ") "
-      case None => ""
-    }
     val docSuffix = arg.doc.getOrElse("")
     val wrapped = softWrap(
-      suffix + docSuffix,
+      docSuffix,
       leftOffset,
       wrappedWidth - leftOffset
     )
-    (renderArgShort(arg), wrapped)
+    (renderArgShort(arg, Some(base)), wrapped)
   }
-  def formatMainMethods[T](base: T, mainMethods: Seq[EntryPoint[T]]) = {
+
+  def formatMainMethods[T](base: T, mainMethods: Seq[EntryPoint[T]], totalWidth: Int) = {
     if (mainMethods.isEmpty) ""
     else{
-      val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSigs))
 
       val methods =
         for(main <- mainMethods)
-        yield formatMainMethodSignature(base, main, 2, leftColWidth)
+        yield formatMainMethodSignature(base, main, 2, totalWidth)
 
       normalizeNewlines(
         s"""
@@ -51,29 +43,28 @@ object Renderer {
       )
     }
   }
+
   def formatMainMethodSignature[T](base: T,
                                    main: EntryPoint[T],
                                    leftIndent: Int,
-                                   leftColWidth: Int) = {
+                                   totalWidth: Int) = {
     // +2 for space on right of left col
-    val args = main.argSigs.map(renderArg(base, _, leftColWidth + leftIndent + 2 + 2, 80))
+    val args = main.argSigs.map(renderArg(base, _, leftIndent + 8, totalWidth))
 
     val leftIndentStr = " " * leftIndent
-    val argStrings =
-      for((lhs, rhs) <- args)
-        yield {
-          val lhsPadded = lhs.padTo(leftColWidth, ' ')
-          val rhsPadded = Predef.augmentString(rhs).lines.mkString(newLine)
-          s"$leftIndentStr  $lhsPadded  $rhsPadded"
-        }
+    val argStrings = for((lhs, rhs) <- args) yield {
+      val rhsPadded = Predef.augmentString(rhs).lines.mkString(newLine)
+      s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
+    }
     val mainDocSuffix = main.doc match{
-      case Some(d) => newLine + softWrap(d, leftIndent, 80)
+      case Some(d) => newLine + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
 
     s"""$leftIndentStr${main.name}$mainDocSuffix
        |${argStrings.map(_ + newLine).mkString}""".stripMargin
   }
+
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
     val oneLine = Predef.augmentString(s).lines.mkString(" ").split(' ')
 
@@ -96,13 +87,15 @@ object Renderer {
     output.mkString
   }
 
-  def pluralize(s: String, n: Int) = {
-    if (n == 1) s else s + "s"
-  }
-  def renderResult[T](base: T, main: EntryPoint[T], result: Result[_]) = {
-    val leftColWidth = Renderer.getLeftColWidth(main.argSigs)
+  def pluralize(s: String, n: Int) = if (n == 1) s else s + "s"
+  def renderResult[T, V](base: () => T,
+                         main: EntryPoint[T],
+                         result: Result[V],
+                         totalWidth: Int): Either[String, V] = {
 
-    val expectedMsg = Renderer.formatMainMethodSignature(base: T, main, 0, leftColWidth)
+    def expectedMsg() = {
+      Renderer.formatMainMethodSignature(base(), main, 0, totalWidth)
+    }
     result match{
       case Result.Success(x) => Right(x)
       case Result.Error.Exception(x) => Left(x.getStackTrace.mkString("\n"))
@@ -133,7 +126,7 @@ object Renderer {
               for ((sig, options) <- duplicate)
                 yield {
                   s"Duplicate arguments for (--${sig.name}: ${sig.typeString}): " +
-                    options.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
+                  options.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
                 }
 
             lines.mkString
@@ -152,7 +145,7 @@ object Renderer {
             s"""$missingStr$unknownStr$duplicateStr$incompleteStr
                |Arguments provided did not match expected signature:
                |
-               |$expectedMsg
+               |${expectedMsg()}
                |""".stripMargin
           )
         )
@@ -162,10 +155,10 @@ object Renderer {
         val thingies = x.map{
           case Result.ParamError.Exception(p, v, ex) =>
             val literalV = Util.literalize(v)
-            val rendered = {Renderer.renderArgShort(p)}
+            val rendered = {Renderer.renderArgShort(p, None)}
             s"$rendered: ${p.typeString} = $literalV failed to parse with $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
-            s"${Renderer.renderArgShort(p)}'s default value failed to evaluate with $ex"
+            s"${Renderer.renderArgShort(p, None)}'s default value failed to evaluate with $ex"
         }
 
         Left(
@@ -176,11 +169,10 @@ object Renderer {
                |
                |expected signature:
                |
-               |$expectedMsg
+               |${expectedMsg()}
             """.stripMargin
           )
         )
     }
   }
-
 }

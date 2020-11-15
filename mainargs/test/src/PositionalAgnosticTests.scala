@@ -11,6 +11,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
       .flatMap(entryPoint.invoke(base, _))
       .map(_.value)
   }
+
   def check[B, T](base: B,
                   entryPoint: EntryPoint[B],
                   input: List[String],
@@ -25,7 +26,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
       val routes = routes0.map(x => (x.name, x)).toMap
 
       test("formatMainMethods"){
-        Renderer.formatMainMethods(Target, routes0)
+        Renderer.formatMainMethods(Target, routes0, 95)
       }
       test("basicModelling") {
         val names = routes0.map(_.name)
@@ -37,21 +38,22 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           case ArgSig(name, s, tpe, docs, Some(default), _, _) =>
             (name, tpe, docs, Some(default(Target)))
         })
+
         assert(
           evaledArgs == List(
             List(),
-            List(("i", "Int", None, None)),
+            List(("i", "int", None, None)),
             List(
-              ("i", "Int", None, None),
-              ("s", "String", Some("Pass in a custom `s` to override it"), Some("lols"))
+              ("i", "int", None, None),
+              ("s", "str", Some("Pass in a custom `s` to override it"), Some("lols"))
             ),
             List(),
-            List(("nums", "Int*", None, None)),
-            List(("first", "Int", None, None), ("args", "String*", None, None)),
+            List(("nums", "int", None, None)),
+            List(("first", "int", None, None), ("args", "str", None, None)),
             List(
-              ("a", "Boolean", None, Some(false)),
-              ("b", "Boolean", None, None),
-              ("c", "Boolean", None, Some(false))
+              ("a", "bool", None, Some(false)),
+              ("b", "bool", None, None),
+              ("c", "bool", None, Some(false))
             )
           )
         )
@@ -76,7 +78,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           test - assertMatch(invoked){
             case Result.Error.InvalidArguments(List(
               Result.ParamError.Failed(
-              ArgSig("nums", _, "Int*", _, _, true, _),
+              ArgSig("nums", _, "int", _, _, true, _),
               "--nums",
               """java.lang.NumberFormatException: For input string: "--nums""""
             )
@@ -86,7 +88,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           test - assertMatch(parseInvoke(Target, routes("pureVariadic"), List("1", "2", "3", "--nums", "4"))){
             case Result.Error.InvalidArguments(List(
             Result.ParamError.Failed(
-            ArgSig("nums", _, "Int*", _, _, true, _),
+            ArgSig("nums", _, "int", _, _, true, _),
             "--nums",
             "java.lang.NumberFormatException: For input string: \"--nums\""
             )
@@ -103,8 +105,8 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           test - assertMatch(parseInvoke(Target, routes("pureVariadic"), List("aa", "bb", "3"))){
             case Result.Error.InvalidArguments(
             List(
-            Result.ParamError.Failed(ArgSig("nums", _, "Int*", _, _, true, _), "aa", "java.lang.NumberFormatException: For input string: \"aa\""),
-            Result.ParamError.Failed(ArgSig("nums", _, "Int*", _, _, true, _), "bb", "java.lang.NumberFormatException: For input string: \"bb\"")
+            Result.ParamError.Failed(ArgSig("nums", _, "int", _, _, true, _), "aa", "java.lang.NumberFormatException: For input string: \"aa\""),
+            Result.ParamError.Failed(ArgSig("nums", _, "int", _, _, true, _), "bb", "java.lang.NumberFormatException: For input string: \"bb\"")
             )
             )=>
           }

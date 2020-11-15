@@ -70,8 +70,7 @@ object AmmoniteTests extends TestSuite{
       val routes = generateClassRoute[Config, Config.type]
 
       test("formatMainMethods"){
-        val leftColWidth = Renderer.getLeftColWidth(routes.argSigs)
-        Renderer.formatMainMethodSignature(Config, routes, 0, leftColWidth)
+        Renderer.formatMainMethodSignature(Config, routes, 0, 95)
       }
       test("parseInvoke"){
         val parsed = parseInvoke(Config, routes, List("--code", "println(1)"))

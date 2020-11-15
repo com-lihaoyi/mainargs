@@ -38,10 +38,8 @@ object MacroHelpers{
           case Right(Left(errMsg)) => Left(Seq(Result.ParamError.Failed(arg, token, errMsg)))
           case Right(Right(v)) => Right(v)
         }
-
     }
   }
-
 
   def validate(args: Seq[Util.FailMaybe]): Result[Seq[Computed[Any]]] = {
     val lefts = args.collect{case Left(x) => x}.flatten
@@ -49,17 +47,18 @@ object MacroHelpers{
     else Result.Success(args.collect{case Right(x) => x})
   }
 
-  def makeReadCall[T: Read](dict: Map[String, String],
-                            default: => Option[T],
-                            arg: ArgSig[_]): Util.FailMaybe = {
+  def getShortName[T: ArgParser] = implicitly[ArgParser[T]].shortName
+  def makeReadCall[T: ArgParser](dict: Map[String, String],
+                                 default: => Option[T],
+                                 arg: ArgSig[_]): Util.FailMaybe = {
     readSingleArg[T](
       dict, default.map(Computed(_)), arg,
-      implicitly[Read[T]].read(None, _).map(Computed(_))
+      implicitly[ArgParser[T]].read(None, _).map(Computed(_))
     )
   }
-  def makeReadVarargsCall[T: Read](arg: ArgSig[_],
-                                   values: Seq[String]): Util.FailMaybe = {
-    readVarargs[T](arg, values, implicitly[Read[T]].read(None, _)).map(Computed(_))
+  def makeReadVarargsCall[T: ArgParser](arg: ArgSig[_],
+                                        values: Seq[String]): Util.FailMaybe = {
+    readVarargs[T](arg, values, implicitly[ArgParser[T]].read(None, _)).map(Computed(_))
   }
 }
 
