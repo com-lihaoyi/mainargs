@@ -26,19 +26,14 @@ object MacroHelpers{
                        thunk: String => Either[String, Computed[T]]): Util.FailMaybe = {
     dict.get(arg.name) match{
       case None =>
-        Util.tryEither(
-          Right(default.get),
-          Result.ParamError.DefaultFailed(arg, _)
-        ) match{
+        Util.tryEither(Right(default.get), Result.ParamError.DefaultFailed(arg, _)) match{
           case Left(ex) => Left(Seq(ex))
           case Right(Right(v)) => Right(v)
         }
 
       case Some(token) =>
-        Util.tryEither(
-          thunk(token),
-          Result.ParamError.Exception(arg, token, _)
-        ) match{
+        if (arg.flag) Right(Computed(true))
+        else Util.tryEither(thunk(token), Result.ParamError.Exception(arg, token, _)) match{
           case Left(ex) => Left(Seq(ex))
           case Right(Left(errMsg)) => Left(Seq(Result.ParamError.Failed(arg, token, errMsg)))
           case Right(Right(v)) => Right(v)

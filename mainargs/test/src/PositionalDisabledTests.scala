@@ -20,59 +20,60 @@ object PositionalDisabledTests extends TestSuite{
   val tests = Tests {
     test("router"){
 
-      val routes = generateRoutes[Target.type].value
+      val routes0 = generateRoutes[Target.type].value
+      val routes = routes0.map(x => (x.name, x)).toMap
 
       test("invoke"){
         test - check(
-          Target, routes(1), List("2"),
+          Target, routes("bar"), List("2"),
           MismatchedArguments(
             missing = List(ArgSig("i",None,"Int",None,None,false,false)),
             unknown = List("2")
           )
         )
         test - check(
-          Target, routes(2), List("2"),
+          Target, routes("qux"), List("2"),
           MismatchedArguments(
             missing = List(ArgSig("i",None,"Int",None,None,false,false)),
             unknown = List("2")
           )
         )
         test - check(
-          Target, routes(2), List("3", "x"),
+          Target, routes("qux"), List("3", "x"),
           MismatchedArguments(
             missing = List(ArgSig("i",None,"Int",None,None,false,false)),
             unknown = List("3", "x")
           )
         )
         test - check(
-          Target, routes(2), List("--i", "3", "x"),
+          Target, routes("qux"), List("--i", "3", "x"),
           MismatchedArguments(List(),List("x"),List(),None)
         )
       }
       test("varargs"){
         test("happyPathPasses"){
           test - check(
-            Target, routes(5), List("1", "2", "3", "4", "5"),
+            Target, routes("mixedVariadic"), List("1", "2", "3", "4", "5"),
             MismatchedArguments(
               missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
             )
           )
         }
         test("emptyVarargsPasses")- check(
-          Target, routes(5), List("1"),
+          Target, routes("mixedVariadic"), List("1"),
           MismatchedArguments(
             missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
           )
         )
         test("varargsAreAlwaysPositional")- check(
-          Target, routes(5), List("1", "--args", "foo"),
+          Target, routes("mixedVariadic"), List("1", "--args", "foo"),
           MismatchedArguments(
             missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
           )
         )
 
         test("multipleVarargParseFailures") - check(
-          Target, routes(5), List("aa", "bb", "3"),
+          Target, routes("mixedVariadic"), List("aa", "bb", "3"),
           MismatchedArguments(
             missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
           )
@@ -81,7 +82,7 @@ object PositionalDisabledTests extends TestSuite{
 
       test("failures"){
         test("invalidParams") - check(
-          Target, routes(1), List("lol"),
+          Target, routes("bar"), List("lol"),
           MismatchedArguments(
             missing = List(ArgSig("i",None,"Int",None,None,false,false)),
             unknown = List("lol"),
@@ -91,7 +92,7 @@ object PositionalDisabledTests extends TestSuite{
 
       test("redundantParams")- check(
         Target,
-        routes(2),
+        routes("qux"),
         List("1", "--i", "2"),
         MismatchedArguments(
           missing = List(ArgSig("i", None,"Int",None,None,false,false)),

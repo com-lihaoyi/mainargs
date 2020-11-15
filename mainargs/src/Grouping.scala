@@ -52,7 +52,7 @@ object Grouping{
 
       val duplicates = current.filter(_._2.size > 1).toSeq
       val missing = argSigs.filter(x =>
-        x.default.isEmpty && !current.contains(x) && !x.varargs
+        x.default.isEmpty && !current.contains(x) && !x.varargs && !x.flag
       )
       val unknown = if (argSigs.exists(_.varargs)) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty){

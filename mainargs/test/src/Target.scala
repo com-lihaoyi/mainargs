@@ -23,4 +23,10 @@ object Target{
 
   @main
   def mixedVariadic(@arg(short = 'f') first: Int, args: String*) = first + args.mkString
+
+  @main
+  def flaggy(@arg(flag = true) a: Boolean = false,
+             b: Boolean,
+             @arg(flag = true) c: Boolean = false) = a || b || c
 }
+
