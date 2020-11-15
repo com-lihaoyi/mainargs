@@ -3,7 +3,11 @@ object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
   def getLeftColWidth[T](items: Seq[ArgSig[T]]) = {
-    items.map(_.name.length + 2) match{
+    items.map(x =>
+      x.name.length + 2 + // name and --
+      (if (x.default.nonEmpty) 2 else 0) + // [ ] wrapper
+      x.shortName.fold(0)(_ => 3) // -c and the separating whitespace
+    ) match{
       case Nil => 0
       case x => x.max
     }
