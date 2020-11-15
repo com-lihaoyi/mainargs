@@ -19,7 +19,6 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
 
   val tests = Tests {
     test("router"){
-
       val routes = generateRoutes[Target.type].value
 
       test("formatMainMethods"){
@@ -119,7 +118,6 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           Target, routes(0), List("1", "2"),
           Result.Error.MismatchedArguments(Nil, List("1", "2"), Nil, None)
         )
-
 
         test("failing") - check(
           Target,

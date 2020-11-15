@@ -15,7 +15,6 @@ object PositionalEnabledTests extends TestSuite{
     assert(result == expected)
   }
 
-
   val tests = Tests {
     test("router"){
 

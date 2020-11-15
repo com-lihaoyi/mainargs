@@ -181,7 +181,6 @@ class Macros(val c: Context) {
     )
     }"""
 
-//    println(showCode(res))
     res
   }
 

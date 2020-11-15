@@ -23,122 +23,80 @@ object PositionalDisabledTests extends TestSuite{
 
       test("invoke"){
         test - check(
-          Target,
-          routes(1)
-          , List("2"),
+          Target, routes(1), List("2"),
           MismatchedArguments(
-            List(ArgSig("i",None,"Int",None,None,false,false)),
-            List("2"),
-            List(),
-            None
+            missing = List(ArgSig("i",None,"Int",None,None,false,false)),
+            unknown = List("2")
           )
         )
         test - check(
-          Target,
-          routes(2),
-          List("2"),
+          Target, routes(2), List("2"),
           MismatchedArguments(
-            List(ArgSig("i",None,"Int",None,None,false,false)),
-            List("2"),
-            List(),
-            None
+            missing = List(ArgSig("i",None,"Int",None,None,false,false)),
+            unknown = List("2")
           )
         )
         test - check(
-          Target,
-          routes(2),
-          List("3", "x"),
+          Target, routes(2), List("3", "x"),
           MismatchedArguments(
-            List(ArgSig("i",None,"Int",None,None,false,false)),
-            List("3", "x"),
-            List(),
-            None
+            missing = List(ArgSig("i",None,"Int",None,None,false,false)),
+            unknown = List("3", "x")
           )
         )
         test - check(
-          Target,
-          routes(2),
-          List("--i", "3", "x"),
+          Target, routes(2), List("--i", "3", "x"),
           MismatchedArguments(List(),List("x"),List(),None)
         )
       }
       test("varargs"){
         test("happyPathPasses"){
           test - check(
-            Target,
-            routes(5),
-            List("1", "2", "3", "4", "5"),
+            Target, routes(5), List("1", "2", "3", "4", "5"),
             MismatchedArguments(
-              List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
-              List(),
-              List(),
-              None
+              missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
             )
           )
         }
-        test("emptyVarargsPasses"){
-          test - check(
-            Target,
-            routes(5),
-            List("1"),
-            MismatchedArguments(
-              List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
-              List(),
-              List(),
-              None
-            )
+        test("emptyVarargsPasses")- check(
+          Target, routes(5), List("1"),
+          MismatchedArguments(
+            missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
           )
-        }
-        test("varargsAreAlwaysPositional"){
-
-          test - check(
-            Target, routes(5), List("1", "--args", "foo"),
-            MismatchedArguments(
-              List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
-              List(),
-              List(),
-              None
-            )
+        )
+        test("varargsAreAlwaysPositional")- check(
+          Target, routes(5), List("1", "--args", "foo"),
+          MismatchedArguments(
+            missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false))
           )
+        )
 
-        }
-
-        test("multipleVarargParseFailures"){
-          test - assertMatch(parseInvoke(Target, routes(5), List("aa", "bb", "3"))){
-            case MismatchedArguments(
-              List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
-              List(),
-              List(),
-              None
-            ) =>
-          }
-        }
+        test("multipleVarargParseFailures") - check(
+          Target, routes(5), List("aa", "bb", "3"),
+          MismatchedArguments(
+            missing = List(ArgSig("first",Some('f'),"Int",None,None,false,false)),
+          )
+        )
       }
 
       test("failures"){
-        test("invalidParams") - assertMatch(parseInvoke(Target, routes(1), List("lol"))){
-          case MismatchedArguments(
-          List(ArgSig("i",None,"Int",None,None,false,false)),
-          List("lol"),
-          List(),
-          None
-          ) =>
-        }
-
-
-
-        test("redundantParams"){
-          val parsed = parseInvoke(Target, routes(2), List("1", "--i", "2"))
-          assertMatch(parsed){
-            case MismatchedArguments(
-              List(ArgSig("i", None,"Int",None,None,false,false)),
-              List("1", "--i", "2"),
-              List(),
-              None
-            ) =>
-          }
-        }
+        test("invalidParams") - check(
+          Target, routes(1), List("lol"),
+          MismatchedArguments(
+            missing = List(ArgSig("i",None,"Int",None,None,false,false)),
+            unknown = List("lol"),
+          )
+        )
       }
+
+      test("redundantParams")- check(
+        Target,
+        routes(2),
+        List("1", "--i", "2"),
+        MismatchedArguments(
+          missing = List(ArgSig("i", None,"Int",None,None,false,false)),
+          unknown = List("1", "--i", "2"),
+        )
+      )
     }
   }
 }

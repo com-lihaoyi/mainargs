@@ -38,10 +38,10 @@ object Result{
      * Invoking the [[EntryPoint]] failed because the arguments provided
      * did not line up with the arguments expected
      */
-    case class MismatchedArguments(missing: Seq[ArgSig[_]],
-                                   unknown: Seq[String],
-                                   duplicate: Seq[(ArgSig[_], Seq[String])],
-                                   incomplete: Option[ArgSig[_]]) extends Error
+    case class MismatchedArguments(missing: Seq[ArgSig[_]] = Nil,
+                                   unknown: Seq[String] = Nil,
+                                   duplicate: Seq[(ArgSig[_], Seq[String])] = Nil,
+                                   incomplete: Option[ArgSig[_]] = None) extends Error
     /**
      * Invoking the [[EntryPoint]] failed because there were problems
      * deserializing/parsing individual arguments

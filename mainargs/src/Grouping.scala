@@ -23,16 +23,14 @@ object Grouping{
                      current: Map[ArgSig[T], Vector[String]]): Result[Grouping[T]] = {
       remaining match{
         case head :: rest  =>
-          if (head(0) == '-'){
-            keywordArgMap.get(if(head(1) == '-') head.drop(2) else head.drop(1)) match {
+          if (head.startsWith("-")){
+            keywordArgMap.get(if(head.startsWith("--")) head.drop(2) else head.drop(1)) match {
               case Some(cliArg) =>
                 if (cliArg.flag) {
                   rec(rest, appendMap(current, cliArg, ""))
                 } else rest match{
-                  case next :: rest2 =>
-                    rec(rest2, appendMap(current, cliArg, next))
-                  case Nil =>
-                    Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+                  case next :: rest2 => rec(rest2, appendMap(current, cliArg, next))
+                  case Nil => Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
                 }
 
               case None => complete(remaining, current)
@@ -40,8 +38,7 @@ object Grouping{
           }else if (allowPositional){
 
             keywordArgMap.values.find(as => !current.exists(_._1 == as)) match{
-              case Some(nextInLine) =>
-                rec(rest, appendMap(current, nextInLine, head))
+              case Some(nextInLine) => rec(rest, appendMap(current, nextInLine, head))
               case None => complete(remaining, current)
             }
           } else complete(remaining, current)
