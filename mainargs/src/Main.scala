@@ -1,12 +1,12 @@
 package mainargs
 object Main {
   def runMains[T](mains: EntryPoints[T],
-                  args: Array[String],
+                  args: Seq[String],
                   allowPositional: Boolean,
-                  totalWidth: Int): Either[String, (EntryPoint[T], Result[Computed[Any]])] = {
+                  totalWidth: Int): Either[Result.Error.Early, (EntryPoint[T], Result[Computed[Any]])] = {
 
     mains.value match{
-      case Seq() => Left("No @main methods declared")
+      case Seq() => Left(Result.Error.Early.NoMainMethodsDetected())
       case Seq(main) =>
         Right(
           main,
@@ -17,16 +17,13 @@ object Main {
       case multiple =>
         lazy val suffix = Renderer.formatMainMethods(mains.target(), multiple, totalWidth)
         args.toList match{
-          case List() => Left("Need to specify a sub command: " + multiple.map(_.name).mkString(", "))
+          case List() => Left(Result.Error.Early.SubcommandNotSpecified(multiple.map(_.name)))
           case head :: tail =>
             if (head.startsWith("-")) {
-              Left(
-                "To select a subcommand to run, you don't need --s." + Renderer.newLine +
-                s"Did you mean `${head.drop(2)}` instead of `$head`?"
-              )
+              Left(Result.Error.Early.SubcommandSelectionDashes(head))
             } else{
               multiple.find(_.name == head) match{
-                case None => Left(s"Unable to find subcommand: " + head + suffix)
+                case None => Left(Result.Error.Early.UnableToFindSubcommand(head))
                 case Some(main) =>
                   Right(
                     main,

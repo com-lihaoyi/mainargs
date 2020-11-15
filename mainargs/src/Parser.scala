@@ -2,7 +2,7 @@ package mainargs
 
 import java.io.PrintStream
 
-case class Parser(args: Array[String],
+case class Parser(args: Seq[String],
                   allowPositional: Boolean = true,
                   stderr: PrintStream = System.err,
                   totalWidth: Int = 95){
@@ -45,14 +45,20 @@ case class Parser(args: Array[String],
     case Right(v) => v
   }
   def runEither[T: EntryPoints]: Either[String, Any] = {
-    runRaw0[T].flatMap{case (main, computed) =>
-      Renderer.renderResult(implicitly[EntryPoints[T]].target, main, computed, totalWidth)
+    runRaw0[T] match {
+      case Left(err) => Left(Renderer.renderEarlyError(err))
+      case Right((main, res)) =>
+        Renderer.renderResult(
+          implicitly[EntryPoints[T]].target, main, res, totalWidth
+        )
     }
   }
-  def runRaw[T: EntryPoints]: Either[String, Result[Any]] = {
-    runRaw0[T].map(_._2)
+  def runRaw[T: EntryPoints]: Result[Any] = runRaw0[T] match{
+    case Left(err) => err
+    case Right((main, res)) => res
   }
-  def runRaw0[T: EntryPoints]: Either[String, (EntryPoint[T], Result[Any])] = {
+
+  def runRaw0[T: EntryPoints]: Either[Result.Error.Early, (EntryPoint[T], Result[Any])] = {
     for {
       tuple <- Main.runMains(implicitly[EntryPoints[T]], args, allowPositional, totalWidth)
     } yield {

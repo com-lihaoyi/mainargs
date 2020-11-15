@@ -27,13 +27,20 @@ object Result{
    */
   sealed trait Error extends Result[Nothing]
   object Error{
+    sealed trait Early extends Error
+    object Early{
 
+
+      case class NoMainMethodsDetected() extends Early
+      case class SubcommandNotSpecified(options: Seq[String]) extends Early
+      case class UnableToFindSubcommand(token: String) extends Early
+      case class SubcommandSelectionDashes(token: String) extends Early
+    }
     /**
      * Invoking the [[EntryPoint]] failed with an exception while executing
      * code within it.
      */
     case class Exception(t: Throwable) extends Error
-
     /**
      * Invoking the [[EntryPoint]] failed because the arguments provided
      * did not line up with the arguments expected

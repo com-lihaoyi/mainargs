@@ -88,6 +88,17 @@ object Renderer {
   }
 
   def pluralize(s: String, n: Int) = if (n == 1) s else s + "s"
+  def renderEarlyError(result: Result.Error.Early) = result match {
+    case Result.Error.Early.NoMainMethodsDetected() =>
+      "No @main methods declared"
+    case Result.Error.Early.SubcommandNotSpecified(options) =>
+      "Need to specify a sub command: " + options.mkString(", ")
+    case Result.Error.Early.UnableToFindSubcommand(token) =>
+      s"Unable to find subcommand: " + token
+    case Result.Error.Early.SubcommandSelectionDashes(token) =>
+        "To select a subcommand to run, you don't need --s." + Renderer.newLine +
+        s"Did you mean `${token.drop(2)}` instead of `$token`?"
+  }
   def renderResult[T, V](base: () => T,
                          main: EntryPoint[T],
                          result: Result[V],
@@ -98,7 +109,7 @@ object Renderer {
     }
     result match{
       case Result.Success(x) => Right(x)
-      case Result.Error.Exception(x) => Left(x.toString + "\n" + x.getStackTrace.mkString("\n"))
+      case err: Result.Error.Early => Left(renderEarlyError(err))
       case Result.Error.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""

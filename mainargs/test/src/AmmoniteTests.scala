@@ -51,18 +51,6 @@ case class Config(@arg(name = "predef-code",
 
 
 object AmmoniteTests extends TestSuite{
-  def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
-    Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = true)
-      .flatMap(entryPoint.invoke(base, _))
-      .map(_.value)
-  }
-  def check[B, T](base: B,
-                  entryPoint: EntryPoint[B],
-                  input: List[String],
-                  expected: Result[T]) = {
-    val result = parseInvoke(base, entryPoint, input)
-    assert(result == expected)
-  }
 
   val tests = Tests {
     test("router"){

@@ -6,35 +6,22 @@ object PositionalAgnosticEnabledTests extends PositionalAgnosticTests(true)
 object PositionalAgnosticDisabledTests extends PositionalAgnosticTests(false)
 
 class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
-  def parseInvoke[T](base: T, entryPoint: EntryPoint[T], input: List[String]) = {
-    Grouping.groupArgs(input, entryPoint.argSigs, allowPositional = allowPositional)
-      .flatMap(entryPoint.invoke(base, _))
-      .map(_.value)
-  }
-
-  def check[B, T](base: B,
-                  entryPoint: EntryPoint[B],
-                  input: List[String],
-                  expected: Result[T]) = {
-    val result = parseInvoke(base, entryPoint, input)
-    assert(result == expected)
-  }
+  val check = new Checker(allowPositional = allowPositional)
 
   val tests = Tests {
     test("router"){
-      val routes0 = generateRoutes[MultiTarget.type].value
-      val routes = routes0.map(x => (x.name, x)).toMap
+      val routes = generateRoutes[MultiTarget.type]
 
       test("formatMainMethods"){
-        Renderer.formatMainMethods(MultiTarget, routes0, 95)
+        Renderer.formatMainMethods(MultiTarget, routes.value, 95)
       }
       test("basicModelling") {
-        val names = routes0.map(_.name)
+        val names = routes.value.map(_.name)
         assert(
           names ==
           List("foo", "bar", "qux", "ex", "pureVariadic", "mixedVariadic", "flaggy")
         )
-        val evaledArgs = routes0.map(_.argSigs.map{
+        val evaledArgs = routes.value.map(_.argSigs.map{
           case ArgSig(name, s, tpe, docs, None, _, _) => (name, tpe, docs, None)
           case ArgSig(name, s, tpe, docs, Some(default), _, _) =>
             (name, tpe, docs, Some(default(MultiTarget)))
@@ -62,33 +49,33 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
 
       test("invoke"){
         test - check(
-          MultiTarget, routes("foo"), List(), Result.Success(1)
+          MultiTarget, routes, List("foo"), Result.Success(1)
         )
         test - check(
-          MultiTarget, routes("bar"), List("--i", "2"), Result.Success(2)
+          MultiTarget, routes, List("bar", "--i", "2"), Result.Success(2)
         )
         test - check(
-          MultiTarget, routes("qux"), List("--i", "2"), Result.Success("lolslols")
+          MultiTarget, routes, List("qux", "--i", "2"), Result.Success("lolslols")
         )
         test - check(
-          MultiTarget, routes("qux"), List("--i", "3", "--s", "x"), Result.Success("xxx")
+          MultiTarget, routes, List("qux", "--i", "3", "--s", "x"), Result.Success("xxx")
         )
       }
       test("varargs"){
         test("happyPathPasses"){
           test - check(
-            MultiTarget, routes("pureVariadic"), List("1", "2", "3"), Result.Success(6)
+            MultiTarget, routes, List("pureVariadic", "1", "2", "3"), Result.Success(6)
           )
         }
         test("emptyVarargsPasses"){
-          test - check(MultiTarget, routes("pureVariadic"), List(), Result.Success(0))
+          test - check(MultiTarget, routes, List("pureVariadic"), Result.Success(0))
           test - check(
-            MultiTarget, routes("mixedVariadic"), List("-f", "1"), Result.Success("1")
+            MultiTarget, routes, List("mixedVariadic", "-f", "1"), Result.Success("1")
           )
         }
         test("varargsAreAlwaysPositional"){
-          val invoked = parseInvoke(
-            MultiTarget, routes("pureVariadic"), List("--nums", "31337")
+          val invoked = check.parseInvoke(
+            MultiTarget, routes, List("pureVariadic", "--nums", "31337")
           )
           test - assertMatch(invoked){
             case Result.Error.InvalidArguments(List(
@@ -101,10 +88,10 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
           }
 
           test - assertMatch(
-            parseInvoke(
+            check.parseInvoke(
               MultiTarget,
-              routes("pureVariadic"),
-              List("1", "2", "3", "--nums", "4")
+              routes,
+              List("pureVariadic", "1", "2", "3", "--nums", "4")
             )
           ){
             case Result.Error.InvalidArguments(List(
@@ -118,7 +105,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
         }
 
         test("notEnoughNormalArgsStillFails"){
-          assertMatch(parseInvoke(MultiTarget, routes("mixedVariadic"), List())){
+          assertMatch(check.parseInvoke(MultiTarget, routes, List("mixedVariadic"))){
             case Result.Error.MismatchedArguments(
               List(ArgSig("first", _, _, _, _, false, _)),
               Nil,
@@ -129,7 +116,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
         }
         test("multipleVarargParseFailures"){
           test - assertMatch(
-            parseInvoke(MultiTarget, routes("pureVariadic"), List("aa", "bb", "3"))
+            check.parseInvoke(MultiTarget, routes, List("pureVariadic", "aa", "bb", "3"))
           ){
             case Result.Error.InvalidArguments(List(
               Result.ParamError.Failed(
@@ -150,31 +137,31 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
 
       test("flags"){
         test - check(
-          MultiTarget, routes("flaggy"), List("--b", "true"), Result.Success(true)
+          MultiTarget, routes, List("flaggy", "--b", "true"), Result.Success(true)
         )
         test - check(
-          MultiTarget, routes("flaggy"), List("--b", "false"), Result.Success(false)
-        )
-
-        test - check(
-          MultiTarget, routes("flaggy"), List("--a", "--b", "false"), Result.Success(true)
+          MultiTarget, routes, List("flaggy", "--b", "false"), Result.Success(false)
         )
 
         test - check(
-          MultiTarget, routes("flaggy"), List("--c", "--b", "false"), Result.Success(true)
+          MultiTarget, routes, List("flaggy", "--a", "--b", "false"), Result.Success(true)
+        )
+
+        test - check(
+          MultiTarget, routes, List("flaggy", "--c", "--b", "false"), Result.Success(true)
         )
 
         test - check(
           MultiTarget,
-          routes("flaggy"),
-          List("--a", "--c", "--b", "false"), Result.Success(true)
+          routes,
+          List("flaggy", "--a", "--c", "--b", "false"), Result.Success(true)
         )
 
       }
 
       test("failures"){
         test("missingParams"){
-          test - assertMatch(parseInvoke(MultiTarget, routes("bar"), List.empty)){
+          test - assertMatch(check.parseInvoke(MultiTarget, routes, List("bar"))){
             case Result.Error.MismatchedArguments(
               List(ArgSig("i", _, _, _, _, false, _)),
               Nil,
@@ -182,7 +169,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
               None
             ) =>
           }
-          test - assertMatch(parseInvoke(MultiTarget, routes("qux"), List("--s", "omg"))){
+          test - assertMatch(check.parseInvoke(MultiTarget, routes, List("qux", "--s", "omg"))){
             case Result.Error.MismatchedArguments(
             List(ArgSig("i", _, _, _, _, false, _)),
               Nil,
@@ -193,14 +180,14 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
         }
 
         test("tooManyParams") - check(
-          MultiTarget, routes("foo"), List("1", "2"),
+          MultiTarget, routes, List("foo", "1", "2"),
           Result.Error.MismatchedArguments(Nil, List("1", "2"), Nil, None)
         )
 
         test("failing") - check(
           MultiTarget,
-          routes("ex"),
-          List(),
+          routes,
+          List("ex"),
           Result.Error.Exception(MyException)
         )
       }
