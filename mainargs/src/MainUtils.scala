@@ -1,9 +1,9 @@
 package mainargs
-object Main {
-  def runMains[T](mains: EntryPoints[T],
+object MainUtils {
+  def runMains[T](mains: Mains[T],
                   args: Seq[String],
                   allowPositional: Boolean,
-                  totalWidth: Int): Either[Result.Error.Early, (EntryPoint[T], Result[Computed[Any]])] = {
+                  totalWidth: Int): Either[Result.Error.Early, (Main[T], Result[Computed[Any]])] = {
 
     mains.value match{
       case Seq() => Left(Result.Error.Early.NoMainMethodsDetected())
@@ -15,7 +15,6 @@ object Main {
         )
 
       case multiple =>
-        lazy val suffix = Renderer.formatMainMethods(mains.base(), multiple, totalWidth)
         args.toList match{
           case List() => Left(Result.Error.Early.SubcommandNotSpecified(multiple.map(_.name)))
           case head :: tail =>

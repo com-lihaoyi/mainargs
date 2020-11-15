@@ -2,10 +2,10 @@ package mainargs
 
 import scala.annotation.tailrec
 
-case class BareEntryPoints[B](value: Seq[EntryPoint[B]])
-case class EntryPoints[B](value: Seq[EntryPoint[B]], base: () => B)
+case class BareMains[B](value: Seq[Main[B]])
+case class Mains[B](value: Seq[Main[B]], base: () => B)
 
-case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
+case class ClassMains[T](main: Main[Any], companion: () => Any)
 
 /**
  * What is known about a single endpoint for our routes. It has a [[name]],
@@ -16,11 +16,11 @@ case class ClassEntryPoint[T](main: EntryPoint[Any], companion: () => Any)
  * instead, which provides a nicer API to call it that mimmicks the API of
  * calling a Scala method.
  */
-case class EntryPoint[B](name: String,
-                         argSigs: Seq[ArgSig[B]],
-                         doc: Option[String],
-                         varargs: Boolean,
-                         invoke0: (B, Map[String, String], Seq[String]) => Result[Computed[Any]]){
+case class Main[B](name: String,
+                   argSigs: Seq[ArgSig[B]],
+                   doc: Option[String],
+                   varargs: Boolean,
+                   invoke0: (B, Map[String, String], Seq[String]) => Result[Computed[Any]]){
   def invoke(target: B, grouped: Grouping[B]): Result[Computed[Any]] = {
     try invoke0(
       target,

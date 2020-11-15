@@ -1,14 +1,14 @@
 package mainargs
 
 class Checker(allowPositional: Boolean){
-  def parseInvoke[T](base: T, entryPoint: EntryPoints[T], input: List[String]) = {
-    Parser(input, allowPositional = allowPositional).runRaw[T](entryPoint)
+  def parseInvoke[T](base: T, main: Mains[T], input: List[String]) = {
+    Parser(input, allowPositional = allowPositional).runRaw[T](main)
   }
   def apply[B, T](base: B,
-                  entryPoint: EntryPoints[B],
+                  main: Mains[B],
                   input: List[String],
                   expected: Result[T]) = {
-    val result = parseInvoke(base, entryPoint, input)
+    val result = parseInvoke(base, main, input)
     utest.assert(result == expected)
   }
 }

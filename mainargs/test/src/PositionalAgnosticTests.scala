@@ -10,7 +10,7 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
 
   val tests = Tests {
     test("router"){
-      val routes = generateEntryPoints[MultiTarget.type]
+      val routes = generateMains[MultiTarget.type]
 
       test("formatMainMethods"){
         Renderer.formatMainMethods(MultiTarget, routes.value, 95)
@@ -194,4 +194,3 @@ class PositionalAgnosticTests(allowPositional: Boolean) extends TestSuite{
     }
   }
 }
-

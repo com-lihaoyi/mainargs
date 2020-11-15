@@ -1,7 +1,7 @@
 package mainargs
 
 /**
- * Represents what comes out of an attempt to invoke an [[EntryPoint]].
+ * Represents what comes out of an attempt to invoke an [[Main]].
  * Could succeed with a value, but could fail in many different ways.
  */
 sealed trait Result[+T]{
@@ -17,13 +17,13 @@ sealed trait Result[+T]{
 object Result{
 
   /**
-   * Invoking the [[EntryPoint]] was totally successful, and returned a
+   * Invoking the [[Main]] was totally successful, and returned a
    * result
    */
   case class Success[T](value: T) extends Result[T]
 
   /**
-   * Invoking the [[EntryPoint]] was not successful
+   * Invoking the [[Main]] was not successful
    */
   sealed trait Error extends Result[Nothing]
   object Error{
@@ -37,12 +37,12 @@ object Result{
       case class SubcommandSelectionDashes(token: String) extends Early
     }
     /**
-     * Invoking the [[EntryPoint]] failed with an exception while executing
+     * Invoking the [[Main]] failed with an exception while executing
      * code within it.
      */
     case class Exception(t: Throwable) extends Error
     /**
-     * Invoking the [[EntryPoint]] failed because the arguments provided
+     * Invoking the [[Main]] failed because the arguments provided
      * did not line up with the arguments expected
      */
     case class MismatchedArguments(missing: Seq[ArgSig[_]] = Nil,
@@ -50,7 +50,7 @@ object Result{
                                    duplicate: Seq[(ArgSig[_], Seq[String])] = Nil,
                                    incomplete: Option[ArgSig[_]] = None) extends Error
     /**
-     * Invoking the [[EntryPoint]] failed because there were problems
+     * Invoking the [[Main]] failed because there were problems
      * deserializing/parsing individual arguments
      */
     case class InvalidArguments(values: Seq[ParamError]) extends Error

@@ -55,7 +55,7 @@ object AmmoniteTests extends TestSuite{
   val tests = Tests {
     test("router"){
 
-      val routes = genereateClassEntryPoints[Config].main
+      val routes = genereateClassMains[Config].main
 
       test("formatMainMethods"){
         Renderer.formatMainMethodSignature(Config, routes, 0, 95)

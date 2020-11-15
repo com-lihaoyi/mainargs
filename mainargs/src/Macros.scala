@@ -11,22 +11,22 @@ import scala.reflect.macros.blackbox.Context
  * the Scala compiler and greatly reduces the startup time of cached scripts.
  */
 class Macros(val c: Context) {
-  def generateBareEntryPoints[B: c.WeakTypeTag]: c.Expr[BareEntryPoints[B]] = {
+  def generateBareMains[B: c.WeakTypeTag]: c.Expr[BareMains[B]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
-    c.Expr[BareEntryPoints[B]](
-      q"_root_.mainargs.BareEntryPoints(_root_.scala.Seq(..$allRoutes))"
+    c.Expr[BareMains[B]](
+      q"_root_.mainargs.BareMains(_root_.scala.Seq(..$allRoutes))"
     )
   }
-  def generateEntryPoints[B: c.WeakTypeTag]: c.Expr[EntryPoints[B]] = {
+  def generateMains[B: c.WeakTypeTag]: c.Expr[Mains[B]] = {
     import c.universe._
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
     val obj = weakTypeOf[B].termSymbol
-    c.Expr[EntryPoints[B]](
-      q"_root_.mainargs.EntryPoints(_root_.scala.Seq(..$allRoutes), () => $obj)"
+    c.Expr[Mains[B]](
+      q"_root_.mainargs.Mains(_root_.scala.Seq(..$allRoutes), () => $obj)"
     )
   }
-  def genereateClassEntryPoints[T: c.WeakTypeTag]: c.Expr[ClassEntryPoint[T]] = {
+  def genereateClassMains[T: c.WeakTypeTag]: c.Expr[ClassMains[T]] = {
     import c.universe._
 
     val cls = weakTypeOf[T].typeSymbol.asClass
@@ -40,8 +40,8 @@ class Macros(val c: Context) {
       companionObj.typeSignature
     )
 
-    c.Expr[ClassEntryPoint[T]](
-      q"_root_.mainargs.ClassEntryPoint[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.EntryPoint[Any]], () => $companionObj)"
+    c.Expr[ClassMains[T]](
+      q"_root_.mainargs.ClassMains[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.Main[Any]], () => $companionObj)"
     )
   }
   import c.universe._
@@ -167,7 +167,7 @@ class Macros(val c: Context) {
     val res = q"""{
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
-    _root_.mainargs.EntryPoint[$curCls](
+    _root_.mainargs.Main[$curCls](
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),
