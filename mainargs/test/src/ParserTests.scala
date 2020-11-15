@@ -4,7 +4,6 @@ import utest._
 object ParserTests extends TestSuite{
 
   val tests = Tests {
-
     test("runEitherMulti") {
       test {
         Parser(Array("foo")).runEither[MultiTarget.type] ==> Right(1)

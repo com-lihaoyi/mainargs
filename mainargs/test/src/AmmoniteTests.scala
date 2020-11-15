@@ -53,17 +53,15 @@ case class Config(@arg(name = "predef-code",
 object AmmoniteTests extends TestSuite{
 
   val tests = Tests {
-    test("router"){
 
-      val routes = ClassMains.generate[Config].main
+    val routes = ClassMains.generate[Config].main
 
-      test("formatMainMethods"){
-        Renderer.formatMainMethodSignature(Config, routes, 0, 95)
-      }
-      test("parseInvoke"){
-        Parser(Array("--code", "println(1)")).constructEither[Config] ==>
-          Right(Config(code = Some("println(1)")))
-      }
+    test("formatMainMethods"){
+      Renderer.formatMainMethodSignature(Config, routes, 0, 95)
+    }
+    test("parseInvoke"){
+      Parser(Array("--code", "println(1)")).constructEither[Config] ==>
+        Right(Config(code = Some("println(1)")))
     }
   }
 }
