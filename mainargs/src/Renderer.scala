@@ -3,14 +3,10 @@ object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
   def renderArgShort[B](arg: ArgSig[B], base: Option[B]) = {
-    val defaultSuffix = (base, arg.default) match{
-      case (Some(b), Some(f)) => " (default " + Util.literalize(f(b).toString) + ") "
-      case _ => ""
-    }
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
     val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
     if (arg.varargs) s"${arg.name} ..."
-    else s"$shortPrefix--${arg.name}$typeSuffix$defaultSuffix"
+    else s"$shortPrefix--${arg.name}$typeSuffix"
   }
 
   def renderArg[B](base: B,
@@ -62,7 +58,7 @@ object Renderer {
     }
 
     s"""$leftIndentStr${main.name}$mainDocSuffix
-       |${argStrings.map(_ + newLine).mkString}""".stripMargin
+       |${argStrings.map(_ + newLine).mkString("\n")}""".stripMargin
   }
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
