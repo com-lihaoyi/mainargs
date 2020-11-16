@@ -2,7 +2,7 @@ package mainargs
 object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort[B](arg: ArgSig[B], base: Option[B]) = {
+  def renderArgShort[B](arg: ArgSig[B]) = {
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
     val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
     if (arg.varargs) s"${arg.name} ..."
@@ -19,7 +19,7 @@ object Renderer {
       leftOffset,
       wrappedWidth - leftOffset
     )
-    (renderArgShort(arg, Some(base)), wrapped)
+    (renderArgShort(arg), wrapped)
   }
 
   def formatMainMethods[B](base: B, mainMethods: Seq[MainData[B]], totalWidth: Int) = {
@@ -162,10 +162,10 @@ object Renderer {
         val thingies = x.map{
           case Result.ParamError.Exception(p, v, ex) =>
             val literalV = Util.literalize(v)
-            val rendered = {Renderer.renderArgShort(p, None)}
+            val rendered = {Renderer.renderArgShort(p)}
             s"$rendered: ${p.typeString} = $literalV failed to parse with $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
-            s"${Renderer.renderArgShort(p, None)}'s default value failed to evaluate with $ex"
+            s"${Renderer.renderArgShort(p)}'s default value failed to evaluate with $ex"
         }
 
         Left(
