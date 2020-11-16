@@ -67,7 +67,7 @@ usage: mill [mill-options] [target [target-options]]
     @arg(
       short = 'i',
       doc = "Run Mill in interactive mode, suitable for opening REPLs and taking user input. In this mode, no mill server will be used. Must be the first argument.")
-    interactive: os.Path = os.pwd,
+    interactive: Boolean = false,
     @arg(
       short = 'v',
       flag = true,
