@@ -32,7 +32,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
 
   val tests = Tests {
     test("formatMainMethods"){
-      Renderer.formatMainMethods(CoreBase, check.mains.value, 95)
+      check.parser.helpText()
     }
     test("basicModelling") {
       val names = check.mains.value.map(_.name)

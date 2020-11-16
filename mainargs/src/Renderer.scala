@@ -21,13 +21,11 @@ object Renderer {
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods[B](base: B, mainMethods: Seq[MainData[B]], totalWidth: Int) = {
+  def formatMainMethods[B](mainMethods: Seq[MainData[B]], totalWidth: Int) = {
     if (mainMethods.isEmpty) ""
     else{
-
       val methods =
-        for(main <- mainMethods)
-        yield formatMainMethodSignature(base, main, 2, totalWidth)
+        for(main <- mainMethods) yield formatMainMethodSignature(main, 2, totalWidth)
 
       normalizeNewlines(
         s"""

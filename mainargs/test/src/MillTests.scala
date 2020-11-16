@@ -113,7 +113,8 @@ usage: mill [mill-options] [target [target-options]]
     val parser = ParserForClass[Config]
 
     test("formatMainMethods"){
-      println(Renderer.formatMainMethodSignature(parser.mains.main, 0, 95))
+      parser.helpText()
+
     }
     test("parseInvoke"){
       parser.constructEither(Array("--jobs", "12")) ==>

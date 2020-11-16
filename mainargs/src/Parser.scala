@@ -6,7 +6,9 @@ object ParserForMethods{
   def apply[B](base: B): ParserForMethods[B] = macro Macros.parserForMethods[B]
 }
 class ParserForMethods[B](val mains: BasedMains[B]){
-
+  def helpText(totalWidth: Int = 95) = {
+    Renderer.formatMainMethods(mains.value, totalWidth)
+  }
   def runOrExit(args: Seq[String],
                 allowPositional: Boolean = true,
                 stderr: PrintStream = System.err,
@@ -53,6 +55,9 @@ object ParserForClass{
   def apply[T]: ParserForClass[T] = macro Macros.parserForClass[T]
 }
 class ParserForClass[T](val mains: ClassMains[T]){
+  def helpText(totalWidth: Int = 95) = {
+    Renderer.formatMainMethodSignature(mains.main, 0, totalWidth)
+  }
   def constructOrExit(args: Seq[String],
                       allowPositional: Boolean = true,
                       stderr: PrintStream = System.err,

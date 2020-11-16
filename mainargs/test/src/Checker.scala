@@ -1,6 +1,6 @@
 package mainargs
 
-class Checker[B](parser: ParserForMethods[B], allowPositional: Boolean){
+class Checker[B](val parser: ParserForMethods[B], allowPositional: Boolean){
   val mains = parser.mains
   def parseInvoke(input: List[String]) = {
     parser.runRaw(input, allowPositional = allowPositional)
