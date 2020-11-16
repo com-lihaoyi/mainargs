@@ -9,8 +9,7 @@ object Renderer {
     else s"$shortPrefix--${arg.name}$typeSuffix"
   }
 
-  def renderArg[B](base: B,
-                   arg: ArgSig[B],
+  def renderArg[B](arg: ArgSig[B],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val docSuffix = arg.doc.getOrElse("")
@@ -40,12 +39,11 @@ object Renderer {
     }
   }
 
-  def formatMainMethodSignature[B](base: B,
-                                   main: MainData[B],
+  def formatMainMethodSignature[B](main: MainData[B],
                                    leftIndent: Int,
                                    totalWidth: Int) = {
     // +2 for space on right of left col
-    val args = main.argSigs.map(renderArg(base, _, leftIndent + 8, totalWidth))
+    val args = main.argSigs.map(renderArg(_, leftIndent + 8, totalWidth))
 
     val leftIndentStr = " " * leftIndent
     val argStrings = for((lhs, rhs) <- args) yield {
@@ -101,7 +99,7 @@ object Renderer {
                          totalWidth: Int): Either[String, T] = {
 
     def expectedMsg() = {
-      Renderer.formatMainMethodSignature(base(), main, 0, totalWidth)
+      Renderer.formatMainMethodSignature(main, 0, totalWidth)
     }
     result match{
       case Result.Success(x) => Right(x)
