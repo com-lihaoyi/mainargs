@@ -62,10 +62,12 @@ usage: mill [mill-options] [target [target-options]]
     repl: Boolean = false,
     @arg(
       name = "no-server",
+      flag = true,
       doc = "Run Mill in interactive mode, suitable for opening REPLs and taking user input. In this mode, no mill server will be used. Must be the first argument.")
     noServer: Boolean = false,
     @arg(
       short = 'i',
+      flag = true,
       doc = "Run Mill in interactive mode, suitable for opening REPLs and taking user input. In this mode, no mill server will be used. Must be the first argument.")
     interactive: Boolean = false,
     @arg(
@@ -76,6 +78,7 @@ usage: mill [mill-options] [target [target-options]]
     @arg(
       name = "bell",
       short = 'b',
+      flag = true,
       doc = "Ring the bell once if the run completes successfully, twice if it fails.")
     ringBell: Boolean = false,
     @arg(
@@ -85,11 +88,13 @@ usage: mill [mill-options] [target [target-options]]
     disableTicker: Boolean = false,
     @arg(
       short = 'd',
+      flag = true,
       doc = "Show debug output on STDOUT")
     debug: Boolean = false,
     @arg(
       name = "keep-going",
       short = 'k',
+      flag = true,
       doc = "Continue build, even after build failures")
     keepGoing: Boolean = false,
     @arg(
