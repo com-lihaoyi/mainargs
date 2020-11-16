@@ -12,7 +12,7 @@ object VarargsTests extends TestSuite{
     def mixedVariadic(@arg(short = 'f') first: Int, args: String*) = first + args.mkString
   }
 
-  val check = new Checker(Base, allowPositional = true)
+  val check = new Checker(ParserForMethods(Base), allowPositional = true)
 
   val tests = Tests {
 
@@ -105,7 +105,6 @@ object VarargsTests extends TestSuite{
           )
         ))=>
       }
-
     }
   }
 }

@@ -14,27 +14,27 @@ object HelloWorldTests extends TestSuite{
 
   val tests = Tests {
     test("explicit") {
-      Parser(Array("--foo", "bar", "--my-num", "3")).runOrThrow(Main) ==>
+      ParserForMethods(Main).runOrThrow(Array("--foo", "bar", "--my-num", "3"))==>
         "barbarbar false"
     }
     test("short") {
-      Parser(Array("-f", "bar")).runOrThrow(Main) ==>
+      ParserForMethods(Main).runOrThrow(Array("-f", "bar")) ==>
         "barbar false"
     }
     test("default") {
-      Parser(Array("--foo", "bar")).runOrThrow(Main) ==>
+      ParserForMethods(Main).runOrThrow(Array("--foo", "bar"))  ==>
         "barbar false"
     }
     test("positional") {
-      Parser(Array("qux", "4")).runOrThrow(Main) ==>
+      ParserForMethods(Main).runOrThrow(Array("qux", "4")) ==>
         "quxquxquxqux false"
     }
     test("flags") {
-      Parser(Array("qux", "4", "--bool")).runOrThrow(Main) ==>
+      ParserForMethods(Main).runOrThrow(Array("qux", "4", "--bool")) ==>
         "quxquxquxqux true"
     }
     test("either") {
-      Parser(Array("qux", "4", "--bool")).runEither(Main) ==>
+      ParserForMethods(Main).runEither(Array("qux", "4", "--bool")) ==>
         Right("quxquxquxqux true")
     }
   }

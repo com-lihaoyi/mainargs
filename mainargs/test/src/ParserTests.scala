@@ -22,41 +22,32 @@ object ParserTests extends TestSuite{
   @main
   case class ClassBase(code: Option[String] = None, other: String = "hello")
 
+  val multiMethodParser = ParserForMethods(MultiBase)
+  val singleMethodParser = ParserForMethods(SingleBase)
+  val classParser = ParserForClass[ClassBase]
   val tests = Tests {
     test("runEitherMulti") {
+
       test {
-        Parser(Array("foo")).runEither[MultiBase.type] ==> Right(1)
+        multiMethodParser.runEither(Array("foo")) ==> Right(1)
       }
       test {
-        Parser(Array("foo")).runEither(MultiBase) ==> Right(1)
+        multiMethodParser.runEither(Array("bar", "--i", "123")) ==> Right(123)
       }
       test {
-        Parser(Array("bar", "--i", "123")).runEither(MultiBase) ==> Right(123)
-      }
-      test {
-        Parser(Array("f")).runEither[MultiBase.type].left.exists(
-          _.contains("Unable to find subcommand: f")
-        )
-      }
-      test {
-        Parser(Array("f")).runEither(MultiBase).left.exists(
-          _.contains("Unable to find subcommand: f")
+        assert(
+          multiMethodParser.runEither(Array("f"))
+          .left
+          .exists(_.contains("Unable to find subcommand: f"))
         )
       }
     }
     test("runEitherSingle"){
-      test {
-        Parser(Array("5", "x")).runEither[SingleBase.type] ==> Right("xxxxx")
-      }
-      test {
-        Parser(Array("5", "x")).runEither(SingleBase) ==> Right("xxxxx")
-      }
+      singleMethodParser.runEither(Array("5", "x")) ==> Right("xxxxx")
     }
     test("constructEither"){
-      test {
-        Parser(Array("--code", "println(1)")).constructEither[ClassBase] ==>
-          Right(ClassBase(code = Some("println(1)"), other = "hello"))
-      }
+      classParser.constructEither(Array("--code", "println(1)")) ==>
+        Right(ClassBase(code = Some("println(1)"), other = "hello"))
     }
   }
 }

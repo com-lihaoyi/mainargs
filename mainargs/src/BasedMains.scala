@@ -2,21 +2,9 @@ package mainargs
 import acyclic.skipped
 import scala.language.experimental.macros
 
-case class Mains[B](value: Seq[MainData[B]])
-object Mains{
-  implicit def generate[B]: Mains[B] = macro Macros.generateBareMains[B]
-
-}
-
 case class BasedMains[B](value: Seq[MainData[B]], base: () => B)
-object BasedMains{
-  implicit def generate[B]: BasedMains[B] = macro Macros.generateMains[B]
-}
 
 case class ClassMains[T](main: MainData[Any], companion: () => Any)
-object ClassMains{
-  implicit def generate[T]: ClassMains[T] = macro Macros.genereateClassMains[T]
-}
 
 /**
  * What is known about a single endpoint for our routes. It has a [[name]],

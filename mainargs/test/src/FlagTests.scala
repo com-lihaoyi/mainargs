@@ -10,7 +10,7 @@ object FlagTests extends TestSuite{
                b: Boolean,
                @arg(flag = true) c: Boolean = false) = a || b || c
   }
-  val check = new Checker(Base, allowPositional = true)
+  val check = new Checker(ParserForMethods(Base), allowPositional = true)
 
   val tests = Tests {
     test - check(

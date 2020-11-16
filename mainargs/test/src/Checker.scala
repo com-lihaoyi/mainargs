@@ -1,12 +1,12 @@
 package mainargs
 
-class Checker[B: Mains](b: B, allowPositional: Boolean){
-  val mains = implicitly[Mains[B]]
+class Checker[B](parser: ParserForMethods[B], allowPositional: Boolean){
+  val mains = parser.mains
   def parseInvoke(input: List[String]) = {
-    Parser(input, allowPositional = allowPositional).runRaw(b)
+    parser.runRaw(input, allowPositional = allowPositional)
   }
-  def apply[B, T](input: List[String],
-                  expected: Result[T]) = {
+  def apply[T](input: List[String],
+               expected: Result[T]) = {
     val result = parseInvoke(input)
     utest.assert(result == expected)
   }

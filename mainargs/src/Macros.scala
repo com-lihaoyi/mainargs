@@ -11,23 +11,18 @@ import scala.reflect.macros.blackbox.Context
  * the Scala compiler and greatly reduces the startup time of cached scripts.
  */
 class Macros(val c: Context) {
-  def generateBareMains[B: c.WeakTypeTag]: c.Expr[Mains[B]] = {
-    import c.universe._
+  import c.universe._
+
+  def parserForMethods[B: c.WeakTypeTag](base: c.Expr[B]): c.Expr[ParserForMethods[B]] = {
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
-    c.Expr[Mains[B]](
-      q"_root_.mainargs.Mains(_root_.scala.Seq(..$allRoutes))"
-    )
+    c.Expr[ParserForMethods[B]](q"""
+      new _root_.mainargs.ParserForMethods(
+        _root_.mainargs.BasedMains[${weakTypeOf[B]}](_root_.scala.List(..$allRoutes), () => $base)
+      )
+    """)
   }
-  def generateMains[B: c.WeakTypeTag]: c.Expr[BasedMains[B]] = {
-    import c.universe._
-    val allRoutes = getAllRoutesForClass(weakTypeOf[B])
-    val obj = weakTypeOf[B].termSymbol
-    c.Expr[BasedMains[B]](
-      q"_root_.mainargs.BasedMains(_root_.scala.Seq(..$allRoutes), () => $obj)"
-    )
-  }
-  def genereateClassMains[T: c.WeakTypeTag]: c.Expr[ClassMains[T]] = {
-    import c.universe._
+
+  def parserForClass[T: c.WeakTypeTag]: c.Expr[ParserForClass[T]] = {
 
     val cls = weakTypeOf[T].typeSymbol.asClass
     val companionObj = weakTypeOf[T].typeSymbol.companion
@@ -40,11 +35,15 @@ class Macros(val c: Context) {
       companionObj.typeSignature
     )
 
-    c.Expr[ClassMains[T]](
-      q"_root_.mainargs.ClassMains[${weakTypeOf[T]}]($route.asInstanceOf[_root_.mainargs.MainData[Any]], () => $companionObj)"
-    )
+    c.Expr[ParserForClass[T]](q"""
+      new _root_.mainargs.ParserForClass(
+        _root_.mainargs.ClassMains[${weakTypeOf[T]}](
+          $route.asInstanceOf[_root_.mainargs.MainData[Any]],
+          () => $companionObj
+        )
+      )
+    """)
   }
-  import c.universe._
   def getValsOrMeths(curCls: Type): Iterable[MethodSymbol] = {
     def isAMemberOfAnyRef(member: Symbol) = {
       // AnyRef is an alias symbol, we go to the real "owner" of these methods

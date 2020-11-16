@@ -102,13 +102,13 @@ REPL-specific args:
 
   val tests = Tests {
 
-    val routes = ClassMains.generate[Config].main
+    val parser = ParserForClass[Config]
 
     test("formatMainMethods"){
-      println(Renderer.formatMainMethodSignature(Config, routes, 0, 95))
+      println(Renderer.formatMainMethodSignature(Config, parser.mains.main, 0, 95))
     }
     test("parseInvoke"){
-      Parser(Array("--code", "println(1)")).constructEither[Config] ==>
+      parser.constructEither(Array("--code", "println(1)")) ==>
         Right(Config(code = Some("println(1)")))
     }
   }

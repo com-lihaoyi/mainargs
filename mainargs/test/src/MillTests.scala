@@ -110,13 +110,13 @@ usage: mill [mill-options] [target [target-options]]
 
   val tests = Tests {
 
-    val routes = ClassMains.generate[Config].main
+    val parser = ParserForClass[Config]
 
     test("formatMainMethods"){
-      println(Renderer.formatMainMethodSignature(Config, routes, 0, 95))
+      println(Renderer.formatMainMethodSignature(Config, parser.mains.main, 0, 95))
     }
     test("parseInvoke"){
-      Parser(Array("--jobs", "12")).constructEither[Config] ==>
+      parser.constructEither(Array("--jobs", "12")) ==>
         Right(Config(threadCount = 12))
     }
   }
