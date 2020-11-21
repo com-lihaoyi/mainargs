@@ -4,14 +4,17 @@ import java.io.{PrintWriter, StringWriter}
 
 object Renderer {
 
-  def getLeftColWidth[T, B](items: Seq[ArgSig.Simple[T, B]]) = {
+  def getLeftColWidth[T, B](items: Seq[ArgSig.Terminal[T, B]]) = {
     if (items.isEmpty) 0
     else items
-      .map(x =>
-        x.name.length + 2 + // name and --
-        x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
-        (if (x.flag || x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
-      )
+      .map {
+        case x: ArgSig.Simple[_, _] =>
+          x.name.length + 2 + // name and --
+          x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
+          (if (x.flag || x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
+        case x: ArgSig.Leftover[_, _] =>
+          x.name.size + 1 + x.reader.shortName.size + 2 + 3
+      }
       .max
   }
 

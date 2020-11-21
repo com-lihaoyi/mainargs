@@ -11,7 +11,10 @@ object TokenGrouping{
                    allowPositional: Boolean,
                    allowRepeats: Boolean,
                    allowLeftover: Boolean): Result[TokenGrouping[B]] = {
-    val argSigs: Seq[ArgSig.Simple[_, B]] = argSigs0.map(ArgSig.flatten(_)).flatten
+    val argSigs: Seq[ArgSig.Simple[_, B]] = argSigs0
+      .map(ArgSig.flatten(_).collect{case x: ArgSig.Simple[_, _] => x})
+      .flatten
+
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs

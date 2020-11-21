@@ -46,9 +46,9 @@ object ArgSig{
     def typeString = reader.shortName
   }
 
-  def flatten[T, B](x: ArgSig[T, B]): Seq[Simple[T, B]] = x match{
+  def flatten[T, B](x: ArgSig[T, B]): Seq[Terminal[T, B]] = x match{
     case x: Simple[T, B] => Seq(x)
-    case x: Leftover[T, B] => Seq()
+    case x: Leftover[T, B] => Seq(x)
     case x: Class[T, B] => x.reader.main.argSigs.flatMap(x => flatten(x.asInstanceOf[Simple[T, B]]))
   }
 
@@ -95,12 +95,9 @@ case class MainData[T, B](name: String,
                           invokeRaw: (B, Seq[Any]) => T){
 
   val argSigs = argSigs0.iterator.flatMap(ArgSig.flatten).toVector
-  val leftoverArgSig: Seq[ArgSig.Leftover[_, _]] = argSigs0
-    .flatMap{
-      case x: ArgSig.Leftover[_, B] => Some(x)
-      case x: ArgSig.Class[_, B] => x.reader.main.leftoverArgSig
-      case _ => None
-    }
+  val leftoverArgSig: Seq[ArgSig.Leftover[_, _]] =
+    argSigs.collect{case x: ArgSig.Leftover[_, B] => x}
+  
 }
 
 object MainData{
