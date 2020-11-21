@@ -1,5 +1,4 @@
 package mainargs
-import acyclic.skipped
 import scala.language.experimental.macros
 import java.io.PrintStream
 object ParserForMethods{

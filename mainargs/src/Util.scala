@@ -47,8 +47,7 @@ object Util{
     else current + (k -> Vector(v))
   }
 
-  type FailMaybe = Either[Seq[Result.ParamError], Computed[Any]]
-  type FailAll = Either[Seq[Result.ParamError], Seq[Computed[Any]]]
+
 
 }
 
