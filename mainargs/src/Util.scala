@@ -35,11 +35,6 @@ object Util{
     else s
   }
 
-  def tryEither[T](t: => T,
-                   error: Throwable => Result.ParamError): Either[Result.ParamError, T] = {
-    try Right(t)
-    catch{ case e: Throwable => Left(error(e))}
-  }
 
 
   def appendMap[K, V](current: Map[K, Vector[V]], k: K, v: V): Map[K, Vector[V]] = {

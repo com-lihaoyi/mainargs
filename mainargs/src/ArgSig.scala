@@ -58,8 +58,3 @@ case class MainData[B](name: String,
   val varargs = argSigs.exists(_.varargs)
 }
 
-sealed trait FailMaybe
-object FailMaybe{
-  case class Failure(errors: Seq[Result.ParamError]) extends FailMaybe
-  case class Success(value: Computed[Any]) extends FailMaybe
-}

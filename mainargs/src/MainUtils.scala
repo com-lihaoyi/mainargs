@@ -13,7 +13,7 @@ object MainUtils {
                  mainData: MainData[B],
                  kvs: Map[String, String],
                  extras: Seq[String]): Result[Computed[Any]] = {
-    val readArgValues: Seq[Either[Result[Computed[Any]], FailMaybe]] = for(a <- mainData.argSigs0) yield {
+    val readArgValues: Seq[Either[Result[Computed[Any]], ParamResult]] = for(a <- mainData.argSigs0) yield {
       a match{
         case a: ArgSig[B] =>
           if (a.varargs) Right(makeReadVarargsCall(a, extras))
@@ -27,14 +27,14 @@ object MainUtils {
       val lefts = readArgValues
         .collect{
           case Left(Result.Error.InvalidArguments(lefts)) => lefts
-          case Right(FailMaybe.Failure(failure)) => failure
+          case Right(ParamResult.Failure(failure)) => failure
         }
         .flatten
       if (lefts.nonEmpty) Result.Error.InvalidArguments(lefts)
       else Result.Success(
         readArgValues.collect{
           case Left(Result.Success(x)) => x
-          case Right(FailMaybe.Success(x)) => x
+          case Right(ParamResult.Success(x)) => x
         }
       )
     }
@@ -79,40 +79,46 @@ object MainUtils {
         }
     }
   }
+
+  def tryEither[T](t: => T,
+                   error: Throwable => Result.ParamError): Either[Result.ParamError, T] = {
+    try Right(t)
+    catch{ case e: Throwable => Left(error(e))}
+  }
   def makeReadCall[B](dict: Map[String, String],
                       base: B,
-                      arg: ArgSig[B]): FailMaybe = {
+                      arg: ArgSig[B]): ParamResult = {
     def default = arg.default.map(f => Computed(f(base)))
     dict.get(arg.name) match{
       case None =>
-        Util.tryEither(Right(default.get), Result.ParamError.DefaultFailed(arg, _)) match{
-          case Left(ex) => FailMaybe.Failure(Seq(ex))
-          case Right(Right(v)) => FailMaybe.Success(v)
+        tryEither(Right(default.get), Result.ParamError.DefaultFailed(arg, _)) match{
+          case Left(ex) => ParamResult.Failure(Seq(ex))
+          case Right(Right(v)) => ParamResult.Success(v)
         }
 
       case Some(token) =>
-        if (arg.flag) FailMaybe.Success(Computed(true))
-        else Util.tryEither(arg.reader.read(None, token), Result.ParamError.Exception(arg, token, _)) match{
-          case Left(ex) => FailMaybe.Failure(Seq(ex))
-          case Right(Left(errMsg)) => FailMaybe.Failure(Seq(Result.ParamError.Failed(arg, token, errMsg)))
-          case Right(Right(v)) => FailMaybe.Success(Computed(v))
+        if (arg.flag) ParamResult.Success(Computed(true))
+        else tryEither(arg.reader.read(None, token), Result.ParamError.Exception(arg, token, _)) match{
+          case Left(ex) => ParamResult.Failure(Seq(ex))
+          case Right(Left(errMsg)) => ParamResult.Failure(Seq(Result.ParamError.Failed(arg, token, errMsg)))
+          case Right(Right(v)) => ParamResult.Success(Computed(v))
         }
     }
   }
 
   def makeReadVarargsCall[B](arg: ArgSig[B],
-                             values: Seq[String]): FailMaybe = {
+                             values: Seq[String]): ParamResult = {
     val attempts =
       for(token <- values)
-        yield Util.tryEither(arg.reader.read(None, token), Result.ParamError.Exception(arg, token, _)) match{
+        yield tryEither(arg.reader.read(None, token), Result.ParamError.Exception(arg, token, _)) match{
           case Left(x) => Left(x)
           case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, token, errMsg))
           case Right(Right(v)) => Right(v)
         }
 
     attempts.collect{ case Left(x) => x} match{
-      case Nil => FailMaybe.Success(Computed(attempts.collect{case Right(x) => x}))
-      case bad => FailMaybe.Failure(bad)
+      case Nil => ParamResult.Success(Computed(attempts.collect{case Right(x) => x}))
+      case bad => ParamResult.Failure(bad)
     }
   }
 }

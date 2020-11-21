@@ -58,6 +58,7 @@ object Result{
 
   sealed trait ParamError
   object ParamError{
+
     /**
      * Something went wrong trying to de-serialize the input parameter
      */
@@ -75,3 +76,10 @@ object Result{
   }
 }
 
+
+
+sealed trait ParamResult
+object ParamResult{
+  case class Failure(errors: Seq[Result.ParamError]) extends ParamResult
+  case class Success(value: Computed[Any]) extends ParamResult
+}
