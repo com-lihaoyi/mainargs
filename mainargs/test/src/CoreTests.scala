@@ -42,18 +42,18 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
         List("foo", "bar", "qux", "ex")
       )
       val evaledArgs = check.mains.value.map(_.argSigs.map{
-        case ArgSig(name, s, tpe, docs, None, _, _) => (name, tpe, docs, None)
-        case ArgSig(name, s, tpe, docs, Some(default), _, _) =>
-          (name, tpe, docs, Some(default(CoreBase)))
+        case ArgSig(name, s, docs, None, _, _, parser) => (name, docs, None, parser)
+        case ArgSig(name, s, docs, Some(default), _, _, parser) =>
+          (name, docs, Some(default(CoreBase)), parser)
       })
 
       assert(
         evaledArgs == List(
           List(),
-          List(("i", "int", None, None)),
+          List(("i", None, None, ArgParser.IntRead)),
           List(
-            ("i", "int", None, None),
-            ("s", "str", Some("Pass in a custom `s` to override it"), Some("lols"))
+            ("i", None, None, ArgParser.IntRead),
+            ("s", Some("Pass in a custom `s` to override it"), Some("lols"), ArgParser.StringRead)
           ),
           List()
         )
@@ -79,7 +79,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
       test("missingParams"){
         test - assertMatch(check.parseInvoke(List("bar"))){
           case Result.Error.MismatchedArguments(
-            List(ArgSig("i", _, _, _, _, false, _)),
+            List(ArgSig("i", _, _, _, false, _, _)),
             Nil,
             Nil,
             None
@@ -87,7 +87,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
         }
         test - assertMatch(check.parseInvoke(List("qux", "--s", "omg"))){
           case Result.Error.MismatchedArguments(
-          List(ArgSig("i", _, _, _, _, false, _)),
+          List(ArgSig("i", _, _, _, false, _, _)),
             Nil,
             Nil,
             None
@@ -117,21 +117,21 @@ object CorePositionalDisabledOnlyTests extends TestSuite{
       test - check(
         List("bar", "2"),
         MismatchedArguments(
-          missing = List(ArgSig("i",None,"int",None,None,false,false)),
+          missing = List(ArgSig("i",None,None,None,false,false, ArgParser.IntRead)),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "2"),
         MismatchedArguments(
-          missing = List(ArgSig("i",None,"int",None,None,false,false)),
+          missing = List(ArgSig("i",None,None,None,false,false, ArgParser.IntRead)),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "3", "x"),
         MismatchedArguments(
-          missing = List(ArgSig("i",None,"int",None,None,false,false)),
+          missing = List(ArgSig("i",None,None,None,false,false, ArgParser.IntRead)),
           unknown = List("3", "x")
         )
       )
@@ -145,7 +145,7 @@ object CorePositionalDisabledOnlyTests extends TestSuite{
       test("invalidParams") - check(
         List("bar", "lol"),
         MismatchedArguments(
-          missing = List(ArgSig("i",None,"int",None,None,false,false)),
+          missing = List(ArgSig("i",None,None,None,false,false, ArgParser.IntRead)),
           unknown = List("lol"),
         )
       )
@@ -154,7 +154,7 @@ object CorePositionalDisabledOnlyTests extends TestSuite{
     test("redundantParams") - check(
       List("qux", "1", "--i", "2"),
       MismatchedArguments(
-        missing = List(ArgSig("i", None,"int",None,None,false,false)),
+        missing = List(ArgSig("i", None,None,None,false,false, ArgParser.IntRead)),
         unknown = List("1", "--i", "2"),
       )
     )
@@ -187,7 +187,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
         val parsed = check.parseInvoke(List("qux", "1", "--i", "2"))
         assertMatch(parsed){
           case Result.Error.MismatchedArguments(
-          Nil, Nil, Seq((ArgSig("i", _, _, _, _, false, _), Seq("1", "2"))), None
+          Nil, Nil, Seq((ArgSig("i", _, _, _, false, _, _), Seq("1", "2"))), None
           ) =>
         }
       }

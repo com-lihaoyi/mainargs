@@ -82,7 +82,7 @@ class Macros(val c: Context) {
     }
 
     val argListSymbol = q"${c.fresh[TermName](TermName("argsList"))}"
-    val extrasSymbol = q"${c.fresh[TermName](TermName("extras"))}"
+
     val defaults = for ((arg, i) <- flattenedArgLists.zipWithIndex) yield {
       val arg = TermName(c.freshName())
       hasDefault(i).map(defaultName =>
@@ -103,12 +103,6 @@ class Macros(val c: Context) {
 
       val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
 
-      val default =
-        if (vararg) q"scala.Some(scala.Nil)"
-        else defaultOpt match {
-          case Some(defaultExpr) => q"scala.Some($defaultExpr($baseArgSym))"
-          case None => q"scala.None"
-        }
       val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
 
       val instantiateArg = argAnnotation match{
@@ -123,43 +117,25 @@ class Macros(val c: Context) {
           _root_.mainargs.ArgSig[$curCls](
             scala.Option($argVal.name).getOrElse(${arg.name.toString}),
             $argVal.short match{ case '\u0000' => None; case c => Some(c)},
-            _root_.mainargs.MacroHelpers.getShortName[$varargUnwrappedType],
             scala.Option($argVal.doc),
             $defaultOpt,
             $vararg,
             $argVal.flag,
+            implicitly[_root_.mainargs.ArgParser[$varargUnwrappedType]]
           )
         }
       """
 
-      val reader =
-        if(vararg) q"""
-          _root_.mainargs.MacroHelpers.makeReadVarargsCall[$varargUnwrappedType](
-            $argSigVal,
-            $extrasSymbol
-          )
-        """ else q"""
-          _root_.mainargs.MacroHelpers.makeReadCall[$varargUnwrappedType](
-            $argListSymbol,
-            $default,
-            $argSigVal
-          )
-        """
-      c.internal.setPos(reader, methodPos)
-      (reader, argSig, (argSigVal, vararg))
+      c.internal.setPos(argSig, methodPos)
+      (argSig, argSigVal)
     }
 
-    val (readArgs, argSigs, argSigValVarargs) = readArgSigs.unzip3
-    val (argSigVals, varargs) = argSigValVarargs.unzip
-    val (argNames, argNameCasts) = flattenedArgLists.map { arg =>
+    val (argSigs, argSigVals) = readArgSigs.unzip
+    val argNameCasts = flattenedArgLists.zipWithIndex.map { case (arg, i) =>
       val (vararg, unwrappedType) = unwrapVarargType(arg)
-      (
-        pq"${arg.name.toTermName}",
-        if (!vararg) q"${arg.name.toTermName}.value.asInstanceOf[$unwrappedType]"
-        else q"${arg.name.toTermName}.value.asInstanceOf[Seq[$unwrappedType]]: _*"
-
-      )
-    }.unzip
+      if (!vararg) q"$argListSymbol($i).value.asInstanceOf[$unwrappedType]"
+      else q"$argListSymbol($i).value.asInstanceOf[Seq[$unwrappedType]]: _*"
+    }
 
 
     val methVal = TermName(c.freshName("arg"))
@@ -170,14 +146,8 @@ class Macros(val c: Context) {
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),
-      ${varargs.contains(true)},
-      ($baseArgSym: $curCls, $argListSymbol: Map[String, String], $extrasSymbol: Seq[String]) =>
-        _root_.mainargs.MacroHelpers.validate(Seq(..$readArgs)).flatMap{
-          case _root_.scala.List(..$argNames) =>
-            _root_.mainargs.Result.Success(
-              _root_.mainargs.Computed($baseArgSym.${TermName(methodName)}(..$argNameCasts))
-            )
-        }
+      ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.mainargs.Computed[_root_.scala.Any]]) =>
+        _root_.mainargs.Computed($baseArgSym.${TermName(methodName)}(..$argNameCasts))
     )
     }"""
 //    println(res)

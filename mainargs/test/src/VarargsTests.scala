@@ -41,7 +41,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(invoked){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-          ArgSig("nums", _, "int", _, _, true, _),
+          ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
           "--nums",
           """java.lang.NumberFormatException: For input string: "--nums""""
         )
@@ -53,7 +53,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
         Result.ParamError.Failed(
-        ArgSig("nums", _, "int", _, _, true, _),
+        ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
         "--nums",
         "java.lang.NumberFormatException: For input string: \"--nums\""
         )
@@ -69,7 +69,7 @@ object VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Error.MismatchedArguments(
-          List(ArgSig("first", _, _, _, _, false, _)),
+          List(ArgSig("first", _, _, _, false, _, ArgParser.IntRead)),
           Nil,
           Nil,
           None
@@ -82,12 +82,12 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig("nums", _, "int", _, _, true, _),
+            ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
             "aa",
             "java.lang.NumberFormatException: For input string: \"aa\""
           ),
           Result.ParamError.Failed(
-            ArgSig("nums", _, "int", _, _, true, _),
+            ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
             "bb",
             "java.lang.NumberFormatException: For input string: \"bb\""
           )
@@ -99,7 +99,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig("first", _, "int", _, _, fals, _),
+            ArgSig("first", _, _, _, fals, _, ArgParser.IntRead),
             "aa",
             "java.lang.NumberFormatException: For input string: \"aa\""
           )

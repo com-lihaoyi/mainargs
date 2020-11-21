@@ -16,7 +16,17 @@ case class ClassMains[T](main: MainData[Any], companion: () => Any)
  * calling a Scala method.
  */
 case class MainData[B](name: String,
-                   argSigs: Seq[ArgSig[B]],
-                   doc: Option[String],
-                   varargs: Boolean,
-                   invoke0: (B, Map[String, String], Seq[String]) => Result[Computed[Any]])
+                       argSigs: Seq[ArgSig[B]],
+                       doc: Option[String],
+                       invokeRaw: (B, Seq[Computed[Any]]) => Computed[Any]){
+  def invoke0(base: B, kvs: Map[String, String], extras: Seq[String]): Result[Computed[Any]] = {
+    val readArgValues = for(a <- argSigs) yield {
+      if (a.varargs) MacroHelpers.makeReadVarargsCall(a, extras)
+      else MacroHelpers.makeReadCall(kvs, base, a)
+    }
+    MacroHelpers.validate(readArgValues).flatMap{
+      case validated => Result.Success(invokeRaw(base, validated))
+    }
+  }
+  def varargs = argSigs.exists(_.varargs)
+}

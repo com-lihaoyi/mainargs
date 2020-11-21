@@ -9,10 +9,10 @@ import scala.annotation.tailrec
  */
 case class ArgSig[B](name: String,
                      shortName: Option[Char],
-                     typeString: String,
                      doc: Option[String],
                      default: Option[B => Any],
                      varargs: Boolean,
-                     flag: Boolean)
-
-
+                     flag: Boolean,
+                     reader: ArgParser[_]){
+  def typeString = reader.shortName
+}
