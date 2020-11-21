@@ -45,10 +45,10 @@ object Result{
      * Invoking the [[Main]] failed because the arguments provided
      * did not line up with the arguments expected
      */
-    case class MismatchedArguments(missing: Seq[ArgSig[_, _]] = Nil,
+    case class MismatchedArguments(missing: Seq[ArgSig.Simple[_, _]] = Nil,
                                    unknown: Seq[String] = Nil,
-                                   duplicate: Seq[(ArgSig[_, _], Seq[String])] = Nil,
-                                   incomplete: Option[ArgSig[_, _]] = None) extends Error
+                                   duplicate: Seq[(ArgSig.Simple[_, _], Seq[String])] = Nil,
+                                   incomplete: Option[ArgSig.Simple[_, _]] = None) extends Error
     /**
      * Invoking the [[Main]] failed because there were problems
      * deserializing/parsing individual arguments
@@ -62,17 +62,17 @@ object Result{
     /**
      * Something went wrong trying to de-serialize the input parameter
      */
-    case class Failed(arg: AnyArgSig.Terminal[_, _], tokens: Seq[String], errMsg: String) extends ParamError
+    case class Failed(arg: ArgSig.Terminal[_, _], tokens: Seq[String], errMsg: String) extends ParamError
     /**
      * Something went wrong trying to de-serialize the input parameter;
      * the thrown exception is stored in [[ex]]
      */
-    case class Exception(arg: AnyArgSig.Terminal[_, _], tokens: Seq[String], ex: Throwable) extends ParamError
+    case class Exception(arg: ArgSig.Terminal[_, _], tokens: Seq[String], ex: Throwable) extends ParamError
     /**
      * Something went wrong trying to evaluate the default value
      * for this input parameter
      */
-    case class DefaultFailed(arg: ArgSig[_, _], ex: Throwable) extends ParamError
+    case class DefaultFailed(arg: ArgSig.Simple[_, _], ex: Throwable) extends ParamError
   }
 }
 

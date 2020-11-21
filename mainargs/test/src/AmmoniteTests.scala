@@ -3,7 +3,7 @@ import utest._
 
 
 object AmmoniteTests extends TestSuite{
-  implicit object PathRead extends ArgReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
+  implicit object PathRead extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
   @main(
     name = "Ammonite REPL & Script-Runner, 2.2.0",
     doc = "usage: amm [ammonite-options] [script-file [script-options]]")

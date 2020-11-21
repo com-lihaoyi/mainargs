@@ -3,23 +3,23 @@ package mainargs
 import scala.annotation.tailrec
 
 case class TokenGrouping[B](remaining: List[String],
-                            grouped: Map[ArgSig[_, B], Seq[String]])
+                            grouped: Map[ArgSig.Simple[_, B], Seq[String]])
 
 object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
-                   argSigs0: Seq[AnyArgSig[_, B]],
+                   argSigs0: Seq[ArgSig[_, B]],
                    allowPositional: Boolean,
                    allowRepeats: Boolean,
                    allowLeftover: Boolean): Result[TokenGrouping[B]] = {
-    val argSigs: Seq[ArgSig[_, B]] = argSigs0.map(AnyArgSig.flatten(_)).flatten
+    val argSigs: Seq[ArgSig.Simple[_, B]] = argSigs0.map(ArgSig.flatten(_)).flatten
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
-      .toMap[String, ArgSig[_, B]]
+      .toMap[String, ArgSig.Simple[_, B]]
 
     @tailrec def rec(remaining: List[String],
-                     current: Map[ArgSig[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
+                     current: Map[ArgSig.Simple[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
       remaining match{
         case head :: rest  =>
           if (head.startsWith("-")){
@@ -46,7 +46,7 @@ object TokenGrouping{
       }
     }
     def complete(remaining: List[String],
-                 current: Map[ArgSig[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
+                 current: Map[ArgSig.Simple[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
 
       val duplicates = current
         .filter(x => x._2.size > 1 && !x._1.reader.alwaysRepeatable && !allowRepeats)

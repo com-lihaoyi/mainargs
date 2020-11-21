@@ -21,10 +21,10 @@ object MainUtils {
                     extras: Seq[String]): Result[T] = {
     val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] = for(a <- mainData.argSigs0) yield {
       a match{
-        case a: ArgSig[T, B] => Right(makeReadCall(kvs, base, a))
-        case a: LeftoverArgSig[T, B] =>
+        case a: ArgSig.Simple[T, B] => Right(makeReadCall(kvs, base, a))
+        case a: ArgSig.Leftover[T, B] =>
           Right(makeReadVarargsCall(a, extras).map(x => LeftoverTokens(x:_*).asInstanceOf[T]))
-        case a: ClassArgSig[T, B] =>
+        case a: ArgSig.Class[T, B] =>
           Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
       }
     }
@@ -102,7 +102,7 @@ object MainUtils {
   }
   def makeReadCall[T, B](dict: Map[String, Seq[String]],
                          base: B,
-                         arg: ArgSig[T, B]): ParamResult[T] = {
+                         arg: ArgSig.Simple[T, B]): ParamResult[T] = {
     if (arg.flag) ParamResult.Success(dict.contains(arg.name).asInstanceOf[T])
     else{
       def prioritizedDefault = tryEither(
@@ -132,7 +132,7 @@ object MainUtils {
     }
   }
 
-  def makeReadVarargsCall[T, B](arg: LeftoverArgSig[T, B],
+  def makeReadVarargsCall[T, B](arg: ArgSig.Leftover[T, B],
                                 values: Seq[String]): ParamResult[Seq[T]] = {
     val attempts =
       for(token <- values)

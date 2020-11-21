@@ -41,7 +41,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(invoked){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-          LeftoverArgSig("nums", _, _),
+          ArgSig.Leftover("nums", _, _),
           Seq("--nums"),
           """java.lang.NumberFormatException: For input string: "--nums""""
         )
@@ -53,7 +53,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-          LeftoverArgSig("nums", _, _),
+          ArgSig.Leftover("nums", _, _),
           Seq("--nums"),
           "java.lang.NumberFormatException: For input string: \"--nums\""
           )
@@ -69,7 +69,7 @@ object VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Error.MismatchedArguments(
-          Seq(ArgSig("first", _, _, _, _, _)),
+          Seq(ArgSig.Simple("first", _, _, _, _, _)),
           Nil,
           Nil,
           None
@@ -82,12 +82,12 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-          LeftoverArgSig("nums", _, _),
+          ArgSig.Leftover("nums", _, _),
             Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           ),
           Result.ParamError.Failed(
-          LeftoverArgSig("nums", _, _),
+          ArgSig.Leftover("nums", _, _),
             Seq("bb"),
             "java.lang.NumberFormatException: For input string: \"bb\""
           )
@@ -99,7 +99,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig("first", _, _, _, _, _),
+            ArgSig.Simple("first", _, _, _, _, _),
             Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           )

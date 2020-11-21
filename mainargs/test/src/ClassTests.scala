@@ -33,7 +33,7 @@ object ClassTests extends TestSuite{
       test("missing") {
         fooParser.constructRaw(Seq("--x", "1")) ==>
           Result.Error.MismatchedArguments(
-            Seq(ArgSig("y",None,None,None,false,mainargs.ArgReader.IntRead)),
+            Seq(ArgSig.Simple("y",None,None,None,false,mainargs.TokensReader.IntRead)),
             List(),
             List(),
             None
@@ -50,7 +50,7 @@ object ClassTests extends TestSuite{
       test("missingInner"){
         barParser.constructRaw(Seq("--w", "--x", "1", "--z", "xxx")) ==>
           Result.Error.MismatchedArguments(
-            Seq(ArgSig("y",None,None,None,false,mainargs.ArgReader.IntRead)),
+            Seq(ArgSig.Simple("y",None,None,None,false,mainargs.TokensReader.IntRead)),
             List(),
             List(),
             None
@@ -59,7 +59,7 @@ object ClassTests extends TestSuite{
       test("missingOuter"){
         barParser.constructRaw(Seq("--w", "--x", "1", "--y", "2")) ==>
           Result.Error.MismatchedArguments(
-            Seq(ArgSig("zzzz",Some('z'),None,None,false,mainargs.ArgReader.StringRead)),
+            Seq(ArgSig.Simple("zzzz",Some('z'),None,None,false,mainargs.TokensReader.StringRead)),
             List(),
             List(),
             None
@@ -70,8 +70,8 @@ object ClassTests extends TestSuite{
         barParser.constructRaw(Seq("--w", "--x", "1")) ==>
           Result.Error.MismatchedArguments(
             Seq(
-              ArgSig("y",None,None,None,false,mainargs.ArgReader.IntRead),
-              ArgSig("zzzz",Some('z'),None,None,false,mainargs.ArgReader.StringRead)
+              ArgSig.Simple("y",None,None,None,false,mainargs.TokensReader.IntRead),
+              ArgSig.Simple("zzzz",Some('z'),None,None,false,mainargs.TokensReader.StringRead)
             ),
             List(),
             List(),
@@ -82,8 +82,8 @@ object ClassTests extends TestSuite{
         assertMatch(barParser.constructRaw(Seq("--w","--x", "xxx", "--y", "hohoho", "-z", "xxx"))) {
           case Result.Error.InvalidArguments(
             Seq(
-              Result.ParamError.Failed(ArgSig("x", None, None, None, false, _), Seq("xxx"), _),
-              Result.ParamError.Failed(ArgSig("y", None, None, None, false, _), Seq("hohoho"), _)
+              Result.ParamError.Failed(ArgSig.Simple("x", None, None, None, false, _), Seq("xxx"), _),
+              Result.ParamError.Failed(ArgSig.Simple("y", None, None, None, false, _), Seq("hohoho"), _)
           )
           ) =>
         }

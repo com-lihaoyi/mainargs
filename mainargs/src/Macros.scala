@@ -101,7 +101,7 @@ class Macros(val c: Context) {
         case _ => q"new _root_.mainargs.arg()"
       }
       val argSig = q"""
-        _root_.mainargs.AnyArgSig.create[${arg.typeSignature}, $curCls](
+        _root_.mainargs.ArgSig.create[${arg.typeSignature}, $curCls](
           ${arg.name.toString},
           $instantiateArg,
           $defaultOpt

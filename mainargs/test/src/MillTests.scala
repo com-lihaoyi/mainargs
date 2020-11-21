@@ -4,7 +4,7 @@ import utest._
 
 object MillTests extends TestSuite{
 
-  implicit object PathRead extends ArgReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
+  implicit object PathRead extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
   @main(
     name = "Mill Build Tool",
     doc = "usage: mill [mill-options] [target [target-options]]")
