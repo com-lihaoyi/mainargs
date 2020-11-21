@@ -24,9 +24,8 @@ object TokenGrouping{
           if (head.startsWith("-")){
             keywordArgMap.get(if(head.startsWith("--")) head.drop(2) else head.drop(1)) match {
               case Some(cliArg) =>
-                if (cliArg.flag) {
-                  rec(rest, Util.appendMap(current, cliArg, ""))
-                } else rest match{
+                if (cliArg.flag) rec(rest, current + (cliArg -> Vector()))
+                else rest match{
                   case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
                   case Nil => Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
                 }

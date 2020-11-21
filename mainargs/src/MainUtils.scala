@@ -86,20 +86,20 @@ object MainUtils {
     catch{ case e: Throwable => Left(error(e))}
   }
   def makeReadCall[T, B](dict: Map[String, Seq[String]],
-                      base: B,
-                      arg: ArgSig[T, B]): ParamResult[T] = {
-    def prioritizedDefault = tryEither(
-      arg.default.map(_(base)).orElse(arg.reader.default),
-      Result.ParamError.DefaultFailed(arg, _)
-    ) match{
-      case Left(ex) => ParamResult.Failure(Seq(ex))
-      case Right(v) => ParamResult.Success(v)
-    }
-    val optResult = dict.get(arg.name) match{
-      case None => prioritizedDefault
-      case Some(tokens) =>
-        if (arg.flag) ParamResult.Success(Some(true.asInstanceOf[T]))
-        else {
+                         base: B,
+                         arg: ArgSig[T, B]): ParamResult[T] = {
+    if (arg.flag) ParamResult.Success(dict.contains(arg.name).asInstanceOf[T])
+    else{
+      def prioritizedDefault = tryEither(
+        arg.default.map(_(base)).orElse(arg.reader.default),
+        Result.ParamError.DefaultFailed(arg, _)
+      ) match{
+        case Left(ex) => ParamResult.Failure(Seq(ex))
+        case Right(v) => ParamResult.Success(v)
+      }
+      val optResult = dict.get(arg.name) match{
+        case None => prioritizedDefault
+        case Some(tokens) =>
           tokens.foldLeft(prioritizedDefault){
             case (f: ParamResult.Failure, token) => f
             case (ParamResult.Success(value), token) =>
@@ -112,9 +112,9 @@ object MainUtils {
                 case Right(Right(v)) => ParamResult.Success(Some(v))
               }
           }
-        }
+      }
+      optResult.map(_.get)
     }
-    optResult.map(_.get)
   }
 
   def makeReadVarargsCall[T, B](arg: ArgSig[T, B],
