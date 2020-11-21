@@ -4,7 +4,7 @@ import java.io.PrintStream
 object ParserForMethods{
   def apply[B](base: B): ParserForMethods[B] = macro Macros.parserForMethods[B]
 }
-class ParserForMethods[B](val mains: BasedMains[B]){
+class ParserForMethods[B](val mains: MethodMains[B]){
   def helpText(totalWidth: Int = 100, docsOnNewLine: Boolean = false) = {
     Renderer.formatMainMethods(mains.value, totalWidth, docsOnNewLine)
   }
@@ -67,7 +67,7 @@ class ParserForMethods[B](val mains: BasedMains[B]){
 object ParserForClass{
   def apply[T]: ParserForClass[T] = macro Macros.parserForClass[T]
 }
-class ParserForClass[T](val mains: ClassMains[T]){
+class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
   def helpText(totalWidth: Int = 100, docsOnNewLine: Boolean = false) = {
     Renderer.formatMainMethodSignature(
       mains.main,

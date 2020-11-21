@@ -19,7 +19,7 @@ object MainUtils {
           if (a.varargs) Right(makeReadVarargsCall(a, extras))
           else Right(makeReadCall(kvs, base, a))
         case a: ClassArgSig[T, B] =>
-          Left(invoke0(a.reader.mains.companion(), a.reader.mains.main, kvs, extras))
+          Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
       }
     }
 
@@ -54,7 +54,7 @@ object MainUtils {
       grouping.remaining
     ) catch{case e: Throwable => Result.Error.Exception(e)}
   }
-  def runMains[B](mains: BasedMains[B],
+  def runMains[B](mains: MethodMains[B],
                   args: Seq[String],
                   allowPositional: Boolean,
                   allowRepeats: Boolean): Either[Result.Error.Early, (MainData[Any, B], Result[Any])] = {

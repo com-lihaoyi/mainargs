@@ -12,16 +12,16 @@ import scala.reflect.macros.blackbox.Context
 class Macros(val c: Context) {
   import c.universe._
 
-  def parserForMethods[B: c.WeakTypeTag](base: c.Expr[B]): c.Expr[ParserForMethods[B]] = {
+  def parserForMethods[B: c.WeakTypeTag](base: c.Expr[B]): c.Tree = {
     val allRoutes = getAllRoutesForClass(weakTypeOf[B])
-    c.Expr[ParserForMethods[B]](q"""
+    q"""
       new _root_.mainargs.ParserForMethods(
-        _root_.mainargs.BasedMains[${weakTypeOf[B]}](_root_.scala.List(..$allRoutes), () => $base)
+        _root_.mainargs.MethodMains[${weakTypeOf[B]}](_root_.scala.List(..$allRoutes), () => $base)
       )
-    """)
+    """
   }
 
-  def parserForClass[T: c.WeakTypeTag]: c.Expr[ParserForClass[T]] = {
+  def parserForClass[T: c.WeakTypeTag]: c.Tree = {
 
     val cls = weakTypeOf[T].typeSymbol.asClass
     val companionObj = weakTypeOf[T].typeSymbol.companion
@@ -35,14 +35,14 @@ class Macros(val c: Context) {
       weakTypeOf[T]
     )
 
-    c.Expr[ParserForClass[T]](q"""
+    q"""
       new _root_.mainargs.ParserForClass(
         _root_.mainargs.ClassMains[${weakTypeOf[T]}](
           $route.asInstanceOf[_root_.mainargs.MainData[${weakTypeOf[T]}, Any]],
           () => $companionObj
         )
       )
-    """)
+    """
   }
   def getValsOrMeths(curCls: Type): Iterable[MethodSymbol] = {
     def isAMemberOfAnyRef(member: Symbol) = {
@@ -100,56 +100,40 @@ class Macros(val c: Context) {
       (vararg, unwrappedType)
     }
 
-    val readArgSigs = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
+    val argSigs  = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
       val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
 
-      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg]).headOption
+      val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg])
 
       val instantiateArg = argAnnotation match{
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
         case _ => q"new _root_.mainargs.arg()"
       }
-      val argVal = TermName(c.freshName("arg"))
-      val argSigVal = TermName(c.freshName("argSig"))
       val argSig = q"""
-        val $argSigVal: _root_.mainargs.AnyArgSig[$varargUnwrappedType, $curCls] = implicitly[_root_.mainargs.AnyArgParser[$varargUnwrappedType]] match{
-          case _root_.mainargs.AnyArgParser.Simple(parser) =>
-            val $argVal = $instantiateArg
-            _root_.mainargs.ArgSig[$varargUnwrappedType, $curCls](
-              scala.Option($argVal.name).getOrElse(${arg.name.toString}),
-              $argVal.short match{ case '\u0000' => None; case c => Some(c)},
-              scala.Option($argVal.doc),
-              $defaultOpt,
-              $vararg,
-              $argVal.flag,
-              parser
-            )
-          case _root_.mainargs.AnyArgParser.Class(parser) =>
-            _root_.mainargs.ClassArgSig(parser)
-        }
+        _root_.mainargs.AnyArgSig.create[$varargUnwrappedType, $curCls](
+          ${arg.name.toString},
+          $instantiateArg,
+          $vararg,
+          $defaultOpt
+        ).widen[_root_.scala.Any]
       """
 
       c.internal.setPos(argSig, methodPos)
-      (argSig, q"$argSigVal.widen[_root_.scala.Any]")
+      argSig
     }
 
-    val (argSigs, argSigVals) = readArgSigs.unzip
     val argNameCasts = flattenedArgLists.zipWithIndex.map { case (arg, i) =>
       val (vararg, unwrappedType) = unwrapVarargType(arg)
       if (!vararg) q"$argListSymbol($i).asInstanceOf[$unwrappedType]"
       else q"$argListSymbol($i).asInstanceOf[Seq[$unwrappedType]]: _*"
     }
 
-
-    val methVal = TermName(c.freshName("arg"))
     val res = q"""{
-    val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
-    ..$argSigs
-    _root_.mainargs.MainData[$returnType, $curCls](
-      _root_.scala.Option($methVal.name).getOrElse($methodName),
-      _root_.scala.Seq(..$argSigVals),
-      _root_.scala.Option($methVal.doc),
+    _root_.mainargs.MainData.create[$returnType, $curCls](
+      $methodName,
+      new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail}),
+      Seq(..$argSigs),
       ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
         $baseArgSym.${TermName(methodName)}(..$argNameCasts)
       }

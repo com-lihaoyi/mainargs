@@ -20,24 +20,47 @@ sealed trait AnyArgSig[T, B]{
   def widen[V >: T] = this.asInstanceOf[AnyArgSig[V, B]]
 }
 object AnyArgSig{
+  def create[T, B](name: String,
+                   arg: mainargs.arg,
+                   vararg: Boolean, defaultOpt: Option[B => T])
+                  (implicit argParser: AnyArgParser[T]): AnyArgSig[T, B] = {
+    argParser match{
+      case AnyArgParser.Class(parser) => ClassArgSig(parser.mains)
+      case AnyArgParser.Simple(parser) =>
+        ArgSig[T, B](
+          scala.Option(arg.name).getOrElse(name),
+          arg.short match{ case '\u0000' => None; case c => Some(c)},
+          scala.Option(arg.doc),
+          defaultOpt,
+          vararg,
+          arg.flag,
+          parser
+        )
+
+    }
+  }
   def flatten[T, B](x: AnyArgSig[T, B]): Seq[ArgSig[T, B]] = x match{
     case x: ArgSig[T, B] => Seq(x)
-    case x: ClassArgSig[T, B] => x.reader.mains.main.argSigs.flatMap(x => flatten(x.asInstanceOf[ArgSig[T, B]]))
+    case x: ClassArgSig[T, B] => x.reader.main.argSigs.flatMap(x => flatten(x.asInstanceOf[ArgSig[T, B]]))
   }
 }
-case class ClassArgSig[T, B](reader: ParserForClass[T]) extends AnyArgSig[T, B]
+case class ClassArgSig[T, B](reader: ClassMains[T]) extends AnyArgSig[T, B]
 
 sealed trait AnyArgParser[T]
 object AnyArgParser{
   implicit def createSimple[T: ArgReader]: Simple[T] = Simple(implicitly[ArgReader[T]])
   case class Simple[T](x: ArgReader[T]) extends AnyArgParser[T]
 
-  implicit def createClass[T: ParserForClass]: Class[T] = Class(implicitly[ParserForClass[T]])
-  case class Class[T](x: ParserForClass[T]) extends AnyArgParser[T]
+  implicit def createClass[T: SubParser]: Class[T] = Class(implicitly[SubParser[T]])
+  case class Class[T](x: SubParser[T]) extends AnyArgParser[T]
+}
+
+trait SubParser[T]{
+  def mains: ClassMains[T]
 }
 
 
-case class BasedMains[B](value: Seq[MainData[Any, B]], base: () => B)
+case class MethodMains[B](value: Seq[MainData[Any, B]], base: () => B)
 
 case class ClassMains[T](main: MainData[T, Any], companion: () => Any)
 
@@ -59,3 +82,16 @@ case class MainData[T, B](name: String,
   val varargs = argSigs.exists(_.varargs)
 }
 
+object MainData{
+  def create[T, B](methodName: String,
+                   main: mainargs.main,
+                   argSigs: Seq[AnyArgSig[Any, B]],
+                   invokeRaw: (B, Seq[Any]) => T) = {
+    MainData(
+      Option(main.name).getOrElse(methodName),
+      argSigs,
+      Option(main.doc),
+      invokeRaw
+    )
+  }
+}
