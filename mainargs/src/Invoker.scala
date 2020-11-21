@@ -1,6 +1,6 @@
 package mainargs
 
-object MainUtils {
+object Invoker {
   def construct[T](cep: ClassMains[T],
                    args: Seq[String],
                    allowPositional: Boolean,
@@ -74,7 +74,7 @@ object MainUtils {
           allowRepeats,
           main.leftoverArgSig.nonEmpty
         )
-        .flatMap(MainUtils.invoke(mains.base(), main, _))
+        .flatMap(Invoker.invoke(mains.base(), main, _))
     )
     mains.value match{
       case Seq() => Left(Result.Error.Early.NoMainMethodsDetected())

@@ -57,7 +57,7 @@ class ParserForMethods[B](val mains: MethodMains[B]){
   def runRaw0(args: Seq[String],
               allowPositional: Boolean = false,
               allowRepeats: Boolean = false): Either[Result.Error.Early, (MainData[_, B], Result[Any])] = {
-    for (tuple <- MainUtils.runMains(mains, args, allowPositional, allowRepeats)) yield {
+    for (tuple <- Invoker.runMains(mains, args, allowPositional, allowRepeats)) yield {
       val (errMsg, res) = tuple
       (errMsg, res)
     }
@@ -120,6 +120,6 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
   def constructRaw(args: Seq[String],
                    allowPositional: Boolean = false,
                    allowRepeats: Boolean = false): Result[T] = {
-    MainUtils.construct[T](mains, args, allowPositional, allowRepeats)
+    Invoker.construct[T](mains, args, allowPositional, allowRepeats)
   }
 }

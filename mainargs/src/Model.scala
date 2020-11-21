@@ -85,7 +85,7 @@ case class ClassMains[T](main: MainData[T, Any], companion: () => Any)
  * [[argSigs]] for each argument, and a macro-generated [[invoke0]]
  * that performs all the necessary argument parsing and de-serialization.
  *
- * Realistically, you will probably spend most of your time calling [[MainUtils.invoke]]
+ * Realistically, you will probably spend most of your time calling [[Invoker.invoke]]
  * instead, which provides a nicer API to call it that mimmicks the API of
  * calling a Scala method.
  */
