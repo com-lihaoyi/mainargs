@@ -12,7 +12,7 @@ object HelloWorldTests extends TestSuite{
             myNum: Int = 2,
             @arg(flag = true, doc = "Example flag")
             bool: Boolean) = {
-      println(foo * myNum + " " + bool)
+      foo * myNum + " " + bool
     }
   }
 

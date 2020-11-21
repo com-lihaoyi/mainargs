@@ -10,7 +10,7 @@ object Renderer {
       .map(x =>
         x.name.length + 2 + // name and --
         x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
-        (if (x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
+        (if (x.flag || x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
       )
       .max
   }
@@ -46,9 +46,7 @@ object Renderer {
         yield formatMainMethodSignature(main, 2, totalWidth, leftColWidth, docsOnNewLine)
 
       normalizeNewlines(
-        s"""
-           |
-           |Available subcommands:
+        s"""Available subcommands:
            |
            |${methods.mkString(newLine)}""".stripMargin
       )
@@ -69,9 +67,9 @@ object Renderer {
     def formatArg(lhs: String, rhs: String) = {
       val lhsPadded = lhs.padTo(leftColWidth, ' ')
       val rhsPadded = rhs.linesIterator.mkString(newLine)
-      if (docsOnNewLine){
-        if (rhs.isEmpty) s"$leftIndentStr  $lhs"
-        else s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
+      if (rhs.isEmpty) s"$leftIndentStr  $lhs"
+      else if (docsOnNewLine){
+        s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
       }else {
         s"$leftIndentStr  $lhsPadded  $rhsPadded"
       }
@@ -79,7 +77,7 @@ object Renderer {
     val argStrings = for ((lhs, rhs) <- args) yield formatArg(lhs, rhs)
 
     val mainDocSuffix = main.doc match{
-      case Some(d) => newLine + softWrap(d, leftIndent, totalWidth)
+      case Some(d) => newLine + leftIndentStr + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
     s"""$leftIndentStr${main.name}$mainDocSuffix
@@ -87,25 +85,28 @@ object Renderer {
   }
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
-    val oneLine = s.linesIterator.mkString(" ").split(' ').filter(_.nonEmpty)
+    if (s.isEmpty) s
+    else {
+      val oneLine = s.linesIterator.mkString(" ").split(' ').filter(_.nonEmpty)
 
-    lazy val indent = " " * leftOffset
+      lazy val indent = " " * leftOffset
 
-    val output = new StringBuilder(oneLine.head)
-    var currentLineWidth = oneLine.head.length
-    for(chunk <- oneLine.tail){
-      val addedWidth = currentLineWidth + chunk.length + 1
-      if (addedWidth > maxWidth){
-        output.append(newLine + indent)
-        output.append(chunk)
-        currentLineWidth = chunk.length
-      } else{
-        currentLineWidth = addedWidth
-        output.append(' ')
-        output.append(chunk)
+      val output = new StringBuilder(oneLine.head)
+      var currentLineWidth = oneLine.head.length
+      for (chunk <- oneLine.tail) {
+        val addedWidth = currentLineWidth + chunk.length + 1
+        if (addedWidth > maxWidth) {
+          output.append(newLine + indent)
+          output.append(chunk)
+          currentLineWidth = chunk.length
+        } else {
+          currentLineWidth = addedWidth
+          output.append(' ')
+          output.append(chunk)
+        }
       }
+      output.mkString
     }
-    output.mkString
   }
 
   def pluralize(s: String, n: Int) = if (n == 1) s else s + "s"
@@ -153,9 +154,7 @@ object Renderer {
         val missingStr =
           if (missing.isEmpty) ""
           else {
-            val chunks =
-              for (x <- missing)
-              yield s"--${x.name} <${x.typeString}>"
+            val chunks = missing.map(renderArgShort(_))
 
             val argumentsStr = pluralize("argument", chunks.length)
             s"Missing $argumentsStr: ${chunks.mkString(" ")}" + Renderer.newLine

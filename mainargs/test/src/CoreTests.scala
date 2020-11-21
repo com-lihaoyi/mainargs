@@ -32,7 +32,24 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
 
   val tests = Tests {
     test("formatMainMethods"){
-      check.parser.helpText()
+      val parsed = check.parser.helpText()
+      val expected =
+        """Available subcommands:
+          |
+          |  foo
+          |
+          |  bar
+          |    --i <int>
+          |
+          |  qux
+          |  Qux is a function that does stuff
+          |    --i <int>
+          |    --s <str>  Pass in a custom `s` to override it
+          |
+          |  ex
+          |""".stripMargin
+
+      parsed ==> expected
     }
     test("basicModelling") {
       val names = check.mains.value.map(_.name)
