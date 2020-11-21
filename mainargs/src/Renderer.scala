@@ -20,25 +20,21 @@ object Renderer {
 
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort[B](arg: ArgSig.Simple[_, B]) = {
-    val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
-    val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
-    s"$shortPrefix--${arg.name}$typeSuffix"
+  def renderArgShort[B](arg: ArgSig.Terminal[_, B]) = arg match{
+    case arg: ArgSig.Simple[_, B] =>
+      val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
+      val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
+      s"$shortPrefix--${arg.name}$typeSuffix"
+    case arg: ArgSig.Leftover[_, B] =>
+      s"${arg.name} <${arg.reader.shortName}>..."
   }
 
-  def renderLeftoverArgShort[B](arg: ArgSig.Leftover[_, B]) = {
-    s"${arg.name} <${arg.reader.shortName}>..."
-  }
 
   def renderArg[B](arg: ArgSig.Terminal[_, B],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val wrapped = softWrap(arg.doc.getOrElse(""), leftOffset, wrappedWidth - leftOffset)
-    val renderedArg = arg match{
-      case a: ArgSig.Leftover[_, B] => renderLeftoverArgShort(a)
-      case a: ArgSig.Simple[_, B] => renderArgShort(a)
-    }
-    (renderedArg, wrapped)
+    (renderArgShort(arg), wrapped)
   }
 
   def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int, docsOnNewLine: Boolean) = {
@@ -207,13 +203,10 @@ object Renderer {
         val thingies = x.map{
           case Result.ParamError.Exception(p, vs, ex) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
-            val rendered = p match{
-            case a: ArgSig.Leftover[_, B] => renderLeftoverArgShort(a)
-            case a: ArgSig.Simple[_, B] => renderArgShort(a)
-          }
-            s"$rendered = $literalV failed to parse with $ex"
+
+            s"${renderArgShort(p)} = $literalV failed to parse with $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
-            s"${Renderer.renderArgShort(p)}'s default value failed to evaluate with $ex"
+            s"${renderArgShort(p)}'s default value failed to evaluate with $ex"
         }
 
         Left(

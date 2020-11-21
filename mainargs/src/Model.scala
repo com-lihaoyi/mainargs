@@ -97,7 +97,7 @@ case class MainData[T, B](name: String,
   val argSigs = argSigs0.iterator.flatMap(ArgSig.flatten).toVector
   val leftoverArgSig: Seq[ArgSig.Leftover[_, _]] =
     argSigs.collect{case x: ArgSig.Leftover[_, B] => x}
-  
+
 }
 
 object MainData{
