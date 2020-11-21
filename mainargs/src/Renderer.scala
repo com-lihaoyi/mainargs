@@ -1,8 +1,20 @@
 package mainargs
 
-import java.io.{PrintStream, PrintWriter, StringWriter}
+import java.io.{PrintWriter, StringWriter}
 
 object Renderer {
+
+  def getLeftColWidth[T, B](items: Seq[ArgSig[T, B]]) = {
+    if (items.isEmpty) 0
+    else items
+      .map(x =>
+        x.name.length + 2 + // name and --
+        x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
+        (if (x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
+      )
+      .max
+  }
+
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
   def renderArgShort[B](arg: ArgSig[_, B]) = {
@@ -24,11 +36,14 @@ object Renderer {
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int) = {
+
+  def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int, docsOnNewLine: Boolean) = {
+    val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSigs))
     if (mainMethods.isEmpty) ""
     else{
       val methods =
-        for(main <- mainMethods) yield formatMainMethodSignature(main, 2, totalWidth)
+        for(main <- mainMethods)
+        yield formatMainMethodSignature(main, 2, totalWidth, leftColWidth, docsOnNewLine)
 
       normalizeNewlines(
         s"""
@@ -42,22 +57,33 @@ object Renderer {
 
   def formatMainMethodSignature[B](main: MainData[_, B],
                                    leftIndent: Int,
-                                   totalWidth: Int) = {
-    // +2 for space on right of left col
-    val args = main.argSigs.map(renderArg(_, leftIndent + 8, totalWidth))
+                                   totalWidth: Int,
+                                   leftColWidth: Int,
+                                   docsOnNewLine: Boolean) = {
+
+    val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
+    val args = main.argSigs.map(renderArg(_, argLeftCol, totalWidth))
 
     val leftIndentStr = " " * leftIndent
-    val argStrings = for((lhs, rhs) <- args) yield {
-      val rhsPadded = Predef.augmentString(rhs).lines.mkString(newLine)
-      s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
+
+    def formatArg(lhs: String, rhs: String) = {
+      val lhsPadded = lhs.padTo(leftColWidth, ' ')
+      val rhsPadded = rhs.linesIterator.mkString(newLine)
+      if (docsOnNewLine){
+        if (rhs.isEmpty) s"$leftIndentStr  $lhs"
+        else s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
+      }else {
+        s"$leftIndentStr  $lhsPadded  $rhsPadded"
+      }
     }
+    val argStrings = for ((lhs, rhs) <- args) yield formatArg(lhs, rhs)
+
     val mainDocSuffix = main.doc match{
       case Some(d) => newLine + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
-
     s"""$leftIndentStr${main.name}$mainDocSuffix
-       |${argStrings.map(_ + newLine).mkString("\n")}""".stripMargin
+       |${argStrings.map(_ + newLine).mkString}""".stripMargin
   }
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
@@ -96,10 +122,23 @@ object Renderer {
   }
   def renderResult[B, T](main: MainData[_, B],
                          result: Result[T],
-                         totalWidth: Int): Either[String, T] = {
+                         totalWidth: Int,
+                         printHelpOnError: Boolean,
+                         docsOnNewLine: Boolean): Either[String, T] = {
 
     def expectedMsg() = {
-      Renderer.formatMainMethodSignature(main, 0, totalWidth)
+      if (printHelpOnError) {
+        val leftColWidth = getLeftColWidth(main.argSigs)
+        "Expected Signature: " +
+        Renderer.formatMainMethodSignature(
+          main,
+          0,
+          totalWidth,
+          leftColWidth,
+          docsOnNewLine
+        )
+      }
+      else ""
     }
     result match{
       case Result.Success(x) => Right(x)
@@ -116,10 +155,10 @@ object Renderer {
           else {
             val chunks =
               for (x <- missing)
-                yield "--" + x.name + ": " + x.typeString
+              yield s"--${x.name} <${x.typeString}>"
 
             val argumentsStr = pluralize("argument", chunks.length)
-            s"Missing $argumentsStr: (${chunks.mkString(", ")})" + Renderer.newLine
+            s"Missing $argumentsStr: ${chunks.mkString(" ")}" + Renderer.newLine
           }
 
 
@@ -153,10 +192,7 @@ object Renderer {
 
         Left(
           Renderer.normalizeNewlines(
-            s"""$missingStr$unknownStr$duplicateStr$incompleteStr
-               |Arguments provided did not match expected signature:
-               |
-               |${expectedMsg()}
+            s"""$missingStr$unknownStr$duplicateStr$incompleteStr${expectedMsg()}
                |""".stripMargin
           )
         )
@@ -175,11 +211,7 @@ object Renderer {
         Left(
           Renderer.normalizeNewlines(
             s"""The following $argumentsStr failed to parse:
-               |
                |${thingies.mkString(Renderer.newLine)}
-               |
-               |expected signature:
-               |
                |${expectedMsg()}
             """.stripMargin
           )

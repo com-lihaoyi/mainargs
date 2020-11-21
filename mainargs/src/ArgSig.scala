@@ -1,5 +1,4 @@
 package mainargs
-import scala.annotation.tailrec
 
 /**
  * Models what is known by the router about a single argument: that it has
@@ -52,9 +51,9 @@ case class ClassMains[T](main: MainData[T, Any], companion: () => Any)
  * calling a Scala method.
  */
 case class MainData[T, B](name: String,
-                       argSigs0: Seq[AnyArgSig[Any, B]],
-                       doc: Option[String],
-                       invokeRaw: (B, Seq[Any]) => T){
+                          argSigs0: Seq[AnyArgSig[Any, B]],
+                          doc: Option[String],
+                          invokeRaw: (B, Seq[Any]) => T){
 
   val argSigs = argSigs0.iterator.flatMap(AnyArgSig.flatten).toVector
   val varargs = argSigs.exists(_.varargs)

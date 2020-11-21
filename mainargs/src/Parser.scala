@@ -5,15 +5,17 @@ object ParserForMethods{
   def apply[B](base: B): ParserForMethods[B] = macro Macros.parserForMethods[B]
 }
 class ParserForMethods[B](val mains: BasedMains[B]){
-  def helpText(totalWidth: Int = 95) = {
-    Renderer.formatMainMethods(mains.value, totalWidth)
+  def helpText(totalWidth: Int = 95, docsOnNewLine: Boolean = false) = {
+    Renderer.formatMainMethods(mains.value, totalWidth, docsOnNewLine)
   }
   def runOrExit(args: Seq[String],
                 allowPositional: Boolean = false,
                 allowRepeats: Boolean = false,
                 stderr: PrintStream = System.err,
-                totalWidth: Int = 95): Any = {
-    runEither(args, allowPositional, allowRepeats, totalWidth) match{
+                totalWidth: Int = 95,
+                printHelpOnExit: Boolean = true,
+                docsOnNewLine: Boolean = false): Any = {
+    runEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
       case Left(msg) =>
         stderr.println(msg)
         sys.exit(1)
@@ -22,8 +24,11 @@ class ParserForMethods[B](val mains: BasedMains[B]){
   }
   def runOrThrow(args: Seq[String],
                  allowPositional: Boolean = false,
-                 allowRepeats: Boolean = false): Any = {
-    runEither(args, allowPositional, allowRepeats) match{
+                 allowRepeats: Boolean = false,
+                 totalWidth: Int = 95,
+                 printHelpOnExit: Boolean = true,
+                 docsOnNewLine: Boolean = false): Any = {
+    runEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
     }
@@ -31,11 +36,13 @@ class ParserForMethods[B](val mains: BasedMains[B]){
   def runEither(args: Seq[String],
                 allowPositional: Boolean = false,
                 allowRepeats: Boolean = false,
-                totalWidth: Int = 95): Either[String, Any] = {
+                totalWidth: Int = 95,
+                printHelpOnExit: Boolean = true,
+                docsOnNewLine: Boolean = false): Either[String, Any] = {
     runRaw0(args, allowPositional, allowRepeats) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
-        Renderer.renderResult(main, res, totalWidth)
+        Renderer.renderResult(main, res, totalWidth, printHelpOnExit, docsOnNewLine)
     }
   }
   def runRaw(args: Seq[String],
@@ -61,15 +68,17 @@ object ParserForClass{
   def apply[T]: ParserForClass[T] = macro Macros.parserForClass[T]
 }
 class ParserForClass[T](val mains: ClassMains[T]){
-  def helpText(totalWidth: Int = 95) = {
-    Renderer.formatMainMethodSignature(mains.main, 0, totalWidth)
+  def helpText(totalWidth: Int = 95, docsOnNewLine: Boolean = false) = {
+    Renderer.formatMainMethodSignature(mains.main, 0, totalWidth, 0, docsOnNewLine)
   }
   def constructOrExit(args: Seq[String],
                       allowPositional: Boolean = false,
                       allowRepeats: Boolean = false,
                       stderr: PrintStream = System.err,
-                      totalWidth: Int = 95): T = {
-    constructEither(args, allowPositional, allowRepeats, totalWidth) match{
+                      totalWidth: Int = 95,
+                      printHelpOnExit: Boolean = true,
+                      docsOnNewLine: Boolean = false): T = {
+    constructEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
       case Left(msg) =>
         stderr.println(msg)
         sys.exit(1)
@@ -79,8 +88,10 @@ class ParserForClass[T](val mains: ClassMains[T]){
   def constructOrThrow(args: Seq[String],
                        allowPositional: Boolean = false,
                        allowRepeats: Boolean = false,
-                       totalWidth: Int = 95): T = {
-    constructEither(args, allowPositional, allowRepeats, totalWidth) match{
+                       totalWidth: Int = 95,
+                       printHelpOnExit: Boolean = true,
+                       docsOnNewLine: Boolean = false): T = {
+    constructEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
     }
@@ -88,12 +99,16 @@ class ParserForClass[T](val mains: ClassMains[T]){
   def constructEither(args: Seq[String],
                       allowPositional: Boolean = false,
                       allowRepeats: Boolean = false,
-                      totalWidth: Int = 95): Either[String, T] = {
+                      totalWidth: Int = 95,
+                      printHelpOnExit: Boolean = true,
+                      docsOnNewLine: Boolean = false): Either[String, T] = {
 
     Renderer.renderResult[Any, T](
       mains.main,
       constructRaw(args, allowPositional, allowRepeats),
-      totalWidth
+      totalWidth,
+      printHelpOnExit,
+      docsOnNewLine
     )
   }
   def constructRaw(args: Seq[String],

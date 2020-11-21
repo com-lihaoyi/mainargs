@@ -35,3 +35,12 @@ class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule wit
     def testFrameworks = Seq("utest.runner.Framework")
   }
 }
+
+trait ExampleModule extends ScalaModule{
+  def scalaVersion = "2.13.1"
+  def moduleDeps = Seq(mainargs("2.13.1"))
+}
+object testhello extends ExampleModule
+object testhello2 extends ExampleModule
+object testclass extends ExampleModule
+object testclassarg extends ExampleModule

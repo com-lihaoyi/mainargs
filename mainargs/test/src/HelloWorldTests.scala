@@ -3,12 +3,16 @@ import utest._
 
 
 object HelloWorldTests extends TestSuite{
+
   object Main{
     @main
-    def run(@arg(short = 'f') foo: String,
-            @arg(name = "my-num") myNum: Int = 2,
-            @arg(flag = true) bool: Boolean = false) = {
-      foo * myNum + " " + bool
+    def run(@arg(short = 'f', doc = "String to print repeatedly")
+            foo: String,
+            @arg(name = "my-num", doc = "How many times to print string")
+            myNum: Int = 2,
+            @arg(flag = true, doc = "Example flag")
+            bool: Boolean) = {
+      println(foo * myNum + " " + bool)
     }
   }
 
