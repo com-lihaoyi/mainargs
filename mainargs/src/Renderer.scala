@@ -87,7 +87,7 @@ object Renderer {
   }
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
-    val oneLine = Predef.augmentString(s).lines.mkString(" ").split(' ')
+    val oneLine = s.linesIterator.mkString(" ").split(' ').filter(_.nonEmpty)
 
     lazy val indent = " " * leftOffset
 

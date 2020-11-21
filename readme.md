@@ -298,7 +298,7 @@ of useful configuration values:
   `false`
 
 - `totalWidth: Int`: how wide to re-format the `doc` strings to when printing
-  the help text. Defaults to `95`
+  the help text. Defaults to `100`
 
 - `printHelpOnExit: Boolean`: whether or not to print the full help text when
   argument parsing fails. This can be convenient, but potentially very verbose

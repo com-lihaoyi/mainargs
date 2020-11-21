@@ -7,6 +7,16 @@ class ArgReader[T](val shortName: String,
                    val allowEmpty: Boolean = false)
 object ArgReader{
   def tryEither[T](f: => T) = try Right(f) catch{case e: Throwable => Left(e.toString)}
+
+  implicit object StringRead extends ArgReader[String]("str", strs => Right(strs.last))
+  implicit object BooleanRead extends ArgReader[Boolean]("bool", strs => tryEither(strs.last.toBoolean))
+  implicit object ByteRead extends ArgReader[Byte]("byte", strs => tryEither(strs.last.toByte))
+  implicit object ShortRead extends ArgReader[Short]("short", strs => tryEither(strs.last.toShort))
+  implicit object IntRead extends ArgReader[Int]("int", strs => tryEither(strs.last.toInt))
+  implicit object LongRead extends ArgReader[Long]("long", strs => tryEither(strs.last.toLong))
+  implicit object FloatRead extends ArgReader[Float]("float", strs => tryEither(strs.last.toFloat))
+  implicit object DoubleRead extends ArgReader[Double]("double", strs => tryEither(strs.last.toDouble))
+
   implicit def OptionRead[T: ArgReader] = new ArgReader[Option[T]](
     implicitly[ArgReader[T]].shortName,
     strs => {
@@ -39,13 +49,24 @@ object ArgReader{
     alwaysRepeatable = true,
     allowEmpty = true
   )
-  implicit object StringRead extends ArgReader[String]("str", strs => Right(strs.last))
-  implicit object BooleanRead extends ArgReader[Boolean]("bool", strs => tryEither(strs.last.toBoolean))
-  implicit object ByteRead extends ArgReader[Byte]("byte", strs => tryEither(strs.last.toByte))
-  implicit object ShortRead extends ArgReader[Short]("short", strs => tryEither(strs.last.toShort))
-  implicit object IntRead extends ArgReader[Int]("int", strs => tryEither(strs.last.toInt))
-  implicit object LongRead extends ArgReader[Long]("long", strs => tryEither(strs.last.toLong))
-  implicit object FloatRead extends ArgReader[Float]("float", strs => tryEither(strs.last.toFloat))
-  implicit object DoubleRead extends ArgReader[Double]("double", strs => tryEither(strs.last.toDouble))
+  implicit def MapRead[K: ArgReader, V: ArgReader] = new ArgReader[Map[K, V]](
+    "k=v",
+    strs => {
+      strs.foldLeft[Either[String, Map[K, V]]](Right(Map())){
+        case (Left(s), _) => Left(s)
+        case (Right(prev), token) =>
+          token.split("=", 2) match{
+            case Array(k, v) =>
+              for {
+                tuple <- Right((k, v)): Either[String, (String, String)]
+                (k, v) = tuple
+                key <- implicitly[ArgReader[K]].read(Seq(k))
+                value <- implicitly[ArgReader[V]].read(Seq(v))
+              }yield prev + (key -> value)
 
+            case _ => Left("parameter must be in k=v format")
+          }
+      }
+    }
+  )
 }
