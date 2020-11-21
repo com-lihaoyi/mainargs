@@ -20,22 +20,23 @@ object Renderer {
   def renderArgShort[B](arg: ArgSig[_, B]) = {
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
     val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
-    if (arg.varargs) s"${arg.name} ..."
-    else s"$shortPrefix--${arg.name}$typeSuffix"
+    s"$shortPrefix--${arg.name}$typeSuffix"
   }
 
-  def renderArg[B](arg: ArgSig[_, B],
+  def renderLeftoverArgShort[B](arg: LeftoverArgSig[_, B]) = {
+    s"${arg.name} <${arg.reader.shortName}>..."
+  }
+
+  def renderArg[B](arg: AnyArgSig.Terminal[_, B],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
-    val docSuffix = arg.doc.getOrElse("")
-    val wrapped = softWrap(
-      docSuffix,
-      leftOffset,
-      wrappedWidth - leftOffset
-    )
-    (renderArgShort(arg), wrapped)
+    val wrapped = softWrap(arg.doc.getOrElse(""), leftOffset, wrappedWidth - leftOffset)
+    val renderedArg = arg match{
+      case a: LeftoverArgSig[_, B] => renderLeftoverArgShort(a)
+      case a: ArgSig[_, B] => renderArgShort(a)
+    }
+    (renderedArg, wrapped)
   }
-
 
   def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int, docsOnNewLine: Boolean) = {
     val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSigs))
@@ -60,7 +61,9 @@ object Renderer {
                                    docsOnNewLine: Boolean) = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
-    val args = main.argSigs.map(renderArg(_, argLeftCol, totalWidth))
+    val args =
+      main.argSigs.map(renderArg(_, argLeftCol, totalWidth)) ++
+      main.leftoverArgSig.map(renderArg(_, argLeftCol, totalWidth))
 
     val leftIndentStr = " " * leftIndent
 
@@ -201,8 +204,11 @@ object Renderer {
         val thingies = x.map{
           case Result.ParamError.Exception(p, vs, ex) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
-            val rendered = {Renderer.renderArgShort(p)}
-            s"$rendered: ${p.typeString} = $literalV failed to parse with $ex"
+            val rendered = p match{
+            case a: LeftoverArgSig[_, B] => renderLeftoverArgShort(a)
+            case a: ArgSig[_, B] => renderArgShort(a)
+          }
+            s"$rendered = $literalV failed to parse with $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
             s"${Renderer.renderArgShort(p)}'s default value failed to evaluate with $ex"
         }

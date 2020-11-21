@@ -10,9 +10,8 @@ case class ArgSig[T, B](name: String,
                         shortName: Option[Char],
                         doc: Option[String],
                         default: Option[B => T],
-                        varargs: Boolean,
                         flag: Boolean,
-                        reader: ArgReader[T]) extends AnyArgSig[T, B]{
+                        reader: ArgReader[T]) extends AnyArgSig.Terminal[T, B]{
   def typeString = reader.shortName
 }
 
@@ -20,39 +19,51 @@ sealed trait AnyArgSig[T, B]{
   def widen[V >: T] = this.asInstanceOf[AnyArgSig[V, B]]
 }
 object AnyArgSig{
+  sealed trait Terminal[T, B] extends AnyArgSig[T, B]{
+    def name: String
+    def doc: Option[String]
+  }
   def create[T, B](name: String,
                    arg: mainargs.arg,
-                   vararg: Boolean, defaultOpt: Option[B => T])
-                  (implicit argParser: AnyArgParser[T]): AnyArgSig[T, B] = {
+                   defaultOpt: Option[B => T])
+                  (implicit argParser: AnyArgReader[T]): AnyArgSig[T, B] = {
     argParser match{
-      case AnyArgParser.Class(parser) => ClassArgSig(parser.mains)
-      case AnyArgParser.Simple(parser) =>
+      case AnyArgReader.Class(parser) => ClassArgSig(parser.mains)
+      case AnyArgReader.Leftover(reader: ArgReader[T]) =>
+        LeftoverArgSig[T, B](Option(arg.name).getOrElse(name), Option(arg.doc), reader)
+      case AnyArgReader.Simple(reader) =>
         ArgSig[T, B](
           scala.Option(arg.name).getOrElse(name),
           arg.short match{ case '\u0000' => None; case c => Some(c)},
           scala.Option(arg.doc),
           defaultOpt,
-          vararg,
           arg.flag,
-          parser
+          reader
         )
-
     }
   }
+
   def flatten[T, B](x: AnyArgSig[T, B]): Seq[ArgSig[T, B]] = x match{
     case x: ArgSig[T, B] => Seq(x)
+    case x: LeftoverArgSig[T, B] => Seq()
     case x: ClassArgSig[T, B] => x.reader.main.argSigs.flatMap(x => flatten(x.asInstanceOf[ArgSig[T, B]]))
   }
 }
 case class ClassArgSig[T, B](reader: ClassMains[T]) extends AnyArgSig[T, B]
+case class LeftoverArgSig[T, B](name: String,
+                                doc: Option[String],
+                                reader: ArgReader[T]) extends AnyArgSig.Terminal[T, B]
 
-sealed trait AnyArgParser[T]
-object AnyArgParser{
+sealed trait AnyArgReader[T]
+object AnyArgReader{
   implicit def createSimple[T: ArgReader]: Simple[T] = Simple(implicitly[ArgReader[T]])
-  case class Simple[T](x: ArgReader[T]) extends AnyArgParser[T]
+  case class Simple[T](x: ArgReader[T]) extends AnyArgReader[T]
 
   implicit def createClass[T: SubParser]: Class[T] = Class(implicitly[SubParser[T]])
-  case class Class[T](x: SubParser[T]) extends AnyArgParser[T]
+  case class Class[T](x: SubParser[T]) extends AnyArgReader[T]
+
+  implicit def createLeftover[T: ArgReader]: Leftover[T] = Leftover(implicitly[ArgReader[T]])
+  case class Leftover[T](reader: ArgReader[T]) extends AnyArgReader[LeftoverTokens[T]]
 }
 
 trait SubParser[T]{
@@ -79,7 +90,12 @@ case class MainData[T, B](name: String,
                           invokeRaw: (B, Seq[Any]) => T){
 
   val argSigs = argSigs0.iterator.flatMap(AnyArgSig.flatten).toVector
-  val varargs = argSigs.exists(_.varargs)
+  val leftoverArgSig: Seq[LeftoverArgSig[_, _]] = argSigs0
+    .flatMap{
+      case x: LeftoverArgSig[_, B] => Some(x)
+      case x: ClassArgSig[_, B] => x.reader.main.leftoverArgSig
+      case _ => None
+    }
 }
 
 object MainData{

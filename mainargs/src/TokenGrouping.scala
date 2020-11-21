@@ -9,12 +9,12 @@ object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
                    argSigs0: Seq[AnyArgSig[_, B]],
                    allowPositional: Boolean,
-                   allowRepeats: Boolean): Result[TokenGrouping[B]] = {
+                   allowRepeats: Boolean,
+                   allowLeftover: Boolean): Result[TokenGrouping[B]] = {
     val argSigs: Seq[ArgSig[_, B]] = argSigs0.map(AnyArgSig.flatten(_)).flatten
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
-      .filter(!_.varargs) // varargs can only be passed positionally
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
       .toMap[String, ArgSig[_, B]]
 
@@ -56,10 +56,9 @@ object TokenGrouping{
         !x.reader.allowEmpty &&
         x.default.isEmpty &&
         !current.contains(x) &&
-        !x.varargs &&
         !x.flag
       )
-      val unknown = if (argSigs.exists(_.varargs)) Nil else remaining
+      val unknown = if (allowLeftover) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty){
         Result.Error.MismatchedArguments(
           missing = missing,

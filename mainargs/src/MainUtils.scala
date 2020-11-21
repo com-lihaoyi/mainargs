@@ -1,23 +1,29 @@
 package mainargs
 
-
 object MainUtils {
   def construct[T](cep: ClassMains[T],
                    args: Seq[String],
                    allowPositional: Boolean,
                    allowRepeats: Boolean): Result[T] = {
-    TokenGrouping.groupArgs(args, cep.main.argSigs, allowPositional, allowRepeats)
+    TokenGrouping
+      .groupArgs(
+        args,
+        cep.main.argSigs,
+        allowPositional,
+        allowRepeats,
+        cep.main.leftoverArgSig.nonEmpty
+      )
       .flatMap(invoke(cep.companion(), cep.main, _))
   }
   def invoke0[T, B](base: B,
-                 mainData: MainData[T, B],
-                 kvs: Map[String, Seq[String]],
-                 extras: Seq[String]): Result[T] = {
+                    mainData: MainData[T, B],
+                    kvs: Map[String, Seq[String]],
+                    extras: Seq[String]): Result[T] = {
     val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] = for(a <- mainData.argSigs0) yield {
       a match{
-        case a: ArgSig[T, B] =>
-          if (a.varargs) Right(makeReadVarargsCall(a, extras))
-          else Right(makeReadCall(kvs, base, a))
+        case a: ArgSig[T, B] => Right(makeReadCall(kvs, base, a))
+        case a: LeftoverArgSig[T, B] =>
+          Right(makeReadVarargsCall(a, extras).map(x => LeftoverTokens(x:_*).asInstanceOf[T]))
         case a: ClassArgSig[T, B] =>
           Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
       }
@@ -60,7 +66,14 @@ object MainUtils {
                   allowRepeats: Boolean): Either[Result.Error.Early, (MainData[Any, B], Result[Any])] = {
     def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = Right(
       main,
-      TokenGrouping.groupArgs(argsList, main.argSigs, allowPositional, allowRepeats)
+      TokenGrouping
+        .groupArgs(
+          argsList,
+          main.argSigs,
+          allowPositional,
+          allowRepeats,
+          main.leftoverArgSig.nonEmpty
+        )
         .flatMap(MainUtils.invoke(mains.base(), main, _))
     )
     mains.value match{
@@ -119,15 +132,15 @@ object MainUtils {
     }
   }
 
-  def makeReadVarargsCall[T, B](arg: ArgSig[T, B],
+  def makeReadVarargsCall[T, B](arg: LeftoverArgSig[T, B],
                                 values: Seq[String]): ParamResult[Seq[T]] = {
     val attempts =
       for(token <- values)
-        yield tryEither(arg.reader.read(Seq(token)), Result.ParamError.Exception(arg, Seq(token), _)) match{
-          case Left(x) => Left(x)
-          case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, Seq(token), errMsg))
-          case Right(Right(v)) => Right(v)
-        }
+      yield tryEither(arg.reader.read(Seq(token)), Result.ParamError.Exception(arg, Seq(token), _)) match{
+        case Left(x) => Left(x)
+        case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, Seq(token), errMsg))
+        case Right(Right(v)) => Right(v)
+      }
 
     attempts.collect{ case Left(x) => x} match{
       case Nil => ParamResult.Success(attempts.collect{case Right(x) => x})

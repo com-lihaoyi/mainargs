@@ -91,18 +91,8 @@ class Macros(val c: Context) {
       )
     }
 
-    def unwrapVarargType(arg: Symbol) = {
-      val vararg = arg.typeSignature.typeSymbol == definitions.RepeatedParamClass
-      val unwrappedType =
-        if (!vararg) arg.typeSignature
-        else arg.typeSignature.asInstanceOf[TypeRef].args(0)
-
-      (vararg, unwrappedType)
-    }
-
     val argSigs  = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
-      val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
 
       val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg])
 
@@ -111,10 +101,9 @@ class Macros(val c: Context) {
         case _ => q"new _root_.mainargs.arg()"
       }
       val argSig = q"""
-        _root_.mainargs.AnyArgSig.create[$varargUnwrappedType, $curCls](
+        _root_.mainargs.AnyArgSig.create[${arg.typeSignature}, $curCls](
           ${arg.name.toString},
           $instantiateArg,
-          $vararg,
           $defaultOpt
         ).widen[_root_.scala.Any]
       """
@@ -124,9 +113,7 @@ class Macros(val c: Context) {
     }
 
     val argNameCasts = flattenedArgLists.zipWithIndex.map { case (arg, i) =>
-      val (vararg, unwrappedType) = unwrapVarargType(arg)
-      if (!vararg) q"$argListSymbol($i).asInstanceOf[$unwrappedType]"
-      else q"$argListSymbol($i).asInstanceOf[Seq[$unwrappedType]]: _*"
+      q"$argListSymbol($i).asInstanceOf[${arg.typeSignature}]"
     }
 
     val res = q"""{
