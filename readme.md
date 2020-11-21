@@ -9,6 +9,8 @@ MainArgs is a small, dependency-free library for command line argument parsing.
   - [Re-using Argument Sets](#re-using-argument-sets)
   - [Annotations](#annotations)
   - [Customization](#customization)
+  - [Custom Argument Parsers](#custom-argument-parsers)
+
 # Usage
 
 ## Parsing Main Method Parameters
