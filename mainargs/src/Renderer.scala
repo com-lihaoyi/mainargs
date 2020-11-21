@@ -164,8 +164,8 @@ object Renderer {
       case Result.Error.InvalidArguments(x) =>
         val argumentsStr = pluralize("argument", x.length)
         val thingies = x.map{
-          case Result.ParamError.Exception(p, v, ex) =>
-            val literalV = Util.literalize(v)
+          case Result.ParamError.Exception(p, vs, ex) =>
+            val literalV = vs.map(Util.literalize(_)).mkString(" ")
             val rendered = {Renderer.renderArgShort(p)}
             s"$rendered: ${p.typeString} = $literalV failed to parse with $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>

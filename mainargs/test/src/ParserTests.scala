@@ -43,7 +43,7 @@ object ParserTests extends TestSuite{
       }
     }
     test("runEitherSingle"){
-      singleMethodParser.runEither(Array("5", "x")) ==> Right("xxxxx")
+      singleMethodParser.runEither(Array("5", "x"), allowPositional = true) ==> Right("xxxxx")
     }
     test("constructEither"){
       classParser.constructEither(Array("--code", "println(1)")) ==>

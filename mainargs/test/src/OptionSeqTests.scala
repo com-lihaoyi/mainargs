@@ -9,6 +9,12 @@ object OptionSeqTests extends TestSuite{
 
     @main
     def runSeq(seq: Seq[Int]) = seq
+
+    @main
+    def runVec(seq: Vector[Int]) = seq
+
+    @main
+    def runInt(int: Int) = int
   }
 
   val tests = Tests {
@@ -32,9 +38,22 @@ object OptionSeqTests extends TestSuite{
         ParserForMethods(Main).runOrThrow(Array("runSeq", "--seq", "123")) ==>
           Seq(123)
       }
-      test {
-        ParserForMethods(Main).runOrThrow(Array("runSeq", "--seq", "123", "--seq", "456")) ==>
-          Seq(123, 456)
+    }
+    test("vec"){
+      ParserForMethods(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
+        Vector(123, 456)
+    }
+    test("allowRepeats"){
+      test("true"){
+        ParserForMethods(Main)
+          .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = true) ==>
+          456
+      }
+      test("false"){
+        intercept[Exception]{
+          ParserForMethods(Main)
+            .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = false)
+        }
       }
     }
   }

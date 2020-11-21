@@ -20,6 +20,9 @@ class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule wit
 
   def scalacPluginIvyDeps = Agg(ivy"com.lihaoyi::acyclic:0.2.0")
 
+  def ivyDeps = Agg(
+    ivy"org.scala-lang.modules::scala-collection-compat:2.1.4",
+  )
   def compileIvyDeps = Agg(
     ivy"org.scala-lang:scala-reflect:$crossScalaVersion",
     ivy"com.lihaoyi::acyclic:0.2.0"

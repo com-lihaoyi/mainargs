@@ -62,12 +62,12 @@ object Result{
     /**
      * Something went wrong trying to de-serialize the input parameter
      */
-    case class Failed(arg: ArgSig[_, _], token: String, errMsg: String) extends ParamError
+    case class Failed(arg: ArgSig[_, _], tokens: Seq[String], errMsg: String) extends ParamError
     /**
      * Something went wrong trying to de-serialize the input parameter;
      * the thrown exception is stored in [[ex]]
      */
-    case class Exception(arg: ArgSig[_, _], token: String, ex: Throwable) extends ParamError
+    case class Exception(arg: ArgSig[_, _], tokens: Seq[String], ex: Throwable) extends ParamError
     /**
      * Something went wrong trying to evaluate the default value
      * for this input parameter

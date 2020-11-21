@@ -13,7 +13,7 @@ case class ArgSig[T, B](name: String,
                         default: Option[B => T],
                         varargs: Boolean,
                         flag: Boolean,
-                        reader: ArgParser[T]) extends AnyArgSig[T, B]{
+                        reader: ArgReader[T]) extends AnyArgSig[T, B]{
   def typeString = reader.shortName
 }
 
@@ -30,8 +30,8 @@ case class ClassArgSig[T, B](reader: ParserForClass[T]) extends AnyArgSig[T, B]
 
 sealed trait AnyArgParser[T]
 object AnyArgParser{
-  implicit def createSimple[T: ArgParser]: Simple[T] = Simple(implicitly[ArgParser[T]])
-  case class Simple[T](x: ArgParser[T]) extends AnyArgParser[T]
+  implicit def createSimple[T: ArgReader]: Simple[T] = Simple(implicitly[ArgReader[T]])
+  case class Simple[T](x: ArgReader[T]) extends AnyArgParser[T]
 
   implicit def createClass[T: ParserForClass]: Class[T] = Class(implicitly[ParserForClass[T]])
   case class Class[T](x: ParserForClass[T]) extends AnyArgParser[T]

@@ -36,7 +36,7 @@ REPL-specific args:
   --class-based        Wrap user code in classes rather than singletons, typically for Java serialization
                        friendliness.
 """
-  implicit object PathRead extends ArgParser[os.Path]("path", (prev, s) => Right(os.Path(s, os.pwd)))
+  implicit object PathRead extends ArgReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
   @main(
     name = "Ammonite REPL & Script-Runner, 2.2.0",
     doc = "usage: amm [ammonite-options] [script-file [script-options]]")

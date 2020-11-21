@@ -4,8 +4,9 @@ package mainargs
 object MainUtils {
   def construct[T](cep: ClassMains[T],
                    args: Seq[String],
-                   allowPositional: Boolean): Result[T] = {
-    TokenGrouping.groupArgs(args, cep.main.argSigs, allowPositional)
+                   allowPositional: Boolean,
+                   allowRepeats: Boolean): Result[T] = {
+    TokenGrouping.groupArgs(args, cep.main.argSigs, allowPositional, allowRepeats)
       .flatMap(invoke(cep.companion(), cep.main, _))
   }
   def invoke0[T, B](base: B,
@@ -54,11 +55,12 @@ object MainUtils {
     ) catch{case e: Throwable => Result.Error.Exception(e)}
   }
   def runMains[B](mains: BasedMains[B],
-                     args: Seq[String],
-                     allowPositional: Boolean): Either[Result.Error.Early, (MainData[Any, B], Result[Any])] = {
+                  args: Seq[String],
+                  allowPositional: Boolean,
+                  allowRepeats: Boolean): Either[Result.Error.Early, (MainData[Any, B], Result[Any])] = {
     def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = Right(
       main,
-      TokenGrouping.groupArgs(argsList, main.argSigs, allowPositional)
+      TokenGrouping.groupArgs(argsList, main.argSigs, allowPositional, allowRepeats)
         .flatMap(MainUtils.invoke(mains.base(), main, _))
     )
     mains.value match{
@@ -91,26 +93,26 @@ object MainUtils {
     if (arg.flag) ParamResult.Success(dict.contains(arg.name).asInstanceOf[T])
     else{
       def prioritizedDefault = tryEither(
-        arg.default.map(_(base)).orElse(arg.reader.default),
+        arg.default.map(_(base)),
         Result.ParamError.DefaultFailed(arg, _)
       ) match{
         case Left(ex) => ParamResult.Failure(Seq(ex))
         case Right(v) => ParamResult.Success(v)
       }
-      val optResult = dict.get(arg.name) match{
+      val tokens = dict.get(arg.name) match{
+        case None =>  if (arg.reader.allowEmpty) Some(Nil) else None
+        case Some(tokens) => Some(tokens)
+      }
+      val optResult = tokens match{
         case None => prioritizedDefault
         case Some(tokens) =>
-          tokens.foldLeft(prioritizedDefault){
-            case (f: ParamResult.Failure, token) => f
-            case (ParamResult.Success(value), token) =>
-              tryEither(
-                arg.reader.read(value, token),
-                Result.ParamError.Exception(arg, token, _)
-              ) match{
-                case Left(ex) => ParamResult.Failure(Seq(ex))
-                case Right(Left(errMsg)) => ParamResult.Failure(Seq(Result.ParamError.Failed(arg, token, errMsg)))
-                case Right(Right(v)) => ParamResult.Success(Some(v))
-              }
+          tryEither(
+            arg.reader.read(tokens),
+            Result.ParamError.Exception(arg, tokens, _)
+          ) match{
+            case Left(ex) => ParamResult.Failure(Seq(ex))
+            case Right(Left(errMsg)) => ParamResult.Failure(Seq(Result.ParamError.Failed(arg, tokens, errMsg)))
+            case Right(Right(v)) => ParamResult.Success(Some(v))
           }
       }
       optResult.map(_.get)
@@ -121,9 +123,9 @@ object MainUtils {
                                 values: Seq[String]): ParamResult[Seq[T]] = {
     val attempts =
       for(token <- values)
-        yield tryEither(arg.reader.read(None, token), Result.ParamError.Exception(arg, token, _)) match{
+        yield tryEither(arg.reader.read(Seq(token)), Result.ParamError.Exception(arg, Seq(token), _)) match{
           case Left(x) => Left(x)
-          case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, token, errMsg))
+          case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, Seq(token), errMsg))
           case Right(Right(v)) => Right(v)
         }
 

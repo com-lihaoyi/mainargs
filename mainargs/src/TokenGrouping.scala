@@ -8,7 +8,8 @@ case class TokenGrouping[B](remaining: List[String],
 object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
                    argSigs0: Seq[AnyArgSig[_, B]],
-                   allowPositional: Boolean): Result[TokenGrouping[B]] = {
+                   allowPositional: Boolean,
+                   allowRepeats: Boolean): Result[TokenGrouping[B]] = {
     val argSigs: Seq[ArgSig[_, B]] = argSigs0.map(AnyArgSig.flatten(_)).flatten
 
     val flatArgs = flatArgs0.toList
@@ -48,11 +49,11 @@ object TokenGrouping{
                  current: Map[ArgSig[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
 
       val duplicates = current
-        .filter(x => x._2.size > 1 && !x._1.reader.alwaysRepeatable)
+        .filter(x => x._2.size > 1 && !x._1.reader.alwaysRepeatable && !allowRepeats)
         .toSeq
 
       val missing = argSigs.filter(x =>
-        x.reader.default.isEmpty &&
+        !x.reader.allowEmpty &&
         x.default.isEmpty &&
         !current.contains(x) &&
         !x.varargs &&

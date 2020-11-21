@@ -3,21 +3,25 @@ import utest._
 
 
 object MillTests extends TestSuite{
-  implicit def MapParser[K: ArgParser, V: ArgParser] = new ArgParser[Map[K, V]](
+  implicit def MapParser[K: ArgReader, V: ArgReader] = new ArgReader[Map[K, V]](
     "k=v",
-    (prev, s) =>{
+    strs => {
+      strs.foldLeft[Either[String, Map[K, V]]](Right(Map())){
+        case (Left(s), _) => Left(s)
+        case (Right(prev), token) =>
+          token.split("=", 2) match{
+            case Array(k, v) =>
+              for {
+                tuple <- Right((k, v)): Either[String, (String, String)]
+                (k, v) = tuple
+                key <- implicitly[ArgReader[K]].read(Seq(k))
+                value <- implicitly[ArgReader[V]].read(Seq(v))
+              }yield prev + (key -> value)
 
-      for {
-        tuple <- s.split("=", 2) match{
-          case Array(k, v) => Right((k, v))
-          case _ => Left("parameter must be in k=v format")
-        }
-        (k, v) = tuple
-        key <- implicitly[ArgParser[K]].read(implicitly[ArgParser[K]].default, k)
-        value <- implicitly[ArgParser[V]].read(implicitly[ArgParser[V]].default, v)
-      }yield prev.get + (key -> value)
-    },
-    default0 = Some(Map())
+            case _ => Left("parameter must be in k=v format")
+          }
+      }
+    }
   )
   """
 Mill Build Tool
@@ -51,7 +55,7 @@ usage: mill [mill-options] [target [target-options]]
   -j, --jobs           Allow processing N targets in parallel. Use 1 to disable parallel and 0 to use as much threads as available processors.
   -b, --bell           Ring the bell once if the run completes successfully, twice if it fails.
 """
-  implicit object PathRead extends ArgParser[os.Path]("path", (prev, s) => Right(os.Path(s, os.pwd)))
+  implicit object PathRead extends ArgReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
   @main(
     name = "Mill Build Tool",
     doc = "usage: mill [mill-options] [target [target-options]]")

@@ -42,7 +42,7 @@ object VarargsTests extends TestSuite{
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
           ArgSig("nums", _, _, _, true, _, _),
-          "--nums",
+          Seq("--nums"),
           """java.lang.NumberFormatException: For input string: "--nums""""
         )
         ))=>
@@ -54,7 +54,7 @@ object VarargsTests extends TestSuite{
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
           ArgSig("nums", _, _, _, true, _, _),
-          "--nums",
+          Seq("--nums"),
           "java.lang.NumberFormatException: For input string: \"--nums\""
           )
         ))=>
@@ -83,12 +83,12 @@ object VarargsTests extends TestSuite{
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
             ArgSig("nums", _, _, _, true, _, _),
-            "aa",
+            Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           ),
           Result.ParamError.Failed(
             ArgSig("nums", _, _, _, true, _, _),
-            "bb",
+            Seq("bb"),
             "java.lang.NumberFormatException: For input string: \"bb\""
           )
         ))=>
@@ -100,7 +100,7 @@ object VarargsTests extends TestSuite{
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
             ArgSig("first", _, _, _, false, _, _),
-            "aa",
+            Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           )
         ))=>
