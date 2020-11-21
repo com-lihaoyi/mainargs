@@ -44,3 +44,7 @@ object testhello extends ExampleModule
 object testhello2 extends ExampleModule
 object testclass extends ExampleModule
 object testclassarg extends ExampleModule
+object testoptseq extends ExampleModule
+object testcustom extends ExampleModule{
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib:0.7.1")
+}
