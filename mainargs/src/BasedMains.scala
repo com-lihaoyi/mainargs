@@ -1,5 +1,7 @@
 package mainargs
 import acyclic.skipped
+import mainargs.Util.FailMaybe
+
 import scala.language.experimental.macros
 
 case class BasedMains[B](value: Seq[MainData[B]], base: () => B)
@@ -16,17 +18,41 @@ case class ClassMains[T](main: MainData[Any], companion: () => Any)
  * calling a Scala method.
  */
 case class MainData[B](name: String,
-                       argSigs: Seq[ArgSig[B]],
+                       argSigs0: Seq[AnyArgSig[B]],
                        doc: Option[String],
                        invokeRaw: (B, Seq[Computed[Any]]) => Computed[Any]){
   def invoke0(base: B, kvs: Map[String, String], extras: Seq[String]): Result[Computed[Any]] = {
-    val readArgValues = for(a <- argSigs) yield {
-      if (a.varargs) MacroHelpers.makeReadVarargsCall(a, extras)
-      else MacroHelpers.makeReadCall(kvs, base, a)
+    val readArgValues: Seq[Either[Result[Computed[Any]], FailMaybe]] = for(a <- argSigs0) yield {
+      a match{
+        case a: ArgSig[B] =>
+          if (a.varargs) Right(MacroHelpers.makeReadVarargsCall(a, extras))
+          else Right(MacroHelpers.makeReadCall(kvs, base, a))
+        case a: ClassArgSig[_, B] =>
+          Left(a.reader.mains.main.invoke0(a.reader.mains.companion(), kvs, extras))
+      }
     }
-    MacroHelpers.validate(readArgValues).flatMap{
-      case validated => Result.Success(invokeRaw(base, validated))
+
+    val validated = {
+      val lefts = readArgValues
+        .collect{
+          case Left(Result.Error.InvalidArguments(lefts)) => lefts
+          case Right(Left(failure)) => failure
+        }
+        .flatten
+      if (lefts.nonEmpty) Result.Error.InvalidArguments(lefts)
+      else Result.Success(
+        readArgValues.collect{
+          case Left(Result.Success(x)) => x
+          case Right(Right(x)) => x
+        }
+      )
     }
+
+    val res = validated.flatMap{ validated =>
+      Result.Success(invokeRaw(base, validated))
+    }
+    res
   }
-  def varargs = argSigs.exists(_.varargs)
+  val argSigs = argSigs0.iterator.flatMap(AnyArgSig.flatten).toVector
+  val varargs = argSigs.exists(_.varargs)
 }

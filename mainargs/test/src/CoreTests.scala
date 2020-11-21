@@ -79,7 +79,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
       test("missingParams"){
         test - assertMatch(check.parseInvoke(List("bar"))){
           case Result.Error.MismatchedArguments(
-            List(ArgSig("i", _, _, _, false, _, _)),
+            Seq(ArgSig("i", _, _, _, false, _, _)),
             Nil,
             Nil,
             None
@@ -87,7 +87,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
         }
         test - assertMatch(check.parseInvoke(List("qux", "--s", "omg"))){
           case Result.Error.MismatchedArguments(
-          List(ArgSig("i", _, _, _, false, _, _)),
+            Seq(ArgSig("i", _, _, _, false, _, _)),
             Nil,
             Nil,
             None

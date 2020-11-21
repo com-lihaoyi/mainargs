@@ -69,7 +69,7 @@ object VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Error.MismatchedArguments(
-          List(ArgSig("first", _, _, _, false, _, ArgParser.IntRead)),
+          Seq(ArgSig("first", _, _, _, false, _, ArgParser.IntRead)),
           Nil,
           Nil,
           None

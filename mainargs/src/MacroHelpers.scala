@@ -4,12 +4,6 @@ import scala.language.experimental.macros
 
 object MacroHelpers{
 
-  def validate(args: Seq[Util.FailMaybe]): Result[Seq[Computed[Any]]] = {
-    val lefts = args.collect{case Left(x) => x}.flatten
-    if (lefts.nonEmpty) Result.Error.InvalidArguments(lefts)
-    else Result.Success(args.collect{case Right(x) => x})
-  }
-
   def makeReadCall[B](dict: Map[String, String],
                       base: B,
                       arg: ArgSig[B]): Util.FailMaybe = {

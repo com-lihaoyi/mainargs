@@ -1,4 +1,7 @@
 package mainargs
+
+import java.io.{PrintStream, PrintWriter, StringWriter}
+
 object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
@@ -102,6 +105,12 @@ object Renderer {
     result match{
       case Result.Success(x) => Right(x)
       case err: Result.Error.Early => Left(renderEarlyError(err))
+      case Result.Error.Exception(t) =>
+        val s = new StringWriter()
+        val ps = new PrintWriter(s)
+        t.printStackTrace(ps)
+        ps.close()
+        Left(s.toString)
       case Result.Error.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""

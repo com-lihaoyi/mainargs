@@ -16,7 +16,7 @@ class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule wit
       Developer("lihaoyi", "Li Haoyi","https://github.com/lihaoyi")
     )
   )
-  def scalacOptions = Seq("-P:acyclic:force")
+//  def scalacOptions = Seq("-P:acyclic:force")
 
   def scalacPluginIvyDeps = Agg(ivy"com.lihaoyi::acyclic:0.2.0")
 

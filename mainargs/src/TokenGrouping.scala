@@ -7,8 +7,9 @@ case class TokenGrouping[B](remaining: List[String],
 
 object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
-                   argSigs: Seq[ArgSig[B]],
+                   argSigs0: Seq[AnyArgSig[B]],
                    allowPositional: Boolean): Result[TokenGrouping[B]] = {
+    val argSigs = argSigs0.flatMap(AnyArgSig.flatten)
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs

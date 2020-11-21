@@ -112,17 +112,20 @@ class Macros(val c: Context) {
       val argVal = TermName(c.freshName("arg"))
       val argSigVal = TermName(c.freshName("argSig"))
       val argSig = q"""
-        val $argSigVal = {
-          val $argVal = $instantiateArg
-          _root_.mainargs.ArgSig[$curCls](
-            scala.Option($argVal.name).getOrElse(${arg.name.toString}),
-            $argVal.short match{ case '\u0000' => None; case c => Some(c)},
-            scala.Option($argVal.doc),
-            $defaultOpt,
-            $vararg,
-            $argVal.flag,
-            implicitly[_root_.mainargs.ArgParser[$varargUnwrappedType]]
-          )
+        val $argSigVal: _root_.mainargs.AnyArgSig[$curCls] = implicitly[_root_.mainargs.AnyArgParser[$varargUnwrappedType]] match{
+          case _root_.mainargs.AnyArgParser.Simple(parser) =>
+            val $argVal = $instantiateArg
+            _root_.mainargs.ArgSig[$curCls](
+              scala.Option($argVal.name).getOrElse(${arg.name.toString}),
+              $argVal.short match{ case '\u0000' => None; case c => Some(c)},
+              scala.Option($argVal.doc),
+              $defaultOpt,
+              $vararg,
+              $argVal.flag,
+              parser
+            )
+          case _root_.mainargs.AnyArgParser.Class(parser) =>
+            _root_.mainargs.ClassArgSig(parser)
         }
       """
 
@@ -146,8 +149,9 @@ class Macros(val c: Context) {
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),
-      ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.mainargs.Computed[_root_.scala.Any]]) =>
+      ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.mainargs.Computed[_root_.scala.Any]]) => {
         _root_.mainargs.Computed($baseArgSym.${TermName(methodName)}(..$argNameCasts))
+      }
     )
     }"""
 //    println(res)
