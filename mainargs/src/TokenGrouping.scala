@@ -3,22 +3,22 @@ package mainargs
 import scala.annotation.tailrec
 
 case class TokenGrouping[B](remaining: List[String],
-                            grouped: Map[ArgSig[B], String])
+                            grouped: Map[ArgSig[_, B], Seq[String]])
 
 object TokenGrouping{
   def groupArgs[B](flatArgs0: Seq[String],
-                   argSigs0: Seq[AnyArgSig[B]],
+                   argSigs0: Seq[AnyArgSig[_, B]],
                    allowPositional: Boolean): Result[TokenGrouping[B]] = {
-    val argSigs = argSigs0.flatMap(AnyArgSig.flatten)
+    val argSigs: Seq[ArgSig[_, B]] = argSigs0.map(AnyArgSig.flatten(_)).flatten
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
       .filter(!_.varargs) // varargs can only be passed positionally
       .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
-      .toMap
+      .toMap[String, ArgSig[_, B]]
 
     @tailrec def rec(remaining: List[String],
-                     current: Map[ArgSig[B], Vector[String]]): Result[TokenGrouping[B]] = {
+                     current: Map[ArgSig[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
       remaining match{
         case head :: rest  =>
           if (head.startsWith("-")){
@@ -46,11 +46,18 @@ object TokenGrouping{
       }
     }
     def complete(remaining: List[String],
-                 current: Map[ArgSig[B], Vector[String]]): Result[TokenGrouping[B]] = {
+                 current: Map[ArgSig[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
 
-      val duplicates = current.filter(_._2.size > 1).toSeq
+      val duplicates = current
+        .filter(x => x._2.size > 1 && !x._1.reader.alwaysRepeatable)
+        .toSeq
+
       val missing = argSigs.filter(x =>
-        x.default.isEmpty && !current.contains(x) && !x.varargs && !x.flag
+        x.reader.default.isEmpty &&
+        x.default.isEmpty &&
+        !current.contains(x) &&
+        !x.varargs &&
+        !x.flag
       )
       val unknown = if (argSigs.exists(_.varargs)) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty){
@@ -60,7 +67,7 @@ object TokenGrouping{
           duplicate = duplicates,
           incomplete = None
         )
-      } else Result.Success(TokenGrouping(remaining, current.map{case (k, Seq(v)) => (k, v)}))
+      } else Result.Success(TokenGrouping(remaining, current))
 
     }
     rec(flatArgs, Map())

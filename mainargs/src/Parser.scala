@@ -32,7 +32,7 @@ class ParserForMethods[B](val mains: BasedMains[B]){
     runRaw0(args, allowPositional) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
-        Renderer.renderResult(mains.base, main, res, totalWidth)
+        Renderer.renderResult(main, res, totalWidth)
     }
   }
   def runRaw(args: Seq[String], allowPositional: Boolean = true): Result[Any] = {
@@ -42,10 +42,10 @@ class ParserForMethods[B](val mains: BasedMains[B]){
     }
   }
 
-  def runRaw0(args: Seq[String], allowPositional: Boolean = true): Either[Result.Error.Early, (MainData[B], Result[Any])] = {
+  def runRaw0(args: Seq[String], allowPositional: Boolean = true): Either[Result.Error.Early, (MainData[_, B], Result[Any])] = {
     for (tuple <- MainUtils.runMains(mains, args, allowPositional)) yield {
       val (errMsg, res) = tuple
-      (errMsg, res.map(_.value))
+      (errMsg, res)
     }
   }
 }
@@ -81,7 +81,6 @@ class ParserForClass[T](val mains: ClassMains[T]){
                       totalWidth: Int = 95): Either[String, T] = {
 
     Renderer.renderResult[Any, T](
-      mains.companion,
       mains.main,
       constructRaw(args, allowPositional),
       totalWidth

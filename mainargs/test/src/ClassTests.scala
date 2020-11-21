@@ -82,8 +82,8 @@ object ClassTests extends TestSuite{
         assertMatch(barParser.constructRaw(Seq("--w","--x", "xxx", "--y", "hohoho", "-z", "xxx"))) {
           case Result.Error.InvalidArguments(
             Seq(
-              Result.ParamError.Failed(ArgSig("x", None, None, None, false, false, ArgParser.IntRead), "xxx", _),
-              Result.ParamError.Failed(ArgSig("y", None, None, None, false, false, ArgParser.IntRead), "hohoho", _)
+              Result.ParamError.Failed(ArgSig("x", None, None, None, false, false, _), "xxx", _),
+              Result.ParamError.Failed(ArgSig("y", None, None, None, false, false, _), "hohoho", _)
           )
           ) =>
         }

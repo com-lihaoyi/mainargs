@@ -31,13 +31,14 @@ class Macros(val c: Context) {
       constructor.paramLists.flatten,
       constructor.pos,
       cls.annotations.find(_.tpe =:= typeOf[main]).head,
-      companionObj.typeSignature
+      companionObj.typeSignature,
+      weakTypeOf[T]
     )
 
     c.Expr[ParserForClass[T]](q"""
       new _root_.mainargs.ParserForClass(
         _root_.mainargs.ClassMains[${weakTypeOf[T]}](
-          $route.asInstanceOf[_root_.mainargs.MainData[Any]],
+          $route.asInstanceOf[_root_.mainargs.MainData[${weakTypeOf[T]}, Any]],
           () => $companionObj
         )
       )
@@ -70,7 +71,8 @@ class Macros(val c: Context) {
                     flattenedArgLists: Seq[Symbol],
                     methodPos: Position,
                     mainAnnotation: Annotation,
-                    curCls: c.universe.Type): c.universe.Tree = {
+                    curCls: c.universe.Type,
+                    returnType: c.universe.Type): c.universe.Tree = {
 
     val baseArgSym = TermName(c.freshName())
 
@@ -111,10 +113,10 @@ class Macros(val c: Context) {
       val argVal = TermName(c.freshName("arg"))
       val argSigVal = TermName(c.freshName("argSig"))
       val argSig = q"""
-        val $argSigVal: _root_.mainargs.AnyArgSig[$curCls] = implicitly[_root_.mainargs.AnyArgParser[$varargUnwrappedType]] match{
+        val $argSigVal: _root_.mainargs.AnyArgSig[$varargUnwrappedType, $curCls] = implicitly[_root_.mainargs.AnyArgParser[$varargUnwrappedType]] match{
           case _root_.mainargs.AnyArgParser.Simple(parser) =>
             val $argVal = $instantiateArg
-            _root_.mainargs.ArgSig[$curCls](
+            _root_.mainargs.ArgSig[$varargUnwrappedType, $curCls](
               scala.Option($argVal.name).getOrElse(${arg.name.toString}),
               $argVal.short match{ case '\u0000' => None; case c => Some(c)},
               scala.Option($argVal.doc),
@@ -129,14 +131,14 @@ class Macros(val c: Context) {
       """
 
       c.internal.setPos(argSig, methodPos)
-      (argSig, argSigVal)
+      (argSig, q"$argSigVal.widen[_root_.scala.Any]")
     }
 
     val (argSigs, argSigVals) = readArgSigs.unzip
     val argNameCasts = flattenedArgLists.zipWithIndex.map { case (arg, i) =>
       val (vararg, unwrappedType) = unwrapVarargType(arg)
-      if (!vararg) q"$argListSymbol($i).value.asInstanceOf[$unwrappedType]"
-      else q"$argListSymbol($i).value.asInstanceOf[Seq[$unwrappedType]]: _*"
+      if (!vararg) q"$argListSymbol($i).asInstanceOf[$unwrappedType]"
+      else q"$argListSymbol($i).asInstanceOf[Seq[$unwrappedType]]: _*"
     }
 
 
@@ -144,12 +146,12 @@ class Macros(val c: Context) {
     val res = q"""{
     val $methVal = new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail})
     ..$argSigs
-    _root_.mainargs.MainData[$curCls](
+    _root_.mainargs.MainData[$returnType, $curCls](
       _root_.scala.Option($methVal.name).getOrElse($methodName),
       _root_.scala.Seq(..$argSigVals),
       _root_.scala.Option($methVal.doc),
-      ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.mainargs.Computed[_root_.scala.Any]]) => {
-        _root_.mainargs.Computed($baseArgSym.${TermName(methodName)}(..$argNameCasts))
+      ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
+        $baseArgSym.${TermName(methodName)}(..$argNameCasts)
       }
     )
     }"""
@@ -168,7 +170,8 @@ class Macros(val c: Context) {
         t.paramss.flatten,
         t.pos,
         t.annotations.find(_.tpe =:= typeOf[main]).head,
-        curCls
+        curCls,
+        weakTypeOf[Any]
       )
     }
   }

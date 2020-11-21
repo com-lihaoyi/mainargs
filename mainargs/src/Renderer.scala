@@ -5,14 +5,14 @@ import java.io.{PrintStream, PrintWriter, StringWriter}
 object Renderer {
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort[B](arg: ArgSig[B]) = {
+  def renderArgShort[B](arg: ArgSig[_, B]) = {
     val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
     val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
     if (arg.varargs) s"${arg.name} ..."
     else s"$shortPrefix--${arg.name}$typeSuffix"
   }
 
-  def renderArg[B](arg: ArgSig[B],
+  def renderArg[B](arg: ArgSig[_, B],
                    leftOffset: Int,
                    wrappedWidth: Int): (String, String) = {
     val docSuffix = arg.doc.getOrElse("")
@@ -24,7 +24,7 @@ object Renderer {
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods[B](mainMethods: Seq[MainData[B]], totalWidth: Int) = {
+  def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int) = {
     if (mainMethods.isEmpty) ""
     else{
       val methods =
@@ -40,7 +40,7 @@ object Renderer {
     }
   }
 
-  def formatMainMethodSignature[B](main: MainData[B],
+  def formatMainMethodSignature[B](main: MainData[_, B],
                                    leftIndent: Int,
                                    totalWidth: Int) = {
     // +2 for space on right of left col
@@ -94,8 +94,7 @@ object Renderer {
         "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
-  def renderResult[B, T](base: () => B,
-                         main: MainData[B],
+  def renderResult[B, T](main: MainData[_, B],
                          result: Result[T],
                          totalWidth: Int): Either[String, T] = {
 

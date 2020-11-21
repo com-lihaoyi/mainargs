@@ -7,24 +7,26 @@ import scala.annotation.tailrec
  * (just for logging and reading, not a replacement for a `TypeTag`) and
  * possible a function that can compute its default value
  */
-case class ArgSig[B](name: String,
-                     shortName: Option[Char],
-                     doc: Option[String],
-                     default: Option[B => Any],
-                     varargs: Boolean,
-                     flag: Boolean,
-                     reader: ArgParser[_]) extends AnyArgSig[B]{
+case class ArgSig[T, B](name: String,
+                        shortName: Option[Char],
+                        doc: Option[String],
+                        default: Option[B => T],
+                        varargs: Boolean,
+                        flag: Boolean,
+                        reader: ArgParser[T]) extends AnyArgSig[T, B]{
   def typeString = reader.shortName
 }
 
-sealed trait AnyArgSig[B]
+sealed trait AnyArgSig[T, B]{
+  def widen[V >: T] = this.asInstanceOf[AnyArgSig[V, B]]
+}
 object AnyArgSig{
-  def flatten[B](x: AnyArgSig[B]): Seq[ArgSig[B]] = x match{
-    case x: ArgSig[B] => Seq(x)
-    case x: ClassArgSig[_, B] => x.reader.mains.main.argSigs.flatMap(x => flatten(x.asInstanceOf[ArgSig[B]]))
+  def flatten[T, B](x: AnyArgSig[T, B]): Seq[ArgSig[T, B]] = x match{
+    case x: ArgSig[T, B] => Seq(x)
+    case x: ClassArgSig[T, B] => x.reader.mains.main.argSigs.flatMap(x => flatten(x.asInstanceOf[ArgSig[T, B]]))
   }
 }
-case class ClassArgSig[T, B](reader: ParserForClass[T]) extends AnyArgSig[B]
+case class ClassArgSig[T, B](reader: ParserForClass[T]) extends AnyArgSig[T, B]
 
 sealed trait AnyArgParser[T]
 object AnyArgParser{
@@ -36,9 +38,9 @@ object AnyArgParser{
 }
 
 
-case class BasedMains[B](value: Seq[MainData[B]], base: () => B)
+case class BasedMains[B](value: Seq[MainData[Any, B]], base: () => B)
 
-case class ClassMains[T](main: MainData[Any], companion: () => Any)
+case class ClassMains[T](main: MainData[T, Any], companion: () => Any)
 
 /**
  * What is known about a single endpoint for our routes. It has a [[name]],
@@ -49,10 +51,10 @@ case class ClassMains[T](main: MainData[Any], companion: () => Any)
  * instead, which provides a nicer API to call it that mimmicks the API of
  * calling a Scala method.
  */
-case class MainData[B](name: String,
-                       argSigs0: Seq[AnyArgSig[B]],
+case class MainData[T, B](name: String,
+                       argSigs0: Seq[AnyArgSig[Any, B]],
                        doc: Option[String],
-                       invokeRaw: (B, Seq[Computed[Any]]) => Computed[Any]){
+                       invokeRaw: (B, Seq[Any]) => T){
 
   val argSigs = argSigs0.iterator.flatMap(AnyArgSig.flatten).toVector
   val varargs = argSigs.exists(_.varargs)

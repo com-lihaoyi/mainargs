@@ -41,12 +41,4 @@ object Util{
     if(current.contains(k)) current + (k -> (current(k) :+ v))
     else current + (k -> Vector(v))
   }
-
-
-
 }
-
-/**
- * A simple box to make passing around `Any`s less dangerous
- */
-case class Computed[+T](value: T)

@@ -45,10 +45,10 @@ object Result{
      * Invoking the [[Main]] failed because the arguments provided
      * did not line up with the arguments expected
      */
-    case class MismatchedArguments(missing: Seq[ArgSig[_]] = Nil,
+    case class MismatchedArguments(missing: Seq[ArgSig[_, _]] = Nil,
                                    unknown: Seq[String] = Nil,
-                                   duplicate: Seq[(ArgSig[_], Seq[String])] = Nil,
-                                   incomplete: Option[ArgSig[_]] = None) extends Error
+                                   duplicate: Seq[(ArgSig[_, _], Seq[String])] = Nil,
+                                   incomplete: Option[ArgSig[_, _]] = None) extends Error
     /**
      * Invoking the [[Main]] failed because there were problems
      * deserializing/parsing individual arguments
@@ -62,24 +62,31 @@ object Result{
     /**
      * Something went wrong trying to de-serialize the input parameter
      */
-    case class Failed(arg: ArgSig[_], token: String, errMsg: String) extends ParamError
+    case class Failed(arg: ArgSig[_, _], token: String, errMsg: String) extends ParamError
     /**
      * Something went wrong trying to de-serialize the input parameter;
      * the thrown exception is stored in [[ex]]
      */
-    case class Exception(arg: ArgSig[_], token: String, ex: Throwable) extends ParamError
+    case class Exception(arg: ArgSig[_, _], token: String, ex: Throwable) extends ParamError
     /**
      * Something went wrong trying to evaluate the default value
      * for this input parameter
      */
-    case class DefaultFailed(arg: ArgSig[_], ex: Throwable) extends ParamError
+    case class DefaultFailed(arg: ArgSig[_, _], ex: Throwable) extends ParamError
   }
 }
 
-
-
-sealed trait ParamResult
+sealed trait ParamResult[+T]{
+  def map[V](f: T => V): ParamResult[V] = this match{
+    case ParamResult.Success(v) => ParamResult.Success(f(v))
+    case e: ParamResult.Failure => e
+  }
+  def flatMap[V](f: T => ParamResult[V]): ParamResult[V] = this match{
+    case ParamResult.Success(v) => f(v)
+    case e: ParamResult.Failure => e
+  }
+}
 object ParamResult{
-  case class Failure(errors: Seq[Result.ParamError]) extends ParamResult
-  case class Success(value: Computed[Any]) extends ParamResult
+  case class Failure(errors: Seq[Result.ParamError]) extends ParamResult[Nothing]
+  case class Success[T](value: T) extends ParamResult[T]
 }

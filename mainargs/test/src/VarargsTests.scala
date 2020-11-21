@@ -41,7 +41,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(invoked){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-          ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
+          ArgSig("nums", _, _, _, true, _, _),
           "--nums",
           """java.lang.NumberFormatException: For input string: "--nums""""
         )
@@ -52,11 +52,11 @@ object VarargsTests extends TestSuite{
         check.parseInvoke(List("pureVariadic", "1", "2", "3", "--nums", "4"))
       ){
         case Result.Error.InvalidArguments(List(
-        Result.ParamError.Failed(
-        ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
-        "--nums",
-        "java.lang.NumberFormatException: For input string: \"--nums\""
-        )
+          Result.ParamError.Failed(
+          ArgSig("nums", _, _, _, true, _, _),
+          "--nums",
+          "java.lang.NumberFormatException: For input string: \"--nums\""
+          )
         ))=>
       }
       test - check(
@@ -69,7 +69,7 @@ object VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Error.MismatchedArguments(
-          Seq(ArgSig("first", _, _, _, false, _, ArgParser.IntRead)),
+          Seq(ArgSig("first", _, _, _, false, _, _)),
           Nil,
           Nil,
           None
@@ -82,12 +82,12 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
+            ArgSig("nums", _, _, _, true, _, _),
             "aa",
             "java.lang.NumberFormatException: For input string: \"aa\""
           ),
           Result.ParamError.Failed(
-            ArgSig("nums", _, _, _, true, _, ArgParser.IntRead),
+            ArgSig("nums", _, _, _, true, _, _),
             "bb",
             "java.lang.NumberFormatException: For input string: \"bb\""
           )
@@ -99,7 +99,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig("first", _, _, _, fals, _, ArgParser.IntRead),
+            ArgSig("first", _, _, _, false, _, _),
             "aa",
             "java.lang.NumberFormatException: For input string: \"aa\""
           )
