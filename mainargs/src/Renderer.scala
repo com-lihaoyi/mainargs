@@ -36,15 +36,17 @@ object Renderer {
   }
 
 
-  def renderArg[B](arg: ArgSig.Terminal[_, B],
-                   leftOffset: Int,
-                   wrappedWidth: Int): (String, String) = {
+  def renderArg(arg: ArgSig.Terminal[_, _],
+                leftOffset: Int,
+                wrappedWidth: Int): (String, String) = {
     val wrapped = softWrap(arg.doc.getOrElse(""), leftOffset, wrappedWidth - leftOffset)
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int, docsOnNewLine: Boolean) = {
-    val flattenedAll: Seq[ArgSig.Terminal[_, B]] = mainMethods.flatMap(_.argSigs)
+  def formatMainMethods(mainMethods: Seq[MainData[_, _]], totalWidth: Int, docsOnNewLine: Boolean) = {
+    val flattenedAll: Seq[ArgSig.Terminal[_, _]] =
+      mainMethods.map(_.argSigs)
+        .flatten
     val leftColWidth = getLeftColWidth(flattenedAll)
     if (mainMethods.isEmpty) ""
     else{
@@ -60,11 +62,11 @@ object Renderer {
     }
   }
 
-  def formatMainMethodSignature[B](main: MainData[_, B],
-                                   leftIndent: Int,
-                                   totalWidth: Int,
-                                   leftColWidth: Int,
-                                   docsOnNewLine: Boolean) = {
+  def formatMainMethodSignature(main: MainData[_, _],
+                                leftIndent: Int,
+                                totalWidth: Int,
+                                leftColWidth: Int,
+                                docsOnNewLine: Boolean) = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
     val args =
@@ -130,11 +132,11 @@ object Renderer {
         "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
-  def renderResult[B, T](main: MainData[_, B],
-                         result: Result[T],
-                         totalWidth: Int,
-                         printHelpOnError: Boolean,
-                         docsOnNewLine: Boolean): Either[String, T] = {
+  def renderResult(main: MainData[_, _],
+                   result: Result.Failure,
+                   totalWidth: Int,
+                   printHelpOnError: Boolean,
+                   docsOnNewLine: Boolean): String = {
 
     def expectedMsg() = {
       if (printHelpOnError) {
@@ -151,14 +153,13 @@ object Renderer {
       else ""
     }
     result match{
-      case Result.Success(x) => Right(x)
-      case err: Result.Failure.Early => Left(renderEarlyError(err))
+      case err: Result.Failure.Early => renderEarlyError(err)
       case Result.Failure.Exception(t) =>
         val s = new StringWriter()
         val ps = new PrintWriter(s)
         t.printStackTrace(ps)
         ps.close()
-        Left(s.toString)
+        s.toString
       case Result.Failure.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""
@@ -198,11 +199,9 @@ object Renderer {
 
         }
 
-        Left(
-          Renderer.normalizeNewlines(
-            s"""$missingStr$unknownStr$duplicateStr$incompleteStr${expectedMsg()}
-               |""".stripMargin
-          )
+        Renderer.normalizeNewlines(
+          s"""$missingStr$unknownStr$duplicateStr$incompleteStr${expectedMsg()}
+             |""".stripMargin
         )
 
       case Result.Failure.InvalidArguments(x) =>
@@ -216,13 +215,11 @@ object Renderer {
             s"${renderArgShort(p)}'s default value failed to evaluate with $ex"
         }
 
-        Left(
-          Renderer.normalizeNewlines(
-            s"""The following $argumentsStr failed to parse:
-               |${thingies.mkString(Renderer.newLine)}
-               |${expectedMsg()}
-            """.stripMargin
-          )
+        Renderer.normalizeNewlines(
+          s"""The following $argumentsStr failed to parse:
+             |${thingies.mkString(Renderer.newLine)}
+             |${expectedMsg()}
+          """.stripMargin
         )
     }
   }

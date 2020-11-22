@@ -42,7 +42,12 @@ class ParserForMethods[B](val mains: MethodMains[B]){
     runRaw0(args, allowPositional, allowRepeats) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
-        Renderer.renderResult(main, res, totalWidth, printHelpOnExit, docsOnNewLine)
+        res match{
+          case Result.Success(v) => Right(v)
+          case f: Result.Failure =>
+            Left(Renderer.renderResult(main, f, totalWidth, printHelpOnExit, docsOnNewLine))
+        }
+
     }
   }
   def runRaw(args: Seq[String],
@@ -108,14 +113,12 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
                       totalWidth: Int = 100,
                       printHelpOnExit: Boolean = true,
                       docsOnNewLine: Boolean = false): Either[String, T] = {
+    constructRaw(args, allowPositional, allowRepeats) match{
+      case Result.Success(v) => Right(v)
+      case f: Result.Failure =>
+        Left(Renderer.renderResult(mains.main, f, totalWidth, printHelpOnExit, docsOnNewLine))
+    }
 
-    Renderer.renderResult[Any, T](
-      mains.main,
-      constructRaw(args, allowPositional, allowRepeats),
-      totalWidth,
-      printHelpOnExit,
-      docsOnNewLine
-    )
   }
   def constructRaw(args: Seq[String],
                    allowPositional: Boolean = false,
