@@ -76,6 +76,9 @@ class Macros(val c: Context) {
 
     val baseArgSym = TermName(c.freshName())
 
+    // Somehow this is necessary to make default
+    // method discovery work on Scala 2.12.1 -> 2.12.7
+    curCls.members.foreach(_.name)
     def hasDefault(i: Int) = {
       val defaultName = s"${methodName}$$default$$${i + 1}"
       if (curCls.members.exists(_.name.toString == defaultName)) Some(defaultName)
