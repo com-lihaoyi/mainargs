@@ -5,8 +5,13 @@ object ParserForMethods{
   def apply[B](base: B): ParserForMethods[B] = macro Macros.parserForMethods[B]
 }
 class ParserForMethods[B](val mains: MethodMains[B]){
-  def helpText(totalWidth: Int = 100, docsOnNewLine: Boolean = false) = {
-    Renderer.formatMainMethods(mains.value, totalWidth, docsOnNewLine)
+  def helpText(totalWidth: Int = 100,
+               docsOnNewLine: Boolean = false,
+               customNames: Map[String, String] = Map(),
+               customDocs: Map[String, String] = Map()) = {
+    Renderer.formatMainMethods(
+      mains.value, totalWidth, docsOnNewLine, customNames, customDocs
+    )
   }
   def runOrExit(args: Seq[String],
                 allowPositional: Boolean = false,
@@ -14,8 +19,16 @@ class ParserForMethods[B](val mains: MethodMains[B]){
                 stderr: PrintStream = System.err,
                 totalWidth: Int = 100,
                 printHelpOnExit: Boolean = true,
-                docsOnNewLine: Boolean = false): Any = {
-    runEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
+                docsOnNewLine: Boolean = false,
+                autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                customNames: Map[String, String] = Map(),
+                customDocs: Map[String, String] = Map()): Any = {
+    runEither(
+      args,
+      allowPositional, allowRepeats,
+      totalWidth, printHelpOnExit, docsOnNewLine, autoPrintHelpAndExit,
+      customNames, customDocs
+    ) match{
       case Left(msg) =>
         stderr.println(msg)
         sys.exit(1)
@@ -27,8 +40,16 @@ class ParserForMethods[B](val mains: MethodMains[B]){
                  allowRepeats: Boolean = false,
                  totalWidth: Int = 100,
                  printHelpOnExit: Boolean = true,
-                 docsOnNewLine: Boolean = false): Any = {
-    runEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
+                 docsOnNewLine: Boolean = false,
+                 autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                 customNames: Map[String, String] = Map(),
+                 customDocs: Map[String, String] = Map()): Any = {
+    runEither(
+      args,
+      allowPositional, allowRepeats,
+      totalWidth, printHelpOnExit, docsOnNewLine, autoPrintHelpAndExit,
+      customNames, customDocs
+    ) match{
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
     }
@@ -38,14 +59,26 @@ class ParserForMethods[B](val mains: MethodMains[B]){
                 allowRepeats: Boolean = false,
                 totalWidth: Int = 100,
                 printHelpOnExit: Boolean = true,
-                docsOnNewLine: Boolean = false): Either[String, Any] = {
-    runRaw0(args, allowPositional, allowRepeats) match {
+                docsOnNewLine: Boolean = false,
+                autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                customNames: Map[String, String] = Map(),
+                customDocs: Map[String, String] = Map()): Either[String, Any] = {
+    if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
+      val (exitCode, outputStream) = autoPrintHelpAndExit.get
+      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs))
+      sys.exit(exitCode)
+    } else runRaw0(args, allowPositional, allowRepeats) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         res match{
           case Result.Success(v) => Right(v)
           case f: Result.Failure =>
-            Left(Renderer.renderResult(main, f, totalWidth, printHelpOnExit, docsOnNewLine))
+            Left(
+              Renderer.renderResult(
+                main, f, totalWidth, printHelpOnExit, docsOnNewLine,
+                customNames.get(main.name), customDocs.get(main.name)
+              )
+            )
         }
 
     }
@@ -73,13 +106,18 @@ object ParserForClass{
   def apply[T]: ParserForClass[T] = macro Macros.parserForClass[T]
 }
 class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
-  def helpText(totalWidth: Int = 100, docsOnNewLine: Boolean = false) = {
+  def helpText(totalWidth: Int = 100,
+               docsOnNewLine: Boolean = false,
+               customName: String = null,
+               customDoc: String = null) = {
     Renderer.formatMainMethodSignature(
       mains.main,
       0,
       totalWidth,
       Renderer.getLeftColWidth(mains.main.argSigs),
-      docsOnNewLine
+      docsOnNewLine,
+      Option(customName),
+      Option(customDoc)
     )
   }
   def constructOrExit(args: Seq[String],
@@ -88,8 +126,16 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
                       stderr: PrintStream = System.err,
                       totalWidth: Int = 100,
                       printHelpOnExit: Boolean = true,
-                      docsOnNewLine: Boolean = false): T = {
-    constructEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
+                      docsOnNewLine: Boolean = false,
+                      autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                      customName: String = null,
+                      customDoc: String = null): T = {
+    constructEither(
+      args,
+      allowPositional, allowRepeats, totalWidth,
+      printHelpOnExit, docsOnNewLine, autoPrintHelpAndExit,
+      customName, customDoc
+    ) match{
       case Left(msg) =>
         stderr.println(msg)
         sys.exit(1)
@@ -101,8 +147,15 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
                        allowRepeats: Boolean = false,
                        totalWidth: Int = 100,
                        printHelpOnExit: Boolean = true,
-                       docsOnNewLine: Boolean = false): T = {
-    constructEither(args, allowPositional, allowRepeats, totalWidth, printHelpOnExit, docsOnNewLine) match{
+                       docsOnNewLine: Boolean = false,
+                       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                       customName: String = null,
+                       customDoc: String = null): T = {
+    constructEither(
+      args,
+      allowPositional, allowRepeats,
+      totalWidth, printHelpOnExit, docsOnNewLine, autoPrintHelpAndExit,
+      customName, customDoc) match{
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
     }
@@ -112,11 +165,23 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
                       allowRepeats: Boolean = false,
                       totalWidth: Int = 100,
                       printHelpOnExit: Boolean = true,
-                      docsOnNewLine: Boolean = false): Either[String, T] = {
-    constructRaw(args, allowPositional, allowRepeats) match{
+                      docsOnNewLine: Boolean = false,
+                      autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
+                      customName: String = null,
+                      customDoc: String = null): Either[String, T] = {
+    if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
+      val (exitCode, outputStream) = autoPrintHelpAndExit.get
+      outputStream.println(helpText(totalWidth, docsOnNewLine, customName, customDoc))
+      sys.exit(exitCode)
+    } else constructRaw(args, allowPositional, allowRepeats) match{
       case Result.Success(v) => Right(v)
       case f: Result.Failure =>
-        Left(Renderer.renderResult(mains.main, f, totalWidth, printHelpOnExit, docsOnNewLine))
+        Left(
+          Renderer.renderResult(
+            mains.main, f, totalWidth, printHelpOnExit, docsOnNewLine,
+            Option(customName), Option(customDoc)
+          )
+        )
     }
 
   }

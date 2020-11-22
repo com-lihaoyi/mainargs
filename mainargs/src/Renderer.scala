@@ -43,7 +43,11 @@ object Renderer {
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods(mainMethods: Seq[MainData[_, _]], totalWidth: Int, docsOnNewLine: Boolean) = {
+  def formatMainMethods(mainMethods: Seq[MainData[_, _]],
+                        totalWidth: Int,
+                        docsOnNewLine: Boolean,
+                        customNames: Map[String, String],
+                        customDocs: Map[String, String]) = {
     val flattenedAll: Seq[ArgSig.Terminal[_, _]] =
       mainMethods.map(_.argSigs)
         .flatten
@@ -52,7 +56,10 @@ object Renderer {
     else{
       val methods =
         for(main <- mainMethods)
-        yield formatMainMethodSignature(main, 2, totalWidth, leftColWidth, docsOnNewLine)
+        yield formatMainMethodSignature(
+          main, 2, totalWidth, leftColWidth, docsOnNewLine,
+          customNames.get(main.name), customDocs.get(main.name)
+        )
 
       normalizeNewlines(
         s"""Available subcommands:
@@ -66,12 +73,13 @@ object Renderer {
                                 leftIndent: Int,
                                 totalWidth: Int,
                                 leftColWidth: Int,
-                                docsOnNewLine: Boolean) = {
+                                docsOnNewLine: Boolean,
+                                customName: Option[String],
+                                customDoc: Option[String]) = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
     val args =
-      main.argSigs.map(renderArg(_, argLeftCol, totalWidth)) ++
-      main.leftoverArgSig.map(renderArg(_, argLeftCol, totalWidth))
+      main.argSigs.map(renderArg(_, argLeftCol, totalWidth))
 
     val leftIndentStr = " " * leftIndent
 
@@ -87,11 +95,11 @@ object Renderer {
     }
     val argStrings = for ((lhs, rhs) <- args) yield formatArg(lhs, rhs)
 
-    val mainDocSuffix = main.doc match{
+    val mainDocSuffix = customDoc.orElse(main.doc) match{
       case Some(d) => newLine + leftIndentStr + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
-    s"""$leftIndentStr${main.name}$mainDocSuffix
+    s"""$leftIndentStr${customName.getOrElse(main.name)}$mainDocSuffix
        |${argStrings.map(_ + newLine).mkString}""".stripMargin
   }
 
@@ -136,7 +144,9 @@ object Renderer {
                    result: Result.Failure,
                    totalWidth: Int,
                    printHelpOnError: Boolean,
-                   docsOnNewLine: Boolean): String = {
+                   docsOnNewLine: Boolean,
+                   customName: Option[String],
+                   customDoc: Option[String]): String = {
 
     def expectedMsg() = {
       if (printHelpOnError) {
@@ -147,7 +157,9 @@ object Renderer {
           0,
           totalWidth,
           leftColWidth,
-          docsOnNewLine
+          docsOnNewLine,
+          customName,
+          customDoc
         )
       }
       else ""
