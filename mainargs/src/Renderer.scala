@@ -206,7 +206,7 @@ object Renderer {
         val incompleteStr = incomplete match{
           case None => ""
           case Some(sig) =>
-            s"Option ${renderArgShort(sig)} is missing a corresponding value" +
+            s"Incomplete argument ${renderArgShort(sig)} is missing a corresponding value" +
               Renderer.newLine
 
         }
@@ -217,19 +217,19 @@ object Renderer {
         )
 
       case Result.Failure.InvalidArguments(x) =>
-        val argumentsStr = pluralize("argument", x.length)
         val thingies = x.map{
+          case Result.ParamError.Failed(p, vs, errMsg) =>
+            val literalV = vs.map(Util.literalize(_)).mkString(" ")
+            s"Invalid argument ${renderArgShort(p)} failed to parse $literalV due to $errMsg"
           case Result.ParamError.Exception(p, vs, ex) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
-
-            s"${renderArgShort(p)} = $literalV failed to parse with $ex"
+            s"Invalid argument ${renderArgShort(p)} failed to parse $literalV due to $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
-            s"${renderArgShort(p)}'s default value failed to evaluate with $ex"
+            s"Invalid argument ${renderArgShort(p)}'s default value failed to evaluate with $ex"
         }
 
         Renderer.normalizeNewlines(
-          s"""The following $argumentsStr failed to parse:
-             |${thingies.mkString(Renderer.newLine)}
+          s"""${thingies.mkString(Renderer.newLine)}
              |${expectedMsg()}
           """.stripMargin
         )
