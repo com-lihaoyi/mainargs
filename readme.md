@@ -15,6 +15,10 @@ MainArgs is a small, dependency-free library for command line argument parsing.
 
 # Usage
 
+```scala
+ivy"com.lihaoyi::mainargs:0.1.1"
+```
+
 ## Parsing Main Method Parameters
 
 You can parse command line arguments and use them to call a main method via
@@ -309,6 +313,11 @@ of useful configuration values:
 - `docsOnNewLine: Boolean`: whether to print argument doc-strings on a new line
   below the name of the argument; this may make things easier to read, but at a
   cost of taking up much more vertical space. Defaults to `false`
+
+- `customName`/`customNames` and `customDoc`/`customDocs`: allows you to
+  override the main method names and documentation strings at runtime. This
+  allows you to work around limitations in the use of the `@main(name = "...",
+  doc = "...")` annotation that only allows simple static strings.
 
 ## Custom Argument Parsers
 
