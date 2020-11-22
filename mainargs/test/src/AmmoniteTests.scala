@@ -29,21 +29,18 @@ object AmmoniteTests extends TestSuite{
       name = "no-home-predef",
       doc = "Disables the default behavior of loading predef files from your " +
         " ~/.ammonite/predef.sc, predefScript.sc, or predefShared.sc. You " +
-        "can choose an additional predef to use using `--predef",
-      flag = true)
-    noHomePredef: Boolean = false,
+        "can choose an additional predef to use using `--predef")
+    noHomePredef: Flag = Flag(),
     @arg(
       name = "no-default-predef",
       doc = "Disable the default predef and run Ammonite with the minimal " +
-        "predef possible",
-      flag = true)
-    defaultPredef: Boolean = false,
+        "predef possible")
+    defaultPredef: Flag = Flag(),
     @arg(
       name = "silent", short = 's',
       doc = "Make ivy logs go silent instead of printing though failures " +
-        "will still throw exception",
-      flag = true)
-    verboseOutput: Boolean = false,
+        "will still throw exception")
+    verboseOutput: Flag = Flag(),
     @arg(
       name = "color",
       doc = "Enable or disable colored output; by default colors are enabled " +
@@ -54,22 +51,20 @@ object AmmoniteTests extends TestSuite{
       short = 'w',
       doc = "Watch and re-run your scripts when they change")
     watch: Boolean = false,
-    @arg(doc = "Run a BSP server against the passed scripts", flag = true)
-    bsp: Boolean = false,
+    @arg(doc = "Run a BSP server against the passed scripts")
+    bsp: Flag = Flag(),
     @arg(doc = "Hide parts of the core of Ammonite and some of its dependencies. "+
       "By default, the core of Ammonite and all of its dependencies can "+
       "be seen by users from the Ammonite session. This option mitigates "+
-      "that via class loader isolation.",
-      flag = true)
-    thin: Boolean = false,
+      "that via class loader isolation.")
+    thin: Flag = Flag(),
     @arg(short = 'b', doc = "Customize the welcome banner that gets shown when Ammonite starts")
     banner: String = "Welcome to Ammonite!",
     @arg(
       name = "class-based",
       doc = "Wrap user code in classes rather than singletons, "+
-        "typically for Java serialization friendliness.",
-      flag = true)
-    classBased: Boolean = false
+        "typically for Java serialization friendliness.")
+    classBased: Flag = Flag()
   )
   implicit val parser = ParserForClass[Config]
   val tests = Tests {

@@ -21,7 +21,7 @@ You can parse command line arguments and use them to call a main method via
 
 ```scala
 package testhello
-import mainargs.{main, arg, ParserForMethods}
+import mainargs.{main, arg, ParserForMethods, Flag}
 
 object Main{
   @main
@@ -29,9 +29,9 @@ object Main{
           foo: String,
           @arg(name = "my-num", doc = "How many times to print string")
           myNum: Int = 2,
-          @arg(flag = true, doc = "Example flag")
-          bool: Boolean) = {
-    println(foo * myNum + " " + bool)
+          @arg(doc = "Example flag, can be passed without any value to become true")
+          bool: Flag) = {
+    println(foo * myNum + " " + bool.value)
   }
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
 }
@@ -95,7 +95,7 @@ with `@main`. Each entrypoint can have their own set of arguments:
 
 ```scala
 package testhello2
-import mainargs.{main, arg, ParserForMethods}
+import mainargs.{main, arg, ParserForMethods, Flag}
 
 object Main{
   @main
@@ -103,9 +103,9 @@ object Main{
           foo: String,
           @arg(name = "my-num", doc = "How many times to print string")
           myNum: Int = 2,
-          @arg(flag = true, doc = "Example flag")
-          bool: Boolean) = {
-    println(foo * myNum + " " + bool)
+          @arg(doc = "Example flag")
+          bool: Flag) = {
+    println(foo * myNum + " " + bool.value)
   }
   @main
   def bar(i: Int,
@@ -135,7 +135,7 @@ method, you can do so via `ParserForClass[T]` and `constructOrExit:
 
 ```scala
 package testclass
-import mainargs.{main, arg, ParserForClass}
+import mainargs.{main, arg, ParserForClass, Flag}
 
 object Main{
   @main
@@ -143,8 +143,8 @@ object Main{
                     foo: String,
                     @arg(name = "my-num", doc = "How many times to print string")
                     myNum: Int = 2,
-                    @arg(flag = true, doc = "Example flag")
-                    bool: Boolean)
+                    @arg(doc = "Example flag")
+                    bool: Flag)
   def main(args: Array[String]): Unit = {
     val config = ParserForClass[Config].constructOrExit(args)
     println(config)
@@ -153,7 +153,7 @@ object Main{
 ```
 ```bash
 $ ./mill testclass --foo "hello"
-Config(hello,2,false)
+Config(hello,2,Flag(false))
 
 $ ./mill testclass
 Missing argument: --foo <str>
@@ -175,7 +175,7 @@ defined:
 
 ```scala
 package testclassarg
-import mainargs.{main, arg, ParserForMethods, ParserForClass}
+import mainargs.{main, arg, ParserForMethods, ParserForClass, Flag}
 
 object Main{
   @main
@@ -183,20 +183,20 @@ object Main{
                     foo: String,
                     @arg(name = "my-num", doc = "How many times to print string")
                     myNum: Int = 2,
-                    @arg(flag = true, doc = "Example flag")
-                    bool: Boolean)
+                    @arg(doc = "Example flag")
+                    bool: Flag)
   implicit def configParser = ParserForClass[Config]
 
   @main
   def bar(config: Config,
           @arg(name = "extra-message")
           extraMessage: String) = {
-    println(config.foo * config.myNum + " " + config.bool + " " + extraMessage)
+    println(config.foo * config.myNum + " " + config.bool.value + " " + extraMessage)
   }
   @main
   def qux(config: Config,
           n: Int) = {
-    println((config.foo * config.myNum + " " + config.bool + "\n") * n)
+    println((config.foo * config.myNum + " " + config.bool.value + "\n") * n)
   }
 
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
@@ -228,7 +228,7 @@ optional parameters without defaults or repeatable parameters
 
 ```scala
 package testoptseq
-import mainargs.{main, arg, ParserForMethods, ArgReader}
+import mainargs.{main, arg, ParserForMethods}
 
 object Main{
   @main
@@ -312,14 +312,14 @@ of useful configuration values:
 ## Custom Argument Parsers
 
 If you want to parse arguments into types that are not provided by the library,
-you can do so by defining an implicit `ArgReader[T]` for that type:
+you can do so by defining an implicit `TokensReader[T]` for that type:
 
 ```scala
 package testcustom
-import mainargs.{main, arg, ParserForMethods, ArgReader}
+import mainargs.{main, arg, ParserForMethods, TokensReader}
 
 object Main{
-  implicit object PathRead extends ArgReader[os.Path](
+  implicit object PathRead extends TokensReader[os.Path](
     "path",
     strs => Right(os.Path(strs.head, os.pwd))
   )
@@ -362,18 +362,18 @@ raise an error when a parameter is provided more than once.
 
 ## Handlings Leftover Arguments
 
-You can use the special `LeftoverTokens[T]` type to store any tokens that are
+You can use the special `Leftover[T]` type to store any tokens that are
 not consumed by other parsers:
 
 ```scala
 package testvararg
-import mainargs.{main, arg, ParserForMethods, LeftoverTokens}
+import mainargs.{main, arg, ParserForMethods, Leftover}
 
 object Main{
   @main
   def run(foo: String,
           myNum: Int = 2,
-          rest: LeftoverTokens[String]) = {
+          rest: Leftover[String]) = {
     println(foo * myNum + " " + rest.value)
   }
 
@@ -389,13 +389,13 @@ This also works with `ParserForClass`:
 
 ```scala
 package testvararg2
-import mainargs.{main, arg, ParserForClass, LeftoverTokens}
+import mainargs.{main, arg, ParserForClass, Leftover}
 
 object Main{
   @main
   case class Config(foo: String,
                     myNum: Int = 2,
-                    rest: LeftoverTokens[String])
+                    rest: Leftover[String])
 
   def main(args: Array[String]): Unit = {
     val config = ParserForClass[Config].constructOrExit(args)
@@ -405,5 +405,10 @@ object Main{
 ```
 ```bash
 $ ./mill testvararg2 --foo bar i am cow
-Config(bar,2,LeftoverTokens(List(i, am, cow)))
+Config(bar,2,Leftover(List(i, am, cow)))
 ```
+
+You can also pass in a different type to `Leftover`, e.g. `Leftover[Int]` or
+`Leftover[Boolean]`, if you want to specify that leftover tokens all parse to a
+particular type. Any tokens that do not conform to that type will result in an
+argument parsing error.

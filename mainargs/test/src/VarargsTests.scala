@@ -1,15 +1,13 @@
 package mainargs
 import utest._
 
-
-
 object VarargsTests extends TestSuite{
   object Base{
     @main
-    def pureVariadic(nums: LeftoverTokens[Int]) = nums.value.sum
+    def pureVariadic(nums: Leftover[Int]) = nums.value.sum
 
     @main
-    def mixedVariadic(@arg(short = 'f') first: Int, args: LeftoverTokens[String]) = first + args.value.mkString
+    def mixedVariadic(@arg(short = 'f') first: Int, args: Leftover[String]) = first + args.value.mkString
   }
 
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
@@ -69,7 +67,7 @@ object VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Error.MismatchedArguments(
-          Seq(ArgSig.Simple("first", _, _, _, _, _)),
+          Seq(ArgSig.Simple("first", _, _, _, _)),
           Nil,
           Nil,
           None
@@ -99,7 +97,7 @@ object VarargsTests extends TestSuite{
       ){
         case Result.Error.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig.Simple("first", _, _, _, _, _),
+            ArgSig.Simple("first", _, _, _, _),
             Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           )

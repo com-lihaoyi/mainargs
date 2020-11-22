@@ -1,5 +1,5 @@
 package testhello2
-import mainargs.{main, arg, ParserForMethods}
+import mainargs.{main, arg, ParserForMethods, Flag}
 
 object Main{
   @main
@@ -7,8 +7,8 @@ object Main{
           foo: String,
           @arg(name = "my-num", doc = "How many times to print string")
           myNum: Int = 2,
-          @arg(flag = true, doc = "Example flag")
-          bool: Boolean) = {
+          @arg(doc = "Example flag")
+          bool: Flag) = {
     println(foo * myNum + " " + bool)
   }
   @main

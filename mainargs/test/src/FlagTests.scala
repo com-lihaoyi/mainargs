@@ -6,9 +6,9 @@ object FlagTests extends TestSuite{
 
   object Base{
     @main
-    def flaggy(@arg(flag = true) a: Boolean,
+    def flaggy(a: Flag,
                b: Boolean,
-               @arg(flag = true) c: Boolean) = a || b || c
+               c: Flag) = a.value || b || c.value
   }
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
 

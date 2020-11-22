@@ -1,8 +1,8 @@
 package testcustom
-import mainargs.{main, arg, ParserForMethods, ArgReader}
+import mainargs.{main, arg, ParserForMethods, TokensReader}
 
 object Main{
-  implicit object PathRead extends ArgReader[os.Path](
+  implicit object PathRead extends TokensReader[os.Path](
     "path",
     strs => Right(os.Path(strs.head, os.pwd))
   )

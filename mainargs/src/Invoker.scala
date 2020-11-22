@@ -19,15 +19,18 @@ object Invoker {
                     mainData: MainData[T, B],
                     kvs: Map[String, Seq[String]],
                     extras: Seq[String]): Result[T] = {
-    val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] = for(a <- mainData.argSigs0) yield {
-      a match{
-        case a: ArgSig.Simple[T, B] => Right(makeReadCall(kvs, base, a))
-        case a: ArgSig.Leftover[T, B] =>
-          Right(makeReadVarargsCall(a, extras).map(x => LeftoverTokens(x:_*).asInstanceOf[T]))
-        case a: ArgSig.Class[T, B] =>
-          Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
+    val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] =
+      for(a <- mainData.argSigs0) yield {
+        a match{
+          case a: ArgSig.Flag[B] =>
+            Right(ParamResult.Success(Flag(kvs.contains(a.name)).asInstanceOf[T]))
+          case a: ArgSig.Simple[T, B] => Right(makeReadCall(kvs, base, a))
+          case a: ArgSig.Leftover[T, B] =>
+            Right(makeReadVarargsCall(a, extras).map(x => Leftover(x:_*).asInstanceOf[T]))
+          case a: ArgSig.Class[T, B] =>
+            Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
+        }
       }
-    }
 
     val validated = {
       val lefts = readArgValues
@@ -103,33 +106,30 @@ object Invoker {
   def makeReadCall[T, B](dict: Map[String, Seq[String]],
                          base: B,
                          arg: ArgSig.Simple[T, B]): ParamResult[T] = {
-    if (arg.flag) ParamResult.Success(dict.contains(arg.name).asInstanceOf[T])
-    else{
-      def prioritizedDefault = tryEither(
-        arg.default.map(_(base)),
-        Result.ParamError.DefaultFailed(arg, _)
-      ) match{
-        case Left(ex) => ParamResult.Failure(Seq(ex))
-        case Right(v) => ParamResult.Success(v)
-      }
-      val tokens = dict.get(arg.name) match{
-        case None =>  if (arg.reader.allowEmpty) Some(Nil) else None
-        case Some(tokens) => Some(tokens)
-      }
-      val optResult = tokens match{
-        case None => prioritizedDefault
-        case Some(tokens) =>
-          tryEither(
-            arg.reader.read(tokens),
-            Result.ParamError.Exception(arg, tokens, _)
-          ) match{
-            case Left(ex) => ParamResult.Failure(Seq(ex))
-            case Right(Left(errMsg)) => ParamResult.Failure(Seq(Result.ParamError.Failed(arg, tokens, errMsg)))
-            case Right(Right(v)) => ParamResult.Success(Some(v))
-          }
-      }
-      optResult.map(_.get)
+    def prioritizedDefault = tryEither(
+      arg.default.map(_(base)),
+      Result.ParamError.DefaultFailed(arg, _)
+    ) match{
+      case Left(ex) => ParamResult.Failure(Seq(ex))
+      case Right(v) => ParamResult.Success(v)
     }
+    val tokens = dict.get(arg.name) match{
+      case None =>  if (arg.reader.allowEmpty) Some(Nil) else None
+      case Some(tokens) => Some(tokens)
+    }
+    val optResult = tokens match{
+      case None => prioritizedDefault
+      case Some(tokens) =>
+        tryEither(
+          arg.reader.read(tokens),
+          Result.ParamError.Exception(arg, tokens, _)
+        ) match{
+          case Left(ex) => ParamResult.Failure(Seq(ex))
+          case Right(Left(errMsg)) => ParamResult.Failure(Seq(Result.ParamError.Failed(arg, tokens, errMsg)))
+          case Right(Right(v)) => ParamResult.Success(Some(v))
+        }
+    }
+    optResult.map(_.get)
   }
 
   def makeReadVarargsCall[T, B](arg: ArgSig.Leftover[T, B],

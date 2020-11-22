@@ -1,11 +1,11 @@
 package testvararg
-import mainargs.{main, arg, ParserForMethods, LeftoverTokens}
+import mainargs.{main, arg, ParserForMethods, Leftover}
 
 object Main{
   @main
   def run(foo: String,
           myNum: Int = 2,
-          rest: LeftoverTokens[String]) = {
+          rest: Leftover[String]) = {
     println(foo * myNum + " " + rest.value)
   }
 

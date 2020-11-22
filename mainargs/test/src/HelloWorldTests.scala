@@ -10,9 +10,9 @@ object HelloWorldTests extends TestSuite{
             foo: String,
             @arg(name = "my-num", doc = "How many times to print string")
             myNum: Int = 2,
-            @arg(flag = true, doc = "Example flag")
-            bool: Boolean) = {
-      foo * myNum + " " + bool
+            @arg(doc = "Example flag")
+            bool: Flag) = {
+      foo * myNum + " " + bool.value
     }
   }
 

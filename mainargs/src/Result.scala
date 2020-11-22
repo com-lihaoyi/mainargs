@@ -47,7 +47,7 @@ object Result{
      */
     case class MismatchedArguments(missing: Seq[ArgSig.Simple[_, _]] = Nil,
                                    unknown: Seq[String] = Nil,
-                                   duplicate: Seq[(ArgSig.Simple[_, _], Seq[String])] = Nil,
+                                   duplicate: Seq[(ArgSig.Named[_, _], Seq[String])] = Nil,
                                    incomplete: Option[ArgSig.Simple[_, _]] = None) extends Error
     /**
      * Invoking the [[Main]] failed because there were problems

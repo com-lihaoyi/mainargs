@@ -4,14 +4,17 @@ import java.io.{PrintWriter, StringWriter}
 
 object Renderer {
 
-  def getLeftColWidth[T, B](items: Seq[ArgSig.Terminal[T, B]]) = {
+  def getLeftColWidth(items: Seq[ArgSig.Terminal[_, _]]) = {
     if (items.isEmpty) 0
     else items
       .map {
+        case x: ArgSig.Flag[_] =>
+          x.name.length + 2 + // name and --
+          x.shortName.fold (0) (_ => 3) // -c and the separating whitespace
         case x: ArgSig.Simple[_, _] =>
           x.name.length + 2 + // name and --
           x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
-          (if (x.flag || x.typeString == "") 0 else x.typeString.size + 3) // "" or " <str>"
+          x.typeString.size + 3 // "" or " <str>"
         case x: ArgSig.Leftover[_, _] =>
           x.name.size + 1 + x.reader.shortName.size + 2 + 3
       }
@@ -20,12 +23,15 @@ object Renderer {
 
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort[B](arg: ArgSig.Terminal[_, B]) = arg match{
-    case arg: ArgSig.Simple[_, B] =>
+  def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match{
+    case arg: ArgSig.Flag[_] =>
       val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
-      val typeSuffix = if (arg.flag) "" else s" <${arg.typeString}>"
+      s"$shortPrefix--${arg.name}"
+    case arg: ArgSig.Simple[_, _] =>
+      val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
+      val typeSuffix = s" <${arg.typeString}>"
       s"$shortPrefix--${arg.name}$typeSuffix"
-    case arg: ArgSig.Leftover[_, B] =>
+    case arg: ArgSig.Leftover[_, _] =>
       s"${arg.name} <${arg.reader.shortName}>..."
   }
 
@@ -38,7 +44,8 @@ object Renderer {
   }
 
   def formatMainMethods[B](mainMethods: Seq[MainData[_, B]], totalWidth: Int, docsOnNewLine: Boolean) = {
-    val leftColWidth = getLeftColWidth(mainMethods.flatMap(_.argSigs))
+    val flattenedAll: Seq[ArgSig.Terminal[_, B]] = mainMethods.flatMap(_.argSigs)
+    val leftColWidth = getLeftColWidth(flattenedAll)
     if (mainMethods.isEmpty) ""
     else{
       val methods =
@@ -176,7 +183,7 @@ object Renderer {
             val lines =
               for ((sig, options) <- duplicate)
                 yield {
-                  s"Duplicate arguments for (--${sig.name}: ${sig.typeString}): " +
+                  s"Duplicate arguments for (${renderArgShort(sig)}): " +
                   options.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
                 }
 
