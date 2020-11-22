@@ -90,7 +90,8 @@ object Invoker {
               Left(Result.Failure.Early.SubcommandSelectionDashes(head))
             } else{
               multiple.find(_.name == head) match{
-                case None => Left(Result.Failure.Early.UnableToFindSubcommand(head))
+                case None =>
+                  Left(Result.Failure.Early.UnableToFindSubcommand(multiple.map(_.name), head))
                 case Some(main) => groupArgs(main, tail)
               }
             }

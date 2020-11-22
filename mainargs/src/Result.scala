@@ -33,7 +33,7 @@ object Result{
 
       case class NoMainMethodsDetected() extends Early
       case class SubcommandNotSpecified(options: Seq[String]) extends Early
-      case class UnableToFindSubcommand(token: String) extends Early
+      case class UnableToFindSubcommand(options: Seq[String], token: String) extends Early
       case class SubcommandSelectionDashes(token: String) extends Early
     }
     /**
