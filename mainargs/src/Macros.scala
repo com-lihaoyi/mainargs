@@ -30,7 +30,7 @@ class Macros(val c: Context) {
       "apply",
       constructor.paramLists.flatten,
       constructor.pos,
-      cls.annotations.find(_.tpe =:= typeOf[main]).head,
+      cls.annotations.find(_.tpe =:= typeOf[main]),
       companionObj.typeSignature,
       weakTypeOf[T]
     )
@@ -70,7 +70,7 @@ class Macros(val c: Context) {
   def extractMethod(methodName: String,
                     flattenedArgLists: Seq[Symbol],
                     methodPos: Position,
-                    mainAnnotation: Annotation,
+                    mainAnnotation: Option[Annotation],
                     curCls: c.universe.Type,
                     returnType: c.universe.Type): c.universe.Tree = {
 
@@ -116,10 +116,15 @@ class Macros(val c: Context) {
       q"$argListSymbol($i).asInstanceOf[${arg.typeSignature}]"
     }
 
+    val mainInstance = mainAnnotation match{
+      case Some(m) => q"new ${m.tree.tpe}(..${m.tree.children.tail})"
+      case None => q"new _root_.mainargs.main()"
+    }
+
     val res = q"""{
     _root_.mainargs.MainData.create[$returnType, $curCls](
       $methodName,
-      new ${mainAnnotation.tree.tpe}(..${mainAnnotation.tree.children.tail}),
+      $mainInstance,
       Seq(..$argSigs),
       ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
         $baseArgSym.${TermName(methodName)}(..$argNameCasts)
@@ -140,7 +145,7 @@ class Macros(val c: Context) {
         t.name.toString,
         t.paramss.flatten,
         t.pos,
-        t.annotations.find(_.tpe =:= typeOf[main]).head,
+        t.annotations.find(_.tpe =:= typeOf[main]),
         curCls,
         weakTypeOf[Any]
       )

@@ -11,6 +11,7 @@ MainArgs is a small, dependency-free library for command line argument parsing.
   - [Customization](#customization)
   - [Custom Argument Parsers](#custom-argument-parsers)
   - [Handling Leftover Arguments](#handlings-leftover-arguments)
+- [Changelog](#changelog)
 
 # Usage
 
@@ -412,3 +413,9 @@ You can also pass in a different type to `Leftover`, e.g. `Leftover[Int]` or
 `Leftover[Boolean]`, if you want to specify that leftover tokens all parse to a
 particular type. Any tokens that do not conform to that type will result in an
 argument parsing error.
+
+# Changelog
+
+## 0.1.0
+
+- First release
