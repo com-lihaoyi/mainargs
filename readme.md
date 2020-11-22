@@ -10,6 +10,7 @@ MainArgs is a small, dependency-free library for command line argument parsing.
   - [Annotations](#annotations)
   - [Customization](#customization)
   - [Custom Argument Parsers](#custom-argument-parsers)
+  - [Handling Leftover Arguments](#handlings-leftover-arguments)
 
 # Usage
 
@@ -359,4 +360,50 @@ simply pick the last token in the list. There is no need to raise an error on
 duplicates, as you can simply disable `allowRepeats` if you want the parser to
 raise an error when a parameter is provided more than once.
 
+## Handlings Leftover Arguments
 
+You can use the special `LeftoverTokens[T]` type to store any tokens that are
+not consumed by other parsers:
+
+```scala
+package testvararg
+import mainargs.{main, arg, ParserForMethods, LeftoverTokens}
+
+object Main{
+  @main
+  def run(foo: String,
+          myNum: Int = 2,
+          rest: LeftoverTokens[String]) = {
+    println(foo * myNum + " " + rest.value)
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+}
+```
+```bash
+$ ./mill testvararg --foo bar i am cow
+barbar List(i, am, cow)
+```
+
+This also works with `ParserForClass`:
+
+```scala
+package testvararg2
+import mainargs.{main, arg, ParserForClass, LeftoverTokens}
+
+object Main{
+  @main
+  case class Config(foo: String,
+                    myNum: Int = 2,
+                    rest: LeftoverTokens[String])
+
+  def main(args: Array[String]): Unit = {
+    val config = ParserForClass[Config].constructOrExit(args)
+    println(config)
+  }
+}
+```
+```bash
+$ ./mill testvararg2 --foo bar i am cow
+Config(bar,2,LeftoverTokens(List(i, am, cow)))
+```
