@@ -32,7 +32,7 @@ object ClassTests extends TestSuite{
       }
       test("missing") {
         fooParser.constructRaw(Seq("--x", "1")) ==>
-          Result.Error.MismatchedArguments(
+          Result.Failure.MismatchedArguments(
             Seq(ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead)),
             List(),
             List(),
@@ -49,7 +49,7 @@ object ClassTests extends TestSuite{
       }
       test("missingInner"){
         barParser.constructRaw(Seq("--w", "--x", "1", "--z", "xxx")) ==>
-          Result.Error.MismatchedArguments(
+          Result.Failure.MismatchedArguments(
             Seq(ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead)),
             List(),
             List(),
@@ -58,7 +58,7 @@ object ClassTests extends TestSuite{
       }
       test("missingOuter"){
         barParser.constructRaw(Seq("--w", "--x", "1", "--y", "2")) ==>
-          Result.Error.MismatchedArguments(
+          Result.Failure.MismatchedArguments(
             Seq(ArgSig.Simple("zzzz",Some('z'),None,None,mainargs.TokensReader.StringRead)),
             List(),
             List(),
@@ -68,7 +68,7 @@ object ClassTests extends TestSuite{
 
       test("missingInnerOuter"){
         barParser.constructRaw(Seq("--w", "--x", "1")) ==>
-          Result.Error.MismatchedArguments(
+          Result.Failure.MismatchedArguments(
             Seq(
               ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead),
               ArgSig.Simple("zzzz",Some('z'),None,None,mainargs.TokensReader.StringRead)
@@ -80,7 +80,7 @@ object ClassTests extends TestSuite{
       }
       test("failedInnerOuter") {
         assertMatch(barParser.constructRaw(Seq("--w","--x", "xxx", "--y", "hohoho", "-z", "xxx"))) {
-          case Result.Error.InvalidArguments(
+          case Result.Failure.InvalidArguments(
             Seq(
               Result.ParamError.Failed(ArgSig.Simple("x", None, None, None, _), Seq("xxx"), _),
               Result.ParamError.Failed(ArgSig.Simple("y", None, None, None, _), Seq("hohoho"), _)

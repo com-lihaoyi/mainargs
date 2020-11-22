@@ -32,7 +32,7 @@ object TokenGrouping{
               case Some(cliArg: ArgSig.Simple[_, _]) =>
                 rest match{
                   case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
-                  case Nil => Result.Error.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+                  case Nil => Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
                 }
 
               case None => complete(remaining, current)
@@ -69,7 +69,7 @@ object TokenGrouping{
         }
       val unknown = if (allowLeftover) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty){
-        Result.Error.MismatchedArguments(
+        Result.Failure.MismatchedArguments(
           missing = missing,
           unknown = unknown,
           duplicate = duplicates,

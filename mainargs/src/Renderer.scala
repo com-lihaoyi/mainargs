@@ -119,14 +119,14 @@ object Renderer {
   }
 
   def pluralize(s: String, n: Int) = if (n == 1) s else s + "s"
-  def renderEarlyError(result: Result.Error.Early) = result match {
-    case Result.Error.Early.NoMainMethodsDetected() =>
+  def renderEarlyError(result: Result.Failure.Early) = result match {
+    case Result.Failure.Early.NoMainMethodsDetected() =>
       "No @main methods declared"
-    case Result.Error.Early.SubcommandNotSpecified(options) =>
+    case Result.Failure.Early.SubcommandNotSpecified(options) =>
       "Need to specify a sub command: " + options.mkString(", ")
-    case Result.Error.Early.UnableToFindSubcommand(token) =>
+    case Result.Failure.Early.UnableToFindSubcommand(token) =>
       s"Unable to find subcommand: " + token
-    case Result.Error.Early.SubcommandSelectionDashes(token) =>
+    case Result.Failure.Early.SubcommandSelectionDashes(token) =>
         "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
@@ -152,14 +152,14 @@ object Renderer {
     }
     result match{
       case Result.Success(x) => Right(x)
-      case err: Result.Error.Early => Left(renderEarlyError(err))
-      case Result.Error.Exception(t) =>
+      case err: Result.Failure.Early => Left(renderEarlyError(err))
+      case Result.Failure.Exception(t) =>
         val s = new StringWriter()
         val ps = new PrintWriter(s)
         t.printStackTrace(ps)
         ps.close()
         Left(s.toString)
-      case Result.Error.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
+      case Result.Failure.MismatchedArguments(missing, unknown, duplicate, incomplete) =>
         val missingStr =
           if (missing.isEmpty) ""
           else {
@@ -205,7 +205,7 @@ object Renderer {
           )
         )
 
-      case Result.Error.InvalidArguments(x) =>
+      case Result.Failure.InvalidArguments(x) =>
         val argumentsStr = pluralize("argument", x.length)
         val thingies = x.map{
           case Result.ParamError.Exception(p, vs, ex) =>

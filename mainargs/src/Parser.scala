@@ -56,7 +56,7 @@ class ParserForMethods[B](val mains: MethodMains[B]){
 
   def runRaw0(args: Seq[String],
               allowPositional: Boolean = false,
-              allowRepeats: Boolean = false): Either[Result.Error.Early, (MainData[_, B], Result[Any])] = {
+              allowRepeats: Boolean = false): Either[Result.Failure.Early, (MainData[_, B], Result[Any])] = {
     for (tuple <- Invoker.runMains(mains, args, allowPositional, allowRepeats)) yield {
       val (errMsg, res) = tuple
       (errMsg, res)

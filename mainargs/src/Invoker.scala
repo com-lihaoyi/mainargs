@@ -35,11 +35,11 @@ object Invoker {
     val validated = {
       val lefts = readArgValues
         .collect{
-          case Left(Result.Error.InvalidArguments(lefts)) => lefts
+          case Left(Result.Failure.InvalidArguments(lefts)) => lefts
           case Right(ParamResult.Failure(failure)) => failure
         }
         .flatten
-      if (lefts.nonEmpty) Result.Error.InvalidArguments(lefts)
+      if (lefts.nonEmpty) Result.Failure.InvalidArguments(lefts)
       else Result.Success(
         readArgValues.collect{
           case Left(Result.Success(x)) => x
@@ -61,12 +61,12 @@ object Invoker {
       main,
       grouping.grouped.map{case (k, vs) => (k.name, vs)},
       grouping.remaining
-    ) catch{case e: Throwable => Result.Error.Exception(e)}
+    ) catch{case e: Throwable => Result.Failure.Exception(e)}
   }
   def runMains[B](mains: MethodMains[B],
                   args: Seq[String],
                   allowPositional: Boolean,
-                  allowRepeats: Boolean): Either[Result.Error.Early, (MainData[Any, B], Result[Any])] = {
+                  allowRepeats: Boolean): Either[Result.Failure.Early, (MainData[Any, B], Result[Any])] = {
     def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = Right(
       main,
       TokenGrouping
@@ -80,17 +80,17 @@ object Invoker {
         .flatMap(Invoker.invoke(mains.base(), main, _))
     )
     mains.value match{
-      case Seq() => Left(Result.Error.Early.NoMainMethodsDetected())
+      case Seq() => Left(Result.Failure.Early.NoMainMethodsDetected())
       case Seq(main) => groupArgs(main, args)
       case multiple =>
         args.toList match{
-          case List() => Left(Result.Error.Early.SubcommandNotSpecified(multiple.map(_.name)))
+          case List() => Left(Result.Failure.Early.SubcommandNotSpecified(multiple.map(_.name)))
           case head :: tail =>
             if (head.startsWith("-")) {
-              Left(Result.Error.Early.SubcommandSelectionDashes(head))
+              Left(Result.Failure.Early.SubcommandSelectionDashes(head))
             } else{
               multiple.find(_.name == head) match{
-                case None => Left(Result.Error.Early.UnableToFindSubcommand(head))
+                case None => Left(Result.Failure.Early.UnableToFindSubcommand(head))
                 case Some(main) => groupArgs(main, tail)
               }
             }

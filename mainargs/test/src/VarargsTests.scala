@@ -37,7 +37,7 @@ object VarargsTests extends TestSuite{
         List("pureVariadic", "--nums", "31337")
       )
       test - assertMatch(invoked){
-        case Result.Error.InvalidArguments(List(
+        case Result.Failure.InvalidArguments(List(
           Result.ParamError.Failed(
           ArgSig.Leftover("nums", _, _),
           Seq("--nums"),
@@ -49,7 +49,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(
         check.parseInvoke(List("pureVariadic", "1", "2", "3", "--nums", "4"))
       ){
-        case Result.Error.InvalidArguments(List(
+        case Result.Failure.InvalidArguments(List(
           Result.ParamError.Failed(
           ArgSig.Leftover("nums", _, _),
           Seq("--nums"),
@@ -66,7 +66,7 @@ object VarargsTests extends TestSuite{
 
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
-        case Result.Error.MismatchedArguments(
+        case Result.Failure.MismatchedArguments(
           Seq(ArgSig.Simple("first", _, _, _, _)),
           Nil,
           Nil,
@@ -78,7 +78,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(
         check.parseInvoke(List("pureVariadic", "aa", "bb", "3"))
       ){
-        case Result.Error.InvalidArguments(List(
+        case Result.Failure.InvalidArguments(List(
           Result.ParamError.Failed(
           ArgSig.Leftover("nums", _, _),
             Seq("aa"),
@@ -95,7 +95,7 @@ object VarargsTests extends TestSuite{
       test - assertMatch(
         check.parseInvoke(List("mixedVariadic", "aa", "bb", "3"))
       ){
-        case Result.Error.InvalidArguments(List(
+        case Result.Failure.InvalidArguments(List(
           Result.ParamError.Failed(
             ArgSig.Simple("first", _, _, _, _),
             Seq("aa"),

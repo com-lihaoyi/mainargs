@@ -7,11 +7,11 @@ package mainargs
 sealed trait Result[+T]{
   def map[V](f: T => V): Result[V] = this match{
     case Result.Success(v) => Result.Success(f(v))
-    case e: Result.Error => e
+    case e: Result.Failure => e
   }
   def flatMap[V](f: T => Result[V]): Result[V] = this match{
     case Result.Success(v) => f(v)
-    case e: Result.Error => e
+    case e: Result.Failure => e
   }
 }
 object Result{
@@ -25,9 +25,9 @@ object Result{
   /**
    * Invoking the [[Main]] was not successful
    */
-  sealed trait Error extends Result[Nothing]
-  object Error{
-    sealed trait Early extends Error
+  sealed trait Failure extends Result[Nothing]
+  object Failure{
+    sealed trait Early extends Failure
     object Early{
 
 
@@ -40,7 +40,7 @@ object Result{
      * Invoking the [[Main]] failed with an exception while executing
      * code within it.
      */
-    case class Exception(t: Throwable) extends Error
+    case class Exception(t: Throwable) extends Failure
     /**
      * Invoking the [[Main]] failed because the arguments provided
      * did not line up with the arguments expected
@@ -48,12 +48,12 @@ object Result{
     case class MismatchedArguments(missing: Seq[ArgSig.Simple[_, _]] = Nil,
                                    unknown: Seq[String] = Nil,
                                    duplicate: Seq[(ArgSig.Named[_, _], Seq[String])] = Nil,
-                                   incomplete: Option[ArgSig.Simple[_, _]] = None) extends Error
+                                   incomplete: Option[ArgSig.Simple[_, _]] = None) extends Failure
     /**
      * Invoking the [[Main]] failed because there were problems
      * deserializing/parsing individual arguments
      */
-    case class InvalidArguments(values: Seq[ParamError]) extends Error
+    case class InvalidArguments(values: Seq[ParamError]) extends Failure
   }
 
   sealed trait ParamError

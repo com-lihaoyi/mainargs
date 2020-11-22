@@ -1,6 +1,6 @@
 package mainargs
 
-import mainargs.Result.Error.MismatchedArguments
+import mainargs.Result.Failure.MismatchedArguments
 import utest._
 
 
@@ -95,7 +95,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
     test("failures"){
       test("missingParams"){
         test - assertMatch(check.parseInvoke(List("bar"))){
-          case Result.Error.MismatchedArguments(
+          case Result.Failure.MismatchedArguments(
             Seq(ArgSig.Simple("i", _, _, _, _)),
             Nil,
             Nil,
@@ -103,7 +103,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
           ) =>
         }
         test - assertMatch(check.parseInvoke(List("qux", "--s", "omg"))){
-          case Result.Error.MismatchedArguments(
+          case Result.Failure.MismatchedArguments(
             Seq(ArgSig.Simple("i", _, _, _, _)),
             Nil,
             Nil,
@@ -114,12 +114,12 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
 
       test("tooManyParams") - check(
         List("foo", "1", "2"),
-        Result.Error.MismatchedArguments(Nil, List("1", "2"), Nil, None)
+        Result.Failure.MismatchedArguments(Nil, List("1", "2"), Nil, None)
       )
 
       test("failing") - check(
         List("ex"),
-        Result.Error.Exception(CoreBase.MyException)
+        Result.Failure.Exception(CoreBase.MyException)
       )
     }
   }
@@ -195,7 +195,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
       test("invalidParams") - assertMatch(
         check.parseInvoke(List("bar", "lol"))
       ){
-        case Result.Error.InvalidArguments(
+        case Result.Failure.InvalidArguments(
         List(Result.ParamError.Failed(ArgSig.Simple("i", _, _, _, _), Seq("lol"), _))
         ) =>
       }
@@ -203,7 +203,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
       test("redundantParams"){
         val parsed = check.parseInvoke(List("qux", "1", "--i", "2"))
         assertMatch(parsed){
-          case Result.Error.MismatchedArguments(
+          case Result.Failure.MismatchedArguments(
           Nil, Nil, Seq((ArgSig.Simple("i", _, _, _, _), Seq("1", "2"))), None
           ) =>
         }
