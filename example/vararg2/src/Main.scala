@@ -1,4 +1,4 @@
-package testvararg2
+package example.vararg2
 import mainargs.{main, arg, ParserForClass, Leftover}
 
 object Main{

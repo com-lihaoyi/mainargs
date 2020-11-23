@@ -1,4 +1,4 @@
-package testclass
+package example.caseclass
 import mainargs.{main, arg, ParserForClass, Flag}
 
 object Main{

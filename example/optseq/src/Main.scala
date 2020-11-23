@@ -1,4 +1,4 @@
-package testoptseq
+package example.optseq
 import mainargs.{main, arg, ParserForMethods, ArgReader}
 
 object Main{

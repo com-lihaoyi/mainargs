@@ -1,4 +1,4 @@
-package testclassarg
+package example.classarg
 import mainargs.{main, arg, ParserForMethods, ParserForClass, Flag}
 
 object Main{

@@ -1,4 +1,4 @@
-package testhello
+package example.hello
 import mainargs.{main, arg, ParserForMethods, Flag}
 
 object Main{

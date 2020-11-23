@@ -1,4 +1,4 @@
-package testcustom
+package example.custom
 import mainargs.{main, arg, ParserForMethods, TokensReader}
 
 object Main{

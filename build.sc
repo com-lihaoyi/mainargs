@@ -40,14 +40,16 @@ trait ExampleModule extends ScalaModule{
   def scalaVersion = "2.13.1"
   def moduleDeps = Seq(mainargs("2.13.1"))
 }
-object testhello extends ExampleModule
-object testhello2 extends ExampleModule
-object testclass extends ExampleModule
-object testclassarg extends ExampleModule
-object testoptseq extends ExampleModule
+object example{
+  object hello extends ExampleModule
+  object hello2 extends ExampleModule
+  object caseclass extends ExampleModule
+  object classarg extends ExampleModule
+  object optseq extends ExampleModule
 
-object testcustom extends ExampleModule{
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib:0.7.1")
+  object custom extends ExampleModule{
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib:0.7.1")
+  }
+  object vararg extends ExampleModule
+  object vararg2 extends ExampleModule
 }
-object testvararg extends ExampleModule
-object testvararg2 extends ExampleModule

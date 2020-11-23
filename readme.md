@@ -43,16 +43,16 @@ object Main{
 ```
 
 ```bash
-$ ./mill testhello -f hello
+$ ./mill example.hello -f hello
 hellohello false
 
-$ ./mill testhello -f hello --my-num 3
+$ ./mill example.hello -f hello --my-num 3
 hellohellohello false
 
-$ ./mill testhello -f hello --my-num 3 --bool
+$ ./mill example.hello -f hello --my-num 3 --bool
 hellohellohello true
 
-$ ./mill testhello --wrong-flag
+$ ./mill example.hello --wrong-flag
 Missing argument: --foo <str>
 Unknown argument: "--wrong-flag"
 Expected Signature: run
@@ -123,13 +123,13 @@ object Main{
 ```
 
 ```bash
-$ ./mill testhello2
+$ ./mill example.hello2
 Need to specify a sub command: foo, bar
 
-$ ./mill testhello2 foo -f hello
+$ ./mill example.hello2 foo -f hello
 hellohello false
 
-$ ./mill testhello2 bar -i 10
+$ ./mill example.hello2 bar -i 10
 lolslolslolslolslolslolslolslolslolslols
 ```
 
@@ -157,10 +157,10 @@ object Main{
 }
 ```
 ```bash
-$ ./mill testclass --foo "hello"
+$ ./mill example.caseclass --foo "hello"
 Config(hello,2,Flag(false))
 
-$ ./mill testclass
+$ ./mill example.caseclass
 Missing argument: --foo <str>
 Expected Signature: apply
   -f --foo <str>  String to print repeatedly
@@ -210,10 +210,10 @@ object Main{
 
 ```bash
 
-$ ./mill testclassarg bar --foo cow --extra-message "hello world"
+$ ./mill example.classarg bar --foo cow --extra-message "hello world"
 cowcow false hello world
 
-$ ./mill testclassarg qux --foo cow --n 5
+$ ./mill example.classarg qux --foo cow --n 5
 cowcow false
 cowcow false
 cowcow false
@@ -249,13 +249,13 @@ object Main{
 }
 ```
 ```bash
-$ ./mill testoptseq runOpt
+$ ./mill example.optseq runOpt
 None
 
-$ ./mill testoptseq runOpt --opt 123
+$ ./mill example.optseq runOpt --opt 123
 Some(123)
 
-$ ./mill testoptseq runSeq --seq 123 --seq 456 --seq 789
+$ ./mill example.optseq runSeq --seq 123 --seq 456 --seq 789
 List(123, 456, 789)
 ```
 
@@ -295,8 +295,8 @@ Apart from taking the name of the main `object` or config `case class`,
 of useful configuration values:
 
 - `allowPositional: Boolean`: allows you to pass CLI arguments "positionally"
-  without the `--name` of the parameter being provided, e.g. `./mill testhello
-  -f hello --my-num 3 --bool` could be called via `./mill testhello hello 3
+  without the `--name` of the parameter being provided, e.g. `./mill example.hello
+  -f hello --my-num 3 --bool` could be called via `./mill example.hello hello 3
   --bool`. Defaults to `false`
 
 - `allowRepeats: Boolean`: allows you to pass in a flag multiple times, and
@@ -343,7 +343,7 @@ object Main{
 }
 ```
 ```bash
-$ ./mill testcustom --from mainargs --to out
+$ ./mill example.custom --from mainargs --to out
 from: /Users/lihaoyi/Github/mainargs/mainargs
 to:   /Users/lihaoyi/Github/mainargs/out
 ```
@@ -391,7 +391,7 @@ object Main{
 }
 ```
 ```bash
-$ ./mill testvararg --foo bar i am cow
+$ ./mill example.vararg --foo bar i am cow
 barbar List(i, am, cow)
 ```
 
@@ -414,7 +414,7 @@ object Main{
 }
 ```
 ```bash
-$ ./mill testvararg2 --foo bar i am cow
+$ ./mill example.vararg2 --foo bar i am cow
 Config(bar,2,Leftover(List(i, am, cow)))
 ```
 
