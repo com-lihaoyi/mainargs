@@ -14,6 +14,9 @@ object OptionSeqTests extends TestSuite{
     def runVec(seq: Vector[Int]) = seq
 
     @main
+    def runMap(map: Map[String, String]) = map
+
+    @main
     def runInt(int: Int) = int
   }
 
@@ -42,6 +45,22 @@ object OptionSeqTests extends TestSuite{
     test("vec"){
       ParserForMethods(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
         Vector(123, 456)
+    }
+
+    test("map") {
+
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runMap")) ==>
+          Map()
+      }
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runMap", "--map", "abc=123")) ==>
+          Map("abc" -> "123")
+      }
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runMap", "--map", "abc=123", "--map", "def=456")) ==>
+          Map("abc" -> "123", "def" -> "456")
+      }
     }
     test("allowRepeats"){
       test("true"){

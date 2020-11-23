@@ -4,7 +4,8 @@ import scala.collection.mutable
 class TokensReader[T](val shortName: String,
                       val read: Seq[String] => Either[String, T],
                       val alwaysRepeatable: Boolean = false,
-                      val allowEmpty: Boolean = false)
+                      val allowEmpty: Boolean = false,
+                      val nonPassed: Boolean = false)
 object TokensReader{
   def tryEither[T](f: => T) = try Right(f) catch{case e: Throwable => Left(e.toString)}
 

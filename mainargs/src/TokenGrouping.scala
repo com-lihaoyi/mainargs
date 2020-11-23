@@ -38,8 +38,7 @@ object TokenGrouping{
               case None => complete(remaining, current)
             }
           }else if (allowPositional){
-
-            keywordArgMap.values.find(as => !current.exists(_._1 == as)) match{
+            argSigs.find(!current.contains(_)) match{
               case Some(nextInLine) => rec(rest, Util.appendMap(current, nextInLine, head))
               case None => complete(remaining, current)
             }
