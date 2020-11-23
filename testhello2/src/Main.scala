@@ -9,7 +9,7 @@ object Main{
           myNum: Int = 2,
           @arg(doc = "Example flag")
           bool: Flag) = {
-    println(foo * myNum + " " + bool)
+    println(foo * myNum + " " + bool.value)
   }
   @main
   def bar(i: Int,
