@@ -12,9 +12,16 @@ object TokenGrouping{
                    allowRepeats: Boolean,
                    allowLeftover: Boolean): Result[TokenGrouping[B]] = {
     val argSigs: Seq[ArgSig.Named[_, B]] = argSigs0
-      .map(ArgSig.flatten(_).collect{case x: ArgSig.Named[_, _] => x})
+      .map(ArgSig.flatten(_))
       .flatten
+      .collect{case x: ArgSig.Named[_, _] => x}
 
+    val positionalArgSigs = argSigs
+      .map{
+        case x: ArgSig.Simple[_, _]  => if (x.reader.noTokens) None else Some(x)
+        case x => Some(x)
+      }
+      .flatten
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
@@ -38,7 +45,7 @@ object TokenGrouping{
               case None => complete(remaining, current)
             }
           }else if (allowPositional){
-            argSigs.find(!current.contains(_)) match{
+            positionalArgSigs.find(!current.contains(_)) match{
               case Some(nextInLine) => rec(rest, Util.appendMap(current, nextInLine, head))
               case None => complete(remaining, current)
             }
