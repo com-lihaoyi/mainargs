@@ -12,20 +12,19 @@ object TokenGrouping{
                    allowRepeats: Boolean,
                    allowLeftover: Boolean): Result[TokenGrouping[B]] = {
     val argSigs: Seq[ArgSig.Named[_, B]] = argSigs0
-      .map(ArgSig.flatten(_))
+      .map(ArgSig.flatten(_).collect{case x: ArgSig.Named[_, _] => x})
       .flatten
-      .collect{case x: ArgSig.Named[_, _] => x}
+
 
     val positionalArgSigs = argSigs
-      .map{
-        case x: ArgSig.Simple[_, _]  => if (x.reader.noTokens) None else Some(x)
-        case x => Some(x)
+      .filter{
+        case x: ArgSig.Simple[_, _] if x.reader.noTokens => false
+        case x => true
       }
-      .flatten
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
-      .flatMap{x => Seq(x.name -> x) ++ x.shortName.map(_.toString -> x)}
+      .flatMap{x => (x.name ++ x.shortName).map(_.toString -> x)}
       .toMap[String, ArgSig.Named[_, B]]
 
     @tailrec def rec(remaining: List[String],

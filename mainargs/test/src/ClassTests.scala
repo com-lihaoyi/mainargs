@@ -31,9 +31,9 @@ object ClassTests extends TestSuite{
         fooParser.constructOrThrow(Seq("--x", "1", "--y", "2")) ==> Foo(1, 2)
       }
       test("missing") {
-        fooParser.constructRaw(Seq("--x", "1")) ==>
+        fooParser.constructRaw(Seq("-x", "1")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead)),
+            Seq(ArgSig.Simple(None, Some('y'),None,None,mainargs.TokensReader.IntRead)),
             List(),
             List(),
             None
@@ -44,22 +44,22 @@ object ClassTests extends TestSuite{
 
     test("nested") {
       test("success"){
-        barParser.constructOrThrow(Seq("--w", "--x", "1", "--y", "2", "--zzzz", "xxx")) ==>
+        barParser.constructOrThrow(Seq("-w", "-x", "1", "-y", "2", "--zzzz", "xxx")) ==>
           Bar(Flag(true), Foo(1, 2), "xxx")
       }
       test("missingInner"){
-        barParser.constructRaw(Seq("--w", "--x", "1", "--z", "xxx")) ==>
+        barParser.constructRaw(Seq("-w", "-x", "1", "-z", "xxx")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead)),
+            Seq(ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead)),
             List(),
             List(),
             None
           )
       }
       test("missingOuter"){
-        barParser.constructRaw(Seq("--w", "--x", "1", "--y", "2")) ==>
+        barParser.constructRaw(Seq("-w", "-x", "1", "-y", "2")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple("zzzz",Some('z'),None,None,mainargs.TokensReader.StringRead)),
+            Seq(ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead)),
             List(),
             List(),
             None
@@ -67,11 +67,11 @@ object ClassTests extends TestSuite{
       }
 
       test("missingInnerOuter"){
-        barParser.constructRaw(Seq("--w", "--x", "1")) ==>
+        barParser.constructRaw(Seq("-w", "-x", "1")) ==>
           Result.Failure.MismatchedArguments(
             Seq(
-              ArgSig.Simple("y",None,None,None,mainargs.TokensReader.IntRead),
-              ArgSig.Simple("zzzz",Some('z'),None,None,mainargs.TokensReader.StringRead)
+              ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead),
+              ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead)
             ),
             List(),
             List(),
@@ -79,11 +79,11 @@ object ClassTests extends TestSuite{
           )
       }
       test("failedInnerOuter") {
-        assertMatch(barParser.constructRaw(Seq("--w","--x", "xxx", "--y", "hohoho", "-z", "xxx"))) {
+        assertMatch(barParser.constructRaw(Seq("-w","-x", "xxx", "-y", "hohoho", "-z", "xxx"))) {
           case Result.Failure.InvalidArguments(
             Seq(
-              Result.ParamError.Failed(ArgSig.Simple("x", None, None, None, _), Seq("xxx"), _),
-              Result.ParamError.Failed(ArgSig.Simple("y", None, None, None, _), Seq("hohoho"), _)
+              Result.ParamError.Failed(ArgSig.Simple(None, Some('x'), None, None, _), Seq("xxx"), _),
+              Result.ParamError.Failed(ArgSig.Simple(None, Some('y'), None, None, _), Seq("hohoho"), _)
           )
           ) =>
         }
@@ -91,11 +91,11 @@ object ClassTests extends TestSuite{
     }
 
     test("doubleNested"){
-      quxParser.constructOrThrow(Seq("--w", "--x", "1", "--y", "2", "--z", "xxx", "--moo", "cow")) ==>
+      quxParser.constructOrThrow(Seq("-w", "-x", "1", "-y", "2", "-z", "xxx", "--moo", "cow")) ==>
         Qux("cow", Bar(Flag(true), Foo(1, 2), "xxx"))
     }
     test("success"){
-      ParserForMethods(Main).runOrThrow(Seq("--x", "1", "--y", "2", "-z", "hello")) ==> "false 1 2 hello false"
+      ParserForMethods(Main).runOrThrow(Seq("-x", "1", "-y", "2", "-z", "hello")) ==> "false 1 2 hello false"
     }
   }
 }

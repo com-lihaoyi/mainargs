@@ -17,18 +17,25 @@ object Invoker {
   }
   def invoke0[T, B](base: B,
                     mainData: MainData[T, B],
-                    kvs: Map[String, Seq[String]],
+                    kvs: Map[ArgSig.Named[_, B], Seq[String]],
                     extras: Seq[String]): Result[T] = {
     val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] =
       for(a <- mainData.argSigs0) yield {
         a match{
           case a: ArgSig.Flag[B] =>
-            Right(ParamResult.Success(Flag(kvs.contains(a.name)).asInstanceOf[T]))
+            Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
           case a: ArgSig.Simple[T, B] => Right(makeReadCall(kvs, base, a))
           case a: ArgSig.Leftover[T, B] =>
             Right(makeReadVarargsCall(a, extras).map(x => Leftover(x:_*).asInstanceOf[T]))
           case a: ArgSig.Class[T, B] =>
-            Left(invoke0(a.reader.companion(), a.reader.main, kvs, extras))
+            Left(
+              invoke0[T, B](
+                a.reader.companion().asInstanceOf[B],
+                a.reader.main.asInstanceOf[MainData[T, B]],
+                kvs,
+                extras
+              )
+            )
         }
       }
 
@@ -59,7 +66,7 @@ object Invoker {
     try invoke0(
       target,
       main,
-      grouping.grouped.map{case (k, vs) => (k.name, vs)},
+      grouping.grouped,
       grouping.remaining
     ) catch{case e: Throwable => Result.Failure.Exception(e)}
   }
@@ -104,7 +111,7 @@ object Invoker {
     try Right(t)
     catch{ case e: Throwable => Left(error(e))}
   }
-  def makeReadCall[T, B](dict: Map[String, Seq[String]],
+  def makeReadCall[T, B](dict: Map[ArgSig.Named[_, B], Seq[String]],
                          base: B,
                          arg: ArgSig.Simple[T, B]): ParamResult[T] = {
     def prioritizedDefault = tryEither(
@@ -114,7 +121,7 @@ object Invoker {
       case Left(ex) => ParamResult.Failure(Seq(ex))
       case Right(v) => ParamResult.Success(v)
     }
-    val tokens = dict.get(arg.name) match{
+    val tokens = dict.get(arg) match{
       case None =>  if (arg.reader.allowEmpty) Some(Nil) else None
       case Some(tokens) => Some(tokens)
     }

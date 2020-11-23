@@ -39,12 +39,12 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
           |  foo
           |
           |  bar
-          |    --i <int>
+          |    -i <int>
           |
           |  qux
           |  Qux is a function that does stuff
-          |    --i <int>
-          |    --s <str>  Pass in a custom `s` to override it
+          |    -i <int>
+          |    -s <str>  Pass in a custom `s` to override it
           |
           |  ex
           |""".stripMargin
@@ -59,18 +59,18 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
         List("foo", "bar", "qux", "ex")
       )
       val evaledArgs = check.mains.value.map(_.argSigs.map{
-        case ArgSig.Simple(name, s, docs, None, parser) => (name, docs, None, parser)
+        case ArgSig.Simple(name, s, docs, None, parser) => (s, docs, None, parser)
         case ArgSig.Simple(name, s, docs, Some(default), parser) =>
-          (name, docs, Some(default(CoreBase)), parser)
+          (s, docs, Some(default(CoreBase)), parser)
       })
 
       assert(
         evaledArgs == List(
           List(),
-          List(("i", None, None, TokensReader.IntRead)),
+          List((Some('i'), None, None, TokensReader.IntRead)),
           List(
-            ("i", None, None, TokensReader.IntRead),
-            ("s", Some("Pass in a custom `s` to override it"), Some("lols"), TokensReader.StringRead)
+            (Some('i'), None, None, TokensReader.IntRead),
+            (Some('s'), Some("Pass in a custom `s` to override it"), Some("lols"), TokensReader.StringRead)
           ),
           List()
         )
@@ -82,13 +82,13 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
         List("foo"), Result.Success(1)
       )
       test - check(
-        List("bar", "--i", "2"), Result.Success(2)
+        List("bar", "-i", "2"), Result.Success(2)
       )
       test - check(
-        List("qux", "--i", "2"), Result.Success("lolslols")
+        List("qux", "-i", "2"), Result.Success("lolslols")
       )
       test - check(
-        List("qux", "--i", "3", "--s", "x"), Result.Success("xxx")
+        List("qux", "-i", "3", "-s", "x"), Result.Success("xxx")
       )
     }
 
@@ -96,15 +96,15 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
       test("missingParams"){
         test - assertMatch(check.parseInvoke(List("bar"))){
           case Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple("i", _, _, _, _)),
+            Seq(ArgSig.Simple(None, Some('i'), _, _, _)),
             Nil,
             Nil,
             None
           ) =>
         }
-        test - assertMatch(check.parseInvoke(List("qux", "--s", "omg"))){
+        test - assertMatch(check.parseInvoke(List("qux", "-s", "omg"))){
           case Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple("i", _, _, _, _)),
+            Seq(ArgSig.Simple(None, Some('i'), _, _, _)),
             Nil,
             Nil,
             None
@@ -134,26 +134,26 @@ object CorePositionalDisabledOnlyTests extends TestSuite{
       test - check(
         List("bar", "2"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple("i",None,None,None, TokensReader.IntRead)),
+          missing = List(ArgSig.Simple(None,Some('i'),None,None, TokensReader.IntRead)),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "2"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple("i",None,None,None, TokensReader.IntRead)),
+          missing = List(ArgSig.Simple(None,Some('i'),None,None, TokensReader.IntRead)),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "3", "x"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple("i",None,None,None, TokensReader.IntRead)),
+          missing = List(ArgSig.Simple(None,Some('i'),None,None, TokensReader.IntRead)),
           unknown = List("3", "x")
         )
       )
       test - check(
-        List("qux", "--i", "3", "x"),
+        List("qux", "-i", "3", "x"),
         MismatchedArguments(List(),List("x"),List(),None)
       )
     }
@@ -162,17 +162,17 @@ object CorePositionalDisabledOnlyTests extends TestSuite{
       test("invalidParams") - check(
         List("bar", "lol"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple("i",None,None,None, TokensReader.IntRead)),
+          missing = List(ArgSig.Simple(None,Some('i'),None,None, TokensReader.IntRead)),
           unknown = List("lol"),
         )
       )
     }
 
     test("redundantParams") - check(
-      List("qux", "1", "--i", "2"),
+      List("qux", "1", "-i", "2"),
       MismatchedArguments(
-        missing = List(ArgSig.Simple("i", None,None,None, TokensReader.IntRead)),
-        unknown = List("1", "--i", "2"),
+        missing = List(ArgSig.Simple(None, Some('i'),None,None, TokensReader.IntRead)),
+        unknown = List("1", "-i", "2"),
       )
     )
   }
@@ -187,7 +187,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
       test - check(List("qux", "2"), Result.Success("lolslols"))
       test - check(List("qux", "3", "x"), Result.Success("xxx"))
       test - check(
-        List("qux", "--i", "3", "x"), Result.Success("xxx")
+        List("qux", "-i", "3", "x"), Result.Success("xxx")
       )
     }
 
@@ -196,15 +196,15 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
         check.parseInvoke(List("bar", "lol"))
       ){
         case Result.Failure.InvalidArguments(
-        List(Result.ParamError.Failed(ArgSig.Simple("i", _, _, _, _), Seq("lol"), _))
+        List(Result.ParamError.Failed(ArgSig.Simple(None, Some('i'), _, _, _), Seq("lol"), _))
         ) =>
       }
 
       test("redundantParams"){
-        val parsed = check.parseInvoke(List("qux", "1", "--i", "2"))
+        val parsed = check.parseInvoke(List("qux", "1", "-i", "2"))
         assertMatch(parsed){
           case Result.Failure.MismatchedArguments(
-          Nil, Nil, Seq((ArgSig.Simple("i", _, _, _, _), Seq("1", "2"))), None
+          Nil, Nil, Seq((ArgSig.Simple(None, Some('i'), _, _, _), Seq("1", "2"))), None
           ) =>
         }
       }

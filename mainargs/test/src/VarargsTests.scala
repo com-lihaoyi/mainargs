@@ -95,7 +95,7 @@ trait VarargsTests extends TestSuite{
     test("notEnoughNormalArgsStillFails"){
       assertMatch(check.parseInvoke(List("mixedVariadic"))){
         case Result.Failure.MismatchedArguments(
-          Seq(ArgSig.Simple("first", _, _, _, _)),
+          Seq(ArgSig.Simple(Some("first"), _, _, _, _)),
           Nil,
           Nil,
           None
@@ -125,7 +125,7 @@ trait VarargsTests extends TestSuite{
       ){
         case Result.Failure.InvalidArguments(List(
           Result.ParamError.Failed(
-            ArgSig.Simple("first", _, _, _, _),
+            ArgSig.Simple(Some("first"), _, _, _, _),
             Seq("aa"),
             "java.lang.NumberFormatException: For input string: \"aa\""
           )

@@ -6,33 +6,23 @@ object Renderer {
 
   def getLeftColWidth(items: Seq[ArgSig.Terminal[_, _]]) = {
     if (items.isEmpty) 0
-    else items
-      .map {
-        case x: ArgSig.Flag[_] =>
-          x.name.length + 2 + // name and --
-            x.shortName.fold (0) (_ => 3) // -c and the separating whitespace
-        case x: ArgSig.Simple[_, _] =>
-          x.name.length + 2 + // name and --
-            x.shortName.fold (0) (_ => 3) + // -c and the separating whitespace
-            x.typeString.size + 3 // "" or " <str>"
-        case x: ArgSig.Leftover[_, _] =>
-          x.name.size + 1 + x.reader.shortName.size + 2 + 3
-      }
-      .max
+    else items.map(renderArgShort(_).length).max
   }
 
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
   def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match{
     case arg: ArgSig.Flag[_] =>
-      val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
-      s"$shortPrefix--${arg.name}"
+      val shortPrefix = arg.shortName.map(c => s"-$c")
+      val nameSuffix = arg.name.map(s => s"--$s")
+      (shortPrefix ++ nameSuffix).mkString(" ")
     case arg: ArgSig.Simple[_, _] =>
-      val shortPrefix = arg.shortName.fold("")(c => s"-$c ")
-      val typeSuffix = s" <${arg.typeString}>"
-      s"$shortPrefix--${arg.name}$typeSuffix"
+      val shortPrefix = arg.shortName.map(c => s"-$c")
+      val typeSuffix = s"<${arg.typeString}>"
+      val nameSuffix = arg.name.map(s => s"--$s")
+      (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
     case arg: ArgSig.Leftover[_, _] =>
-      s"${arg.name} <${arg.reader.shortName}>..."
+      s"${arg.name0} <${arg.reader.shortName}>..."
   }
 
 

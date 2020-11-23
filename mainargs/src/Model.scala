@@ -16,22 +16,25 @@ object ArgSig{
                    arg: mainargs.arg,
                    defaultOpt: Option[B => T])
                   (implicit argParser: ArgReader[T]): ArgSig[T, B] = {
-    val name = scala.Option(arg.name).getOrElse(name0)
-    val shortOpt = arg.short match{ case '\u0000' => None; case c => Some(c)}
+    val nameOpt = scala.Option(arg.name).orElse(if (name0.length == 1 || arg.noDefaultName) None else Some(name0))
+    val shortOpt = arg.short match{
+      case '\u0000' => if (name0.length != 1 || arg.noDefaultName) None else Some(name0(0));
+      case c => Some(c)
+    }
     val docOpt = scala.Option(arg.doc)
     argParser match{
-      case ArgReader.Flag() => ArgSig.Flag[B](name, shortOpt, docOpt)
+      case ArgReader.Flag() => ArgSig.Flag[B](nameOpt, shortOpt, docOpt)
       case ArgReader.Class(parser) => Class(parser.mains)
       case ArgReader.Leftover(reader: TokensReader[T]) =>
-        Leftover[T, B](name, docOpt, reader)
+        Leftover[T, B](scala.Option(arg.name).getOrElse(name0), docOpt, reader)
       case ArgReader.Simple(reader) =>
-        Simple[T, B](name, shortOpt, docOpt, defaultOpt, reader)
+        Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader)
     }
   }
 
 
   sealed trait Terminal[T, B] extends ArgSig[T, B]{
-    def name: String
+    def name: Option[String]
     def doc: Option[String]
   }
 
@@ -46,7 +49,7 @@ object ArgSig{
    * (just for logging and reading, not a replacement for a `TypeTag`) and
    * possible a function that can compute its default value
    */
-  case class Simple[T, B](name: String,
+  case class Simple[T, B](name: Option[String],
                           shortName: Option[Char],
                           doc: Option[String],
                           default: Option[B => T],
@@ -54,7 +57,7 @@ object ArgSig{
     def typeString = reader.shortName
   }
 
-  case class Flag[B](name: String,
+  case class Flag[B](name: Option[String],
                      shortName: Option[Char],
                      doc: Option[String]) extends ArgSig.Named[mainargs.Flag, B]
 
@@ -66,9 +69,11 @@ object ArgSig{
 
   case class Class[T, B](reader: ClassMains[T]) extends ArgSig[T, B]
 
-  case class Leftover[T, B](name: String,
+  case class Leftover[T, B](name0: String,
                             doc: Option[String],
-                            reader: TokensReader[T]) extends ArgSig.Terminal[T, B]
+                            reader: TokensReader[T]) extends ArgSig.Terminal[T, B]{
+    def name = Some(name0)
+  }
 }
 
 sealed trait ArgReader[T]
