@@ -5,6 +5,13 @@ sealed trait ArgSig[T, B]{
   def widen[V >: T] = this.asInstanceOf[ArgSig[V, B]]
 }
 object ArgSig{
+  def createVararg[T, B](name0: String,
+                         arg: mainargs.arg)
+                        (implicit argParser: ArgReader.Leftover[T])= {
+    val name = scala.Option(arg.name).getOrElse(name0)
+    val docOpt = scala.Option(arg.doc)
+    Leftover[T, B](name, docOpt, argParser.reader)
+  }
   def create[T, B](name0: String,
                    arg: mainargs.arg,
                    defaultOpt: Option[B => T])

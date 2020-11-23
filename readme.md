@@ -423,8 +423,33 @@ You can also pass in a different type to `Leftover`, e.g. `Leftover[Int]` or
 particular type. Any tokens that do not conform to that type will result in an
 argument parsing error.
 
+### Varargs Parameters
+
+You can also use `*` "varargs" to define a parameter that takes in the remainder
+of the tokens passed to the CLI:
+
+```scala
+package testvararg
+import mainargs.{main, arg, ParserForMethods, Leftover}
+
+object Main{
+  @main
+  def run(foo: String,
+          myNum: Int,
+          rest: String*) = {
+    println(foo * myNum + " " + rest.value)
+  }
+
+  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+}
+```
+
+Note that this has a limitation that you cannot then assign default values to
+the other parameters of the function, and hence using `Leftover[T]` is
+preferable for those cases.
+
 # Changelog
 
-## 0.1.1
+## 0.1.2
 
 - First release

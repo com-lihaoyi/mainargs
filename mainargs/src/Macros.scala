@@ -67,6 +67,15 @@ class Macros(val c: Context) {
     }
   }
 
+  def unwrapVarargType(arg: Symbol) = {
+    val vararg = arg.typeSignature.typeSymbol == definitions.RepeatedParamClass
+    val unwrappedType =
+      if (!vararg) arg.typeSignature
+      else arg.typeSignature.asInstanceOf[TypeRef].args(0)
+
+    (vararg, unwrappedType)
+  }
+
   def extractMethod(methodName: String,
                     flattenedArgLists: Seq[Symbol],
                     methodPos: Position,
@@ -96,27 +105,36 @@ class Macros(val c: Context) {
 
     val argSigs  = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
-
+      val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
       val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg])
 
       val instantiateArg = argAnnotation match{
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
         case _ => q"new _root_.mainargs.arg()"
       }
-      val argSig = q"""
-        _root_.mainargs.ArgSig.create[${arg.typeSignature}, $curCls](
+      val argSig = if (vararg) q"""
+        _root_.mainargs.ArgSig.createVararg[$varargUnwrappedType, $curCls](
+          ${arg.name.toString},
+          $instantiateArg,
+        ).widen[_root_.scala.Any]
+      """ else q"""
+        _root_.mainargs.ArgSig.create[$varargUnwrappedType, $curCls](
           ${arg.name.toString},
           $instantiateArg,
           $defaultOpt
         ).widen[_root_.scala.Any]
       """
 
+
       c.internal.setPos(argSig, methodPos)
       argSig
     }
 
     val argNameCasts = flattenedArgLists.zipWithIndex.map { case (arg, i) =>
-      q"$argListSymbol($i).asInstanceOf[${arg.typeSignature}]"
+      val (vararg, unwrappedType) = unwrapVarargType(arg)
+      val baseTree = q"$argListSymbol($i)"
+      if (!vararg) q"$baseTree.asInstanceOf[$unwrappedType]"
+      else q"$baseTree.asInstanceOf[_root_.mainargs.Leftover[$unwrappedType]].value: _*"
     }
 
     val mainInstance = mainAnnotation match{

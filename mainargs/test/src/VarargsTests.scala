@@ -1,17 +1,39 @@
 package mainargs
 import utest._
-
-object VarargsTests extends TestSuite{
+object NewVarargsTests extends VarargsTests{
   object Base{
     @main
     def pureVariadic(nums: Leftover[Int]) = nums.value.sum
 
     @main
-    def mixedVariadic(@arg(short = 'f') first: Int, args: Leftover[String]) = first + args.value.mkString
+    def mixedVariadic(@arg(short = 'f') first: Int, args: Leftover[String]) = {
+      first + args.value.mkString
+    }
+    @main
+    def mixedVariadicWithDefault(@arg(short = 'f') first: Int = 1337,
+                                 args: Leftover[String]) = {
+      first + args.value.mkString
+    }
   }
 
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
+}
 
+object OldVarargsTests extends VarargsTests{
+  object Base{
+
+    @main
+    def pureVariadic(nums: Int*) = nums.sum
+
+    @main
+    def mixedVariadic(@arg(short = 'f') first: Int, args: String*) = first + args.mkString
+  }
+
+  val check = new Checker(ParserForMethods(Base), allowPositional = true)
+}
+
+trait VarargsTests extends TestSuite{
+  def check: Checker[_]
   val tests = Tests {
 
     test("happyPathPasses"){
@@ -22,6 +44,12 @@ object VarargsTests extends TestSuite{
         List("mixedVariadic", "1", "2", "3", "4", "5"),
         Result.Success("12345")
       )
+      test - {
+        if (this == NewVarargsTests) check(
+          List("mixedVariadicWithDefault"),
+          Result.Success("1337")
+        )
+      }
     }
     test("emptyVarargsPasses"){
       test - check(List("pureVariadic"), Result.Success(0))
