@@ -14,22 +14,22 @@ object FlagTests extends TestSuite{
 
   val tests = Tests {
     test - check(
-      List("--b", "true"), Result.Success(true)
+      List("-b", "true"), Result.Success(true)
     )
     test - check(
-      List("--b", "false"), Result.Success(false)
-    )
-
-    test - check(
-      List("--a", "--b", "false"), Result.Success(true)
+      List("-b", "false"), Result.Success(false)
     )
 
     test - check(
-      List("--c", "--b", "false"), Result.Success(true)
+      List("-a", "-b", "false"), Result.Success(true)
     )
 
     test - check(
-      List("--a", "--c", "--b", "false"), Result.Success(true)
+      List("-c", "-b", "false"), Result.Success(true)
+    )
+
+    test - check(
+      List("-a", "-c", "-b", "false"), Result.Success(true)
     )
 
   }

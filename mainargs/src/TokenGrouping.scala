@@ -24,7 +24,7 @@ object TokenGrouping{
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
-      .flatMap{x => (x.name ++ x.shortName).map(_.toString -> x)}
+      .flatMap{x => (x.name.map("--" + _) ++ x.shortName.map("-" + _)).map(_ -> x)}
       .toMap[String, ArgSig.Named[_, B]]
 
     @tailrec def rec(remaining: List[String],
@@ -32,7 +32,7 @@ object TokenGrouping{
       remaining match{
         case head :: rest  =>
           if (head.startsWith("-")){
-            keywordArgMap.get(if(head.startsWith("--")) head.drop(2) else head.drop(1)) match {
+            keywordArgMap.get(head) match {
               case Some(cliArg: ArgSig.Flag[_]) =>
                 rec(rest, Util.appendMap(current, cliArg, ""))
               case Some(cliArg: ArgSig.Simple[_, _]) =>

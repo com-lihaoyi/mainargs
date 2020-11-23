@@ -32,7 +32,7 @@ object ParserTests extends TestSuite{
         multiMethodParser.runEither(Array("foo")) ==> Right(1)
       }
       test {
-        multiMethodParser.runEither(Array("bar", "--i", "123")) ==> Right(123)
+        multiMethodParser.runEither(Array("bar", "-i", "123")) ==> Right(123)
       }
       test {
         assert(

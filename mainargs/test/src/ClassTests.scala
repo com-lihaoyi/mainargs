@@ -28,7 +28,7 @@ object ClassTests extends TestSuite{
   val tests = Tests {
     test("simple") {
       test("success"){
-        fooParser.constructOrThrow(Seq("--x", "1", "--y", "2")) ==> Foo(1, 2)
+        fooParser.constructOrThrow(Seq("-x", "1", "-y", "2")) ==> Foo(1, 2)
       }
       test("missing") {
         fooParser.constructRaw(Seq("-x", "1")) ==>
