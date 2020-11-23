@@ -4,7 +4,7 @@ import scalalib._
 
 object mainargs extends Cross[MainArgsModule]("2.12.12", "2.13.1")
 class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule with PublishModule {
-  def publishVersion = "0.1.1"
+  def publishVersion = "0.1.2"
   def artifactName = "mainargs"
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
