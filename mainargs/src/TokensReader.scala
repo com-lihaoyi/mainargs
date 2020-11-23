@@ -67,6 +67,8 @@ object TokensReader{
             case _ => Left("parameter must be in k=v format")
           }
       }
-    }
+    },
+    alwaysRepeatable = true,
+    allowEmpty = true
   )
 }

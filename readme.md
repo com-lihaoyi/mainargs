@@ -16,7 +16,7 @@ MainArgs is a small, dependency-free library for command line argument parsing.
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.1.1"
+ivy"com.lihaoyi::mainargs:0.1.3"
 ```
 
 ## Parsing Main Method Parameters
@@ -450,6 +450,6 @@ preferable for those cases.
 
 # Changelog
 
-## 0.1.2
+## 0.1.3
 
 - First release
