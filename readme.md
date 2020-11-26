@@ -292,10 +292,6 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
-- `flag: Boolean`: turns a boolean argument into a flag, such that it can be
-  provided via `--foo` rather than `--foo true`, with the absence of the flag
-  being interpreted as `false`.
-
 ## Customization
 
 Apart from taking the name of the main `object` or config `case class`,
@@ -321,6 +317,12 @@ of useful configuration values:
 - `docsOnNewLine: Boolean`: whether to print argument doc-strings on a new line
   below the name of the argument; this may make things easier to read, but at a
   cost of taking up much more vertical space. Defaults to `false`
+
+- `autoprintHelpAndExit: Option[(Int, PrintStream)]`: whether to detect `--help`
+  being passed in automatically, and if so where to print the help message and
+  what exit code to exit the process with. Defaults t, `Some((0, System.out))`,
+  but can be disabled by passing in `None` if you want to handle help text
+  manually (e.g. by calling `.helpText` on the parser object)
 
 - `customName`/`customNames` and `customDoc`/`customDocs`: allows you to
   override the main method names and documentation strings at runtime. This
