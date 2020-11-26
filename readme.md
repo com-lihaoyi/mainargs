@@ -2,6 +2,12 @@
 
 MainArgs is a small, dependency-free library for command line argument parsing.
 
+MainArgs is used for command-line parsing of the
+[Ammonite Scala REPL](http://ammonite.io/) and for user-defined `@main` methods
+in its scripts, as well as for command-line parsing for the
+[Mill Build Tool](https://github.com/lihaoyi/mill) and for user-defined
+`T.command`s.
+
 - [Usage](#usage)
   - [Parsing Main Method Parameters](#parsing-main-method-parameters)
   - [Multiple Main Methods](#multiple-main-methods)
@@ -11,6 +17,7 @@ MainArgs is a small, dependency-free library for command line argument parsing.
   - [Customization](#customization)
   - [Custom Argument Parsers](#custom-argument-parsers)
   - [Handling Leftover Arguments](#handlings-leftover-arguments)
+- [Prior Art](#prior-art)
 - [Changelog](#changelog)
 
 # Usage
@@ -447,6 +454,51 @@ object Main{
 Note that this has a limitation that you cannot then assign default values to
 the other parameters of the function, and hence using `Leftover[T]` is
 preferable for those cases.
+
+# Prior Art
+
+## Ammonite & Mill
+
+MainArgs grew out of the user-defined `@main` method feature supported by
+Ammonite Scala Scripts:
+
+- http://ammonite.io/#ScriptArguments
+
+This implementation was largely copy-pasted into the Mill build tool, to use for
+its user-defined `T.command`s. A parallel implementation was used to parse
+command-line parameters for Ammonite and Mill themselves.
+
+Now all four implementations have been unified in the MainArgs library, which
+both Ammonite and Mill rely heavily upon. MainArgs also provides some additional
+features, such as making it easy to define short versions of flags like `-c` via
+the `short = '...'` parameter, or re-naming the command line flags via `name =
+"..."`.
+
+## Case App
+
+MainArgs' support for parsing Scala `case class`es was inspired by Alex
+Archambault's `case-app` library:
+
+- https://github.com/alexarchambault/case-app
+
+MainArgs has the following differentiators over `case-app`:
+
+- Support for directly dispatching to `@main` method(s), rather than only
+  parsing into `case class`es
+- A dependency-free implementation, without pulling in the heavyweight Shapeless
+  library.
+
+## Scopt
+
+MainArgs takes a lot of inspiration from the old Scala Scopt library:
+
+- https://github.com/scopt/scopt
+
+Unlike Scopt, MainArgs lets you call `@main` methods or instantiate `case
+class`es directly, without needing to separately define a `case class` and
+parser. This makes it usable with much less boilerplate than Scopt: a single
+method annotated with `@main` is all you need to turn your program into a
+command-line friendly tool.
 
 # Changelog
 
