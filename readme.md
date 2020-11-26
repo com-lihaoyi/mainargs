@@ -1,6 +1,7 @@
 # mainargs
 
-MainArgs is a small, dependency-free library for command line argument parsing.
+MainArgs is a small, dependency-free library for command line argument parsing
+in Scala.
 
 MainArgs is used for command-line parsing of the
 [Ammonite Scala REPL](http://ammonite.io/) and for user-defined `@main` methods
