@@ -31,7 +31,7 @@ object TokenGrouping{
                      current: Map[ArgSig.Named[_, B], Vector[String]]): Result[TokenGrouping[B]] = {
       remaining match{
         case head :: rest  =>
-          if (head.startsWith("-")){
+          if (head.startsWith("-") && head.exists(_ != '-')){
             keywordArgMap.get(head) match {
               case Some(cliArg: ArgSig.Flag[_]) =>
                 rec(rest, Util.appendMap(current, cliArg, ""))
