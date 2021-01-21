@@ -19,7 +19,8 @@ object Renderer {
     case arg: ArgSig.Simple[_, _] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${arg.typeString}>"
-      val nameSuffix = arg.name.map(s => s"--$s")
+
+      val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
     case arg: ArgSig.Leftover[_, _] =>
       s"${arg.name0} <${arg.reader.shortName}>..."
