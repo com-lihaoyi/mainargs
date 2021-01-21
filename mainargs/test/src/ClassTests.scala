@@ -33,7 +33,7 @@ object ClassTests extends TestSuite{
       test("missing") {
         fooParser.constructRaw(Seq("-x", "1")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple(None, Some('y'),None,None,mainargs.TokensReader.IntRead)),
+            Seq(ArgSig.Simple(None, Some('y'),None,None,mainargs.TokensReader.IntRead, false)),
             List(),
             List(),
             None
@@ -50,7 +50,7 @@ object ClassTests extends TestSuite{
       test("missingInner"){
         barParser.constructRaw(Seq("-w", "-x", "1", "-z", "xxx")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead)),
+            Seq(ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead, false)),
             List(),
             List(),
             None
@@ -59,7 +59,7 @@ object ClassTests extends TestSuite{
       test("missingOuter"){
         barParser.constructRaw(Seq("-w", "-x", "1", "-y", "2")) ==>
           Result.Failure.MismatchedArguments(
-            Seq(ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead)),
+            Seq(ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead, false)),
             List(),
             List(),
             None
@@ -70,8 +70,8 @@ object ClassTests extends TestSuite{
         barParser.constructRaw(Seq("-w", "-x", "1")) ==>
           Result.Failure.MismatchedArguments(
             Seq(
-              ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead),
-              ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead)
+              ArgSig.Simple(None,Some('y'),None,None,mainargs.TokensReader.IntRead, false),
+              ArgSig.Simple(Some("zzzz"),Some('z'),None,None,mainargs.TokensReader.StringRead, false)
             ),
             List(),
             List(),
@@ -82,8 +82,8 @@ object ClassTests extends TestSuite{
         assertMatch(barParser.constructRaw(Seq("-w","-x", "xxx", "-y", "hohoho", "-z", "xxx"))) {
           case Result.Failure.InvalidArguments(
             Seq(
-              Result.ParamError.Failed(ArgSig.Simple(None, Some('x'), None, None, _), Seq("xxx"), _),
-              Result.ParamError.Failed(ArgSig.Simple(None, Some('y'), None, None, _), Seq("hohoho"), _)
+              Result.ParamError.Failed(ArgSig.Simple(None, Some('x'), None, None, _, false), Seq("xxx"), _),
+              Result.ParamError.Failed(ArgSig.Simple(None, Some('y'), None, None, _, false), Seq("hohoho"), _)
           )
           ) =>
         }

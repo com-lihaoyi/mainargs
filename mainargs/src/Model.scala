@@ -28,7 +28,7 @@ object ArgSig{
       case ArgReader.Leftover(reader: TokensReader[T]) =>
         Leftover[T, B](scala.Option(arg.name).getOrElse(name0), docOpt, reader)
       case ArgReader.Simple(reader) =>
-        Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader)
+        Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader, arg.positional)
     }
   }
 
@@ -53,7 +53,8 @@ object ArgSig{
                           shortName: Option[Char],
                           doc: Option[String],
                           default: Option[B => T],
-                          reader: TokensReader[T]) extends ArgSig.Named[T, B]{
+                          reader: TokensReader[T],
+                          positional: Boolean) extends ArgSig.Named[T, B]{
     def typeString = reader.shortName
   }
 

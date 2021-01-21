@@ -19,11 +19,13 @@ object TokenGrouping{
     val positionalArgSigs = argSigs
       .filter{
         case x: ArgSig.Simple[_, _] if x.reader.noTokens => false
-        case x => true
+        case x: ArgSig.Simple[_, _] if x.positional => true
+        case x => allowPositional
       }
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
+      .filter{case x: ArgSig.Simple[_, _] if x.positional => false; case _ => true}
       .flatMap{x => (x.name.map("--" + _) ++ x.shortName.map("-" + _)).map(_ -> x)}
       .toMap[String, ArgSig.Named[_, B]]
 
@@ -43,12 +45,12 @@ object TokenGrouping{
 
               case None => complete(remaining, current)
             }
-          }else if (allowPositional){
+          }else {
             positionalArgSigs.find(!current.contains(_)) match{
               case Some(nextInLine) => rec(rest, Util.appendMap(current, nextInLine, head))
               case None => complete(remaining, current)
             }
-          } else complete(remaining, current)
+          }
 
         case _ => complete(remaining, current)
 

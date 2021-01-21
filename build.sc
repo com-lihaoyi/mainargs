@@ -1,10 +1,9 @@
-import mill._
-import mill.scalalib.publish.{Developer, License, PomSettings, VersionControl}
+import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import scalalib._
 
 object mainargs extends Cross[MainArgsModule]("2.12.12", "2.13.1")
 class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule with PublishModule {
-  def publishVersion = "0.1.4"
+  def publishVersion = "0.1.5"
   def artifactName = "mainargs"
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
