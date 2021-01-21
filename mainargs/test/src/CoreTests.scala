@@ -90,6 +90,12 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
       test - check(
         List("qux", "-i", "3", "-s", "x"), Result.Success("xxx")
       )
+      test - check(
+        List("qux", "-i", "3", "-s", "-"), Result.Success("---")
+      )
+      test - check(
+        List("qux", "-i", "3", "-s", "--"), Result.Success("------")
+      )
     }
 
     test("failures"){
@@ -186,6 +192,9 @@ object CorePositionalEnabledOnlyTests extends TestSuite{
       test - check(List("bar", "2"), Result.Success(2))
       test - check(List("qux", "2"), Result.Success("lolslols"))
       test - check(List("qux", "3", "x"), Result.Success("xxx"))
+      test - check(List("qux", "2", "-"), Result.Success("--"))
+      test - check(List("qux", "2", "--"), Result.Success("----"))
+      test - check(List("qux", "1", "---"), Result.Success("---"))
       test - check(
         List("qux", "-i", "3", "x"), Result.Success("xxx")
       )
