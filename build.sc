@@ -7,7 +7,7 @@ val scala213 = "2.13.4"
 
 val scalaJSVersions = for {
   scalaV <- Seq(scala213, scala212)
-  scalaJSV <- Seq("0.6.33", "1.4.0")
+  scalaJSV <- Seq("1.4.0")
 } yield (scalaV, scalaJSV)
 
 val scalaNativeVersions = for {
@@ -40,7 +40,7 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule {
   )
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.3.2"
+    ivy"org.scala-lang.modules::scala-collection-compat::2.4.0"
   )
 }
 
