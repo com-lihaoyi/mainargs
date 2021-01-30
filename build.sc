@@ -1,10 +1,24 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import scalalib._
 
-object mainargs extends Cross[MainArgsModule]("2.12.12", "2.13.1")
-class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule with PublishModule {
-  def publishVersion = "0.1.7"
+
+val scala212 = "2.12.13"
+val scala213 = "2.13.4"
+
+val scalaJSVersions = for {
+  scalaV <- Seq(scala213, scala212)
+  scalaJSV <- Seq("1.4.0")
+} yield (scalaV, scalaJSV)
+
+val scalaNativeVersions = for {
+  scalaV <- Seq(scala213, scala212)
+  scalaNativeV <- Seq("0.4.0")
+} yield (scalaV, scalaNativeV)
+
+trait MainArgsPublishModule extends PublishModule with CrossScalaModule {
+  def publishVersion = "0.2.0"
   def artifactName = "mainargs"
+
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
     organization = "com.lihaoyi",
@@ -15,29 +29,76 @@ class MainArgsModule(val crossScalaVersion: String) extends CrossScalaModule wit
       Developer("lihaoyi", "Li Haoyi","https://github.com/lihaoyi")
     )
   )
-  def scalacOptions = Seq("-P:acyclic:force")
 
-  def scalacPluginIvyDeps = Agg(ivy"com.lihaoyi::acyclic:0.2.0")
+  def scalacOptions = super.scalacOptions() ++ Seq("-P:acyclic:force")
+
+  def scalacPluginIvyDeps = super.scalacPluginIvyDeps() ++ Agg(ivy"com.lihaoyi::acyclic:0.2.0")
+
+  def compileIvyDeps = super.compileIvyDeps() ++ Agg(
+    ivy"com.lihaoyi::acyclic:0.2.0",
+    ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
+  )
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat:2.1.4",
+    ivy"org.scala-lang.modules::scala-collection-compat::2.4.0"
   )
-  def compileIvyDeps = Agg(
-    ivy"org.scala-lang:scala-reflect:$crossScalaVersion",
-    ivy"com.lihaoyi::acyclic:0.2.0"
+}
+
+trait Common extends CrossScalaModule {
+  def millSourcePath = build.millSourcePath / "mainargs"
+  def sources = T.sources(
+    millSourcePath / "src",
+    millSourcePath / s"src-$platform"
   )
-  object test extends Tests{
-    def ivyDeps = Agg(
-      ivy"com.lihaoyi::utest::0.7.3",
-      ivy"com.lihaoyi::os-lib:0.7.1"
-    )
-    def testFrameworks = Seq("utest.runner.Framework")
+  def platform: String
+}
+
+trait CommonTestModule extends ScalaModule with TestModule {
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.6")
+  def testFrameworks = Seq("utest.runner.Framework")
+  def sources = T.sources(
+    millSourcePath / "src",
+    millSourcePath / s"src-$platform"
+  )
+  def platform: String
+}
+
+
+object mainargs extends Module {
+  object jvm extends Cross[JvmMainArgsModule](scala212, scala213)
+  class JvmMainArgsModule(val crossScalaVersion: String)
+    extends Common with ScalaModule with MainArgsPublishModule {
+    def platform = "jvm"
+    object test extends Tests with CommonTestModule{
+      def platform = "jvm"
+      def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::os-lib:0.7.1")
+    }
+  }
+
+  object js extends Cross[JSMainArgsModule](scalaJSVersions: _*)
+  class JSMainArgsModule(val crossScalaVersion: String, crossJSVersion: String)
+    extends Common with ScalaJSModule with MainArgsPublishModule {
+    def platform = "js"
+    def scalaJSVersion = crossJSVersion
+    object test extends Tests with CommonTestModule{
+      def platform = "js"
+    }
+  }
+
+  object native extends Cross[NativeMainArgsModule](scalaNativeVersions: _*)
+  class NativeMainArgsModule(val crossScalaVersion: String, crossScalaNativeVersion: String)
+    extends Common with ScalaNativeModule with MainArgsPublishModule {
+    def scalaNativeVersion = crossScalaNativeVersion
+    def platform = "native"
+    object test extends Tests with CommonTestModule{
+      def platform = "native"
+    }
   }
 }
 
 trait ExampleModule extends ScalaModule{
-  def scalaVersion = "2.13.1"
-  def moduleDeps = Seq(mainargs("2.13.1"))
+  def scalaVersion = "2.13.4"
+  def moduleDeps = Seq(mainargs.jvm("2.13.4"))
 }
 object example{
   object hello extends ExampleModule

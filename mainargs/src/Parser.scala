@@ -31,7 +31,7 @@ class ParserForMethods[B](val mains: MethodMains[B]){
     ) match{
       case Left(msg) =>
         stderr.println(msg)
-        sys.exit(1)
+        Compat.exit(1)
       case Right(v) => v
     }
   }
@@ -66,7 +66,7 @@ class ParserForMethods[B](val mains: MethodMains[B]){
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
       outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs))
-      sys.exit(exitCode)
+      Compat.exit(exitCode)
     } else runRaw0(args, allowPositional, allowRepeats) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
@@ -138,7 +138,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
     ) match{
       case Left(msg) =>
         stderr.println(msg)
-        sys.exit(1)
+        Compat.exit(1)
       case Right(v) => v
     }
   }
@@ -172,7 +172,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
       outputStream.println(helpText(totalWidth, docsOnNewLine, customName, customDoc))
-      sys.exit(exitCode)
+      Compat.exit(exitCode)
     } else constructRaw(args, allowPositional, allowRepeats) match{
       case Result.Success(v) => Right(v)
       case f: Result.Failure =>
