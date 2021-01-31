@@ -43,20 +43,31 @@ object Renderer {
       mainMethods.map(_.argSigs)
         .flatten
     val leftColWidth = getLeftColWidth(flattenedAll)
-    if (mainMethods.isEmpty) ""
-    else{
-      val methods =
-        for(main <- mainMethods)
-          yield formatMainMethodSignature(
-            main, 2, totalWidth, leftColWidth, docsOnNewLine,
-            customNames.get(main.name), customDocs.get(main.name)
-          )
+    mainMethods match{
+      case Seq() => ""
+      case Seq(main) =>
+        Renderer.formatMainMethodSignature(
+          main,
+          0,
+          totalWidth,
+          leftColWidth,
+          docsOnNewLine,
+          customNames.get(main.name),
+          customDocs.get(main.name)
+        )
+      case _ =>
+        val methods =
+          for(main <- mainMethods)
+            yield formatMainMethodSignature(
+              main, 2, totalWidth, leftColWidth, docsOnNewLine,
+              customNames.get(main.name), customDocs.get(main.name)
+            )
 
-      normalizeNewlines(
-        s"""Available subcommands:
-           |
-           |${methods.mkString(newLine)}""".stripMargin
-      )
+        normalizeNewlines(
+          s"""Available subcommands:
+             |
+             |${methods.mkString(newLine)}""".stripMargin
+        )
     }
   }
 

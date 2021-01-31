@@ -16,7 +16,7 @@ val scalaNativeVersions = for {
 } yield (scalaV, scalaNativeV)
 
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule {
-  def publishVersion = "0.2.0"
+  def publishVersion = "0.2.1"
   def artifactName = "mainargs"
 
   def pomSettings = PomSettings(
