@@ -1,6 +1,9 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import scalalib._
-
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
+import de.tobiasroeser.mill.vcs.version.VcsVersion
+import $ivy.`com.github.lolgab::mill-mima_mill0.9:0.0.4`
+import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.13"
 val scala213 = "2.13.4"
@@ -15,8 +18,9 @@ val scalaNativeVersions = for {
   scalaNativeV <- Seq("0.4.0")
 } yield (scalaV, scalaNativeV)
 
-trait MainArgsPublishModule extends PublishModule with CrossScalaModule {
-  def publishVersion = "0.2.1"
+trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
+  def publishVersion = VcsVersion.vcsState().format()
+  def mimaPreviousVersions = VcsVersion.vcsState().lastTag.toSeq
   def artifactName = "mainargs"
 
   def pomSettings = PomSettings(
