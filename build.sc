@@ -20,7 +20,12 @@ val scalaNativeVersions = for {
 
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
   def publishVersion = VcsVersion.vcsState().format()
-  def mimaPreviousVersions = VcsVersion.vcsState().lastTag.toSeq
+  def mimaPreviousVersions = Seq(
+    VcsVersion
+      .vcsState()
+      .lastTag
+      .getOrElse(throw new Exception("Missing last tag"))
+  )
   def artifactName = "mainargs"
 
   def pomSettings = PomSettings(
