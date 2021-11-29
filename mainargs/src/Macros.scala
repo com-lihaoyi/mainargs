@@ -146,7 +146,7 @@ class Macros(val c: Context) {
     _root_.mainargs.MainData.create[$returnType, $curCls](
       $methodName,
       $mainInstance,
-      Seq(..$argSigs),
+      _root_.scala.Seq(..$argSigs),
       ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
         $baseArgSym.${TermName(methodName)}(..$argNameCasts)
       }
