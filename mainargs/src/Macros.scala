@@ -27,8 +27,7 @@ class Macros(val c: Context) {
     val companionObj = weakTypeOf[T].typeSymbol.companion
     val constructor = cls.primaryConstructor.asMethod
     val route = extractMethod(
-      "apply",
-      "apply",
+      TermName("apply"),
       constructor.paramLists.flatten,
       constructor.pos,
       cls.annotations.find(_.tpe =:= typeOf[main]),
@@ -77,8 +76,7 @@ class Macros(val c: Context) {
     (vararg, unwrappedType)
   }
 
-  def extractMethod(methodName: String,
-                    decodedMethodName: String,
+  def extractMethod(methodName: TermName,
                     flattenedArgLists: Seq[Symbol],
                     methodPos: Position,
                     mainAnnotation: Option[Annotation],
@@ -146,11 +144,11 @@ class Macros(val c: Context) {
 
     val res = q"""{
     _root_.mainargs.MainData.create[$returnType, $curCls](
-      $decodedMethodName,
+      ${methodName.decoded},
       $mainInstance,
       _root_.scala.Seq(..$argSigs),
       ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
-        $baseArgSym.${TermName(methodName)}(..$argNameCasts)
+        $baseArgSym.$methodName(..$argNameCasts)
       }
     )
     }"""
@@ -165,8 +163,7 @@ class Macros(val c: Context) {
     for(t <- getValsOrMeths(curCls) if pred(t))
     yield {
       extractMethod(
-        t.name.toString,
-        t.name.decoded,
+        t.name,
         t.paramss.flatten,
         t.pos,
         t.annotations.find(_.tpe =:= typeOf[main]),
