@@ -28,6 +28,7 @@ class Macros(val c: Context) {
     val constructor = cls.primaryConstructor.asMethod
     val route = extractMethod(
       "apply",
+      "apply",
       constructor.paramLists.flatten,
       constructor.pos,
       cls.annotations.find(_.tpe =:= typeOf[main]),
@@ -77,6 +78,7 @@ class Macros(val c: Context) {
   }
 
   def extractMethod(methodName: String,
+                    decodedMethodName: String,
                     flattenedArgLists: Seq[Symbol],
                     methodPos: Position,
                     mainAnnotation: Option[Annotation],
@@ -114,12 +116,12 @@ class Macros(val c: Context) {
       }
       val argSig = if (vararg) q"""
         _root_.mainargs.ArgSig.createVararg[$varargUnwrappedType, $curCls](
-          ${arg.name.toString},
+          ${arg.name.decoded},
           $instantiateArg,
         ).widen[_root_.scala.Any]
       """ else q"""
         _root_.mainargs.ArgSig.create[$varargUnwrappedType, $curCls](
-          ${arg.name.toString},
+          ${arg.name.decoded},
           $instantiateArg,
           $defaultOpt
         ).widen[_root_.scala.Any]
@@ -144,7 +146,7 @@ class Macros(val c: Context) {
 
     val res = q"""{
     _root_.mainargs.MainData.create[$returnType, $curCls](
-      $methodName,
+      $decodedMethodName,
       $mainInstance,
       _root_.scala.Seq(..$argSigs),
       ($baseArgSym: $curCls, $argListSymbol: _root_.scala.Seq[_root_.scala.Any]) => {
@@ -164,6 +166,7 @@ class Macros(val c: Context) {
     yield {
       extractMethod(
         t.name.toString,
+        t.name.decoded,
         t.paramss.flatten,
         t.pos,
         t.annotations.find(_.tpe =:= typeOf[main]),
