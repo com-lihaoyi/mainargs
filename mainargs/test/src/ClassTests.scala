@@ -17,6 +17,13 @@ object ClassTests extends TestSuite{
   implicit val barParser = ParserForClass[Bar]
   implicit val quxParser = ParserForClass[Qux]
 
+  @main
+  case class Boo(x: Int = 3)
+
+  object Boo {
+    implicit val parser = ParserForClass[Boo]
+  }
+
   object Main{
     @main
     def run(bar: Bar,
@@ -87,6 +94,10 @@ object ClassTests extends TestSuite{
           )
           ) =>
         }
+      }
+      test("implicitInCompanionObject") {
+        Boo.parser.constructOrThrow(Seq("-x", "3")) ==>
+          Boo(3)
       }
     }
 
