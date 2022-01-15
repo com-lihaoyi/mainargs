@@ -11,17 +11,32 @@ object Renderer {
 
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
+  def makeOptional(s: String) = s"[$s]"
+  def makeRequired(s: String) = s" $s"
+  def makeVarargs(s: String) = s"[$s]*"
+  def makeOnePlus(s: String) = s"[$s]+"
   def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match{
     case arg: ArgSig.Flag[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val nameSuffix = arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix).mkString(" ")
+      makeOptional((shortPrefix ++ nameSuffix).mkString(" "))
     case arg: ArgSig.Simple[_, _] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${arg.typeString}>"
 
       val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
+      val rendered = (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
+      arg match {
+        case ArgSig.Simple(_, _, _, _, tokensReader, _) if tokensReader.allowEmpty && tokensReader.alwaysRepeatable =>
+          makeVarargs(rendered)
+        case ArgSig.Simple(_, _, _, _, tokensReader, _) if tokensReader.alwaysRepeatable =>
+          makeOnePlus(rendered)
+        case ArgSig.Simple(_, _, _, _, tokensReader, _) if tokensReader.allowEmpty =>
+          makeOptional(rendered)
+        case ArgSig.Simple(_, _, _, Some(_), _, _) => makeOptional(rendered)
+        case _ =>
+          makeRequired(rendered)
+      }
     case arg: ArgSig.Leftover[_, _] =>
       s"${arg.name0} <${arg.reader.shortName}>..."
   }

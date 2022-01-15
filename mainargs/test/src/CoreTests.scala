@@ -39,12 +39,12 @@ class CoreTests(allowPositional: Boolean) extends TestSuite{
           |  foo
           |
           |  bar
-          |    -i <int>
+          |     -i <int>
           |
           |  qux
           |  Qux is a function that does stuff
-          |    -i <int>
-          |    -s <str>  Pass in a custom `s` to override it
+          |     -i <int>
+          |    [-s <str>]  Pass in a custom `s` to override it
           |
           |  ex
           |""".stripMargin
