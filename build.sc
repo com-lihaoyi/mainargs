@@ -15,7 +15,7 @@ val scala2Versions = scalaVersions.filter(_.startsWith("2."))
 
 val scalaJSVersions = for {
   scalaV <- scalaVersions
-  scalaJSV <- Seq("1.4.0")
+  scalaJSV <- Seq("1.5.1")
 } yield (scalaV, scalaJSV)
 
 val scalaNativeVersions = for {
@@ -31,6 +31,8 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
       .lastTag
       .getOrElse(throw new Exception("Missing last tag"))
   )
+  // Remove after Scala 3 artifacts are published
+  def mimaPreviousArtifacts = T{ if(isScala3(scalaVersion())) Seq() else super.mimaPreviousArtifacts() }
   def artifactName = "mainargs"
 
   def pomSettings = PomSettings(
