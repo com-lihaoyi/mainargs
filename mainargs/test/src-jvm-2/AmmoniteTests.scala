@@ -69,7 +69,7 @@ object AmmoniteConfig{
     @arg(doc = "Print this message")
     help: Flag
   )
-  implicit val coreParser = ParserForClass[Core]
+  implicit val coreParser: ParserForClass[Core] = ParserForClass[Core]
 
   @main
   case class Predef(
@@ -86,7 +86,7 @@ object AmmoniteConfig{
         "choose an additional predef to use using `--predef")
     noHomePredef: Flag
   )
-  implicit val predefParser = ParserForClass[Predef]
+  implicit val predefParser: ParserForClass[Predef] = ParserForClass[Predef]
 
   @main
   case class Repl(
@@ -105,12 +105,12 @@ object AmmoniteConfig{
         "friendliness.")
     classBased: Flag
   )
-  implicit val replParser = ParserForClass[Repl]
+  implicit val replParser: ParserForClass[Repl] = ParserForClass[Repl]
 }
 
 
 object AmmoniteTests extends TestSuite{
-  val parser = ParserForClass[AmmoniteConfig]
+  val parser: ParserForClass[AmmoniteConfig] = ParserForClass[AmmoniteConfig]
   val tests = Tests {
 
 

@@ -1,20 +1,25 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
+import mill.scalalib.api.Util.isScala3
 import scalalib._
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version_mill0.9:0.1.1`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.1.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima_mill0.9:0.0.4`
+import $ivy.`com.github.lolgab::mill-mima::0.0.4`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.13"
 val scala213 = "2.13.4"
+val scala3 = "3.0.2"
+
+val scalaVersions = Seq(scala212, scala213, scala3)
+val scala2Versions = scalaVersions.filter(_.startsWith("2."))
 
 val scalaJSVersions = for {
-  scalaV <- Seq(scala213, scala212)
+  scalaV <- scalaVersions
   scalaJSV <- Seq("1.4.0")
 } yield (scalaV, scalaJSV)
 
 val scalaNativeVersions = for {
-  scalaV <- Seq(scala213, scala212)
+  scalaV <- scala2Versions
   scalaNativeV <- Seq("0.4.0")
 } yield (scalaV, scalaNativeV)
 
@@ -39,48 +44,50 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
     )
   )
 
-  def scalacOptions = super.scalacOptions() ++ Seq("-P:acyclic:force")
+  def scalacOptions = super.scalacOptions() ++ (if (!isScala3(crossScalaVersion)) Seq("-P:acyclic:force") else Seq.empty)
 
-  def scalacPluginIvyDeps = super.scalacPluginIvyDeps() ++ Agg(ivy"com.lihaoyi::acyclic:0.2.0")
+  def scalacPluginIvyDeps = super.scalacPluginIvyDeps() ++ (if (!isScala3(crossScalaVersion)) Agg(ivy"com.lihaoyi::acyclic:0.2.0") else Agg.empty)
 
-  def compileIvyDeps = super.compileIvyDeps() ++ Agg(
-    ivy"com.lihaoyi::acyclic:0.2.0",
-    ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
-  )
+  def compileIvyDeps = super.compileIvyDeps() ++ (if (!isScala3(crossScalaVersion)) Agg(
+      ivy"com.lihaoyi::acyclic:0.2.0",
+      ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
+    ) else Agg.empty)
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.4.0"
-  )
+    ivy"org.scala-lang.modules::scala-collection-compat::2.4.4"
+  ) ++ Agg(ivy"com.lihaoyi::pprint:0.6.6")
 }
 
 trait Common extends CrossScalaModule {
   def millSourcePath = build.millSourcePath / "mainargs"
   def sources = T.sources(
-    millSourcePath / "src",
-    millSourcePath / s"src-$platform"
+    super.sources() ++ Seq(PathRef(millSourcePath / s"src-$platform"))
   )
   def platform: String
 }
 
-trait CommonTestModule extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.6")
-  def testFrameworks = Seq("utest.runner.Framework")
-  def sources = T.sources(
-    millSourcePath / "src",
-    millSourcePath / s"src-$platform"
-  )
+trait CommonTestModule extends ScalaModule with TestModule.Utest {
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.10")
+  def sources = T.sources {
+    val scalaMajor = if(isScala3(scalaVersion())) "3" else "2"
+    super.sources() ++ Seq(
+      millSourcePath / "src",
+      millSourcePath / s"src-$platform",
+      millSourcePath / s"src-$platform-$scalaMajor"
+    ).map(PathRef(_))
+  }
   def platform: String
 }
 
 
 object mainargs extends Module {
-  object jvm extends Cross[JvmMainArgsModule](scala212, scala213)
+  object jvm extends Cross[JvmMainArgsModule](scalaVersions: _*)
   class JvmMainArgsModule(val crossScalaVersion: String)
     extends Common with ScalaModule with MainArgsPublishModule {
     def platform = "jvm"
     object test extends Tests with CommonTestModule{
       def platform = "jvm"
-      def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::os-lib:0.7.1")
+      def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::os-lib:0.7.8")
     }
   }
 

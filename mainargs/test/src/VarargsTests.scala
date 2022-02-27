@@ -1,39 +1,9 @@
 package mainargs
 import utest._
-object NewVarargsTests extends VarargsTests{
-  object Base{
-    @main
-    def pureVariadic(nums: Leftover[Int]) = nums.value.sum
-
-    @main
-    def mixedVariadic(@arg(short = 'f') first: Int, args: Leftover[String]) = {
-      first + args.value.mkString
-    }
-    @main
-    def mixedVariadicWithDefault(@arg(short = 'f') first: Int = 1337,
-                                 args: Leftover[String]) = {
-      first + args.value.mkString
-    }
-  }
-
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
-}
-
-object OldVarargsTests extends VarargsTests{
-  object Base{
-
-    @main
-    def pureVariadic(nums: Int*) = nums.sum
-
-    @main
-    def mixedVariadic(@arg(short = 'f') first: Int, args: String*) = first + args.mkString
-  }
-
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
-}
 
 trait VarargsTests extends TestSuite{
   def check: Checker[_]
+  def isNewVarargsTests: Boolean
   val tests = Tests {
 
     test("happyPathPasses"){
@@ -45,7 +15,7 @@ trait VarargsTests extends TestSuite{
         Result.Success("12345")
       )
       test - {
-        if (this == NewVarargsTests) check(
+        if (isNewVarargsTests) check(
           List("mixedVariadicWithDefault"),
           Result.Success("1337")
         )

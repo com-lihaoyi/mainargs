@@ -13,15 +13,15 @@ object ClassTests extends TestSuite{
   @main
   case class Qux(moo: String, b: Bar)
 
-  implicit val fooParser = ParserForClass[Foo]
-  implicit val barParser = ParserForClass[Bar]
-  implicit val quxParser = ParserForClass[Qux]
+  implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
+  implicit val barParser: ParserForClass[Bar] = ParserForClass[Bar]
+  implicit val quxParser: ParserForClass[Qux] = ParserForClass[Qux]
 
   object Main{
     @main
     def run(bar: Bar,
             bool: Boolean = false) = {
-      bar.w.value + " " + bar.f.x + " " + bar.f.y + " " + bar.zzzz + " " + bool
+      s"${bar.w.value} ${bar.f.x} ${bar.f.y} ${bar.zzzz} $bool"
     }
   }
 
@@ -99,4 +99,3 @@ object ClassTests extends TestSuite{
     }
   }
 }
-

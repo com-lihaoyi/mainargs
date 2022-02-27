@@ -1,9 +1,9 @@
-package mainargs
-import utest._
+// package mainargs
+// import utest._
 
-//
-//object MillTests extends TestSuite{
-//
+
+// object MillTests extends TestSuite{
+
 //  implicit object PathRead extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
 //  @main(
 //    name = "Mill Build Tool",
@@ -53,11 +53,11 @@ import utest._
 //    threadCount: Int = 1,
 //    ammoniteConig: AmmoniteTests.Config = AmmoniteTests.Config()
 //  )
-//
+
 //  val tests = Tests {
-//
+
 //    val parser = ParserForClass[Config]
-//
+
 //    test("formatMainMethods"){
 //      val rendered = parser.helpText()
 //      val expected =
@@ -106,5 +106,5 @@ import utest._
 //        Right(Config(threadCount = 12))
 //    }
 //  }
-//}
+// }
 

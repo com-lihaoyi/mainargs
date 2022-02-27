@@ -18,7 +18,7 @@ object TokensReader{
   implicit object FloatRead extends TokensReader[Float]("float", strs => tryEither(strs.last.toFloat))
   implicit object DoubleRead extends TokensReader[Double]("double", strs => tryEither(strs.last.toDouble))
 
-  implicit def OptionRead[T: TokensReader] = new TokensReader[Option[T]](
+  implicit def OptionRead[T: TokensReader]: TokensReader[Option[T]] = new TokensReader[Option[T]](
     implicitly[TokensReader[T]].shortName,
     strs => {
       strs.lastOption match{
@@ -31,7 +31,7 @@ object TokensReader{
     },
     allowEmpty = true
   )
-  implicit def SeqRead[C[_] <: Iterable[_], T: TokensReader](implicit factory: Factory[T, C[T]]) = new TokensReader[C[T]](
+  implicit def SeqRead[C[_] <: Iterable[_], T: TokensReader](implicit factory: Factory[T, C[T]]): TokensReader[C[T]] = new TokensReader[C[T]](
     implicitly[TokensReader[T]].shortName,
     strs => {
       strs
@@ -50,7 +50,7 @@ object TokensReader{
     alwaysRepeatable = true,
     allowEmpty = true
   )
-  implicit def MapRead[K: TokensReader, V: TokensReader] = new TokensReader[Map[K, V]](
+  implicit def MapRead[K: TokensReader, V: TokensReader]: TokensReader[Map[K, V]] = new TokensReader[Map[K, V]](
     "k=v",
     strs => {
       strs.foldLeft[Either[String, Map[K, V]]](Right(Map())){
