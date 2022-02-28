@@ -12,12 +12,6 @@ object Macros {
       methodSymbol.getAnnotation(mainAnnotation).map(methodSymbol -> _)
     }.sortBy(_._1.pos.map(_.start))
     val mainDatasExprs: Seq[Expr[MainData[Any, B]]] = annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotation) =>
-      val doc: Option[String] = mainAnnotation match {
-        case Apply(_, args) => args.collectFirst {
-          case NamedArg("doc", Literal(constant)) => constant.value.asInstanceOf[String]
-        }
-        case _ => None
-      }
       val params = annotatedMethod.paramSymss.headOption.getOrElse(throw new Exception("Multiple parameter lists not supported"))
       val defaultParams = getDefaultParams(annotatedMethod)
       val argSigs = Expr.ofList(params.map { param =>
@@ -38,7 +32,7 @@ object Macros {
               )
               '{ ??? }
             }
-            '{ ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader }) }
+            '{ ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader }).asInstanceOf[mainargs.ArgSig[Any, B]] }
       })
 
       val invokeRaw: Expr[(B, Seq[Any]) => Any] = {
@@ -48,7 +42,7 @@ object Macros {
         }
       }
 
-      '{ MainData[Any, B](${ Expr(annotatedMethod.name) }, ${ argSigs }, ${Expr(doc)}, ${ invokeRaw }) }
+      '{ MainData.create[Any, B](${ Expr(annotatedMethod.name) }, ${ mainAnnotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
     }
     val mainDatas = Expr.ofList(mainDatasExprs)
 
