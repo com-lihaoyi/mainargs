@@ -1,7 +1,7 @@
 package mainargs
 import utest._
-object NewVarargsTests extends VarargsTests{
-  object Base{
+object NewVarargsTests extends VarargsTests {
+  object Base {
     @main
     def pureVariadic(nums: Leftover[Int]) = nums.value.sum
 
@@ -10,8 +10,10 @@ object NewVarargsTests extends VarargsTests{
       first + args.value.mkString
     }
     @main
-    def mixedVariadicWithDefault(@arg(short = 'f') first: Int = 1337,
-                                 args: Leftover[String]) = {
+    def mixedVariadicWithDefault(
+        @arg(short = 'f') first: Int = 1337,
+        args: Leftover[String]
+    ) = {
       first + args.value.mkString
     }
   }

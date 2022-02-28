@@ -1,7 +1,6 @@
 // package mainargs
 // import utest._
 
-
 // object MillTests extends TestSuite{
 
 //  implicit object PathRead extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
@@ -107,4 +106,3 @@
 //    }
 //  }
 // }
-

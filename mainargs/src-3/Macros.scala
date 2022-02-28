@@ -3,54 +3,82 @@ package mainargs
 import scala.quoted._
 
 object Macros {
+  private def mainAnnotation(using Quotes) = quotes.reflect.TypeRepr.of[mainargs.main].typeSymbol
+  private def argAnnotation(using Quotes) = quotes.reflect.TypeRepr.of[mainargs.arg].typeSymbol
   def parserForMethods[B](base: Expr[B])(using Quotes, Type[B]): Expr[ParserForMethods[B]] = {
     import quotes.reflect._
     val allMethods = TypeRepr.of[B].typeSymbol.memberMethods
-    val mainAnnotation = TypeRepr.of[mainargs.main].typeSymbol
-    val argAnnotation = TypeRepr.of[mainargs.arg].typeSymbol
     val annotatedMethodsWithMainAnnotations = allMethods.flatMap { methodSymbol =>
       methodSymbol.getAnnotation(mainAnnotation).map(methodSymbol -> _)
     }.sortBy(_._1.pos.map(_.start))
-    val mainDatasExprs: Seq[Expr[MainData[Any, B]]] = annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotation) =>
-      val params = annotatedMethod.paramSymss.headOption.getOrElse(throw new Exception("Multiple parameter lists not supported"))
-      val defaultParams = getDefaultParams(annotatedMethod)
-      val argSigs = Expr.ofList(params.map { param =>
-        val paramTree = param.tree.asInstanceOf[ValDef]
-        val paramTpe = paramTree.tpt.tpe
-        val arg = param.getAnnotation(argAnnotation).map(_.asExpr.asInstanceOf[Expr[mainargs.arg]]).getOrElse('{ new mainargs.arg() })
-        val paramType = paramTpe.asType
-        paramType match
-          case '[t] =>
-            val defaultParam: Expr[Option[B => t]] = defaultParams.get(param) match {
-              case Some(v) => '{ Some(((_: B) => $v).asInstanceOf[B => t]) }
-              case None => '{ None }
-            }
-            val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse{
-              report.error(
-                s"No mainargs.ArgReader of ${paramTpe.typeSymbol.fullName} found for parameter ${param.name}",
-                param.pos.get
-              )
-              '{ ??? }
-            }
-            '{ ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader }).asInstanceOf[mainargs.ArgSig[Any, B]] }
-      })
-
-      val invokeRaw: Expr[(B, Seq[Any]) => Any] = {
-        def callOf(args: Expr[Seq[Any]]) = call(annotatedMethod, '{ Seq( ${ args }) })
-        '{ (b: B, params: Seq[Any]) =>
-          ${ callOf('{ params }) }
-        }
-      }
-
-      '{ MainData.create[Any, B](${ Expr(annotatedMethod.name) }, ${ mainAnnotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
-    }
-    val mainDatas = Expr.ofList(mainDatasExprs)
+    val mainDatas = Expr.ofList(annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotationInstance) =>
+      createMainData[Any, B](annotatedMethod, mainAnnotationInstance)
+    })
 
     '{
       new ParserForMethods[B](
         MethodMains[B](${ mainDatas }, () => ${ base })
       )
     }
+  }
+
+  def parserForClass[B](using Quotes, Type[B]): Expr[ParserForClass[B]] = {
+    import quotes.reflect._
+    val typeReprOfB = TypeRepr.of[B]
+    val companionModule = typeReprOfB match {
+      case TypeRef(a,b) => TermRef(a,b)
+    }
+    val typeSymbolOfB = typeReprOfB.typeSymbol
+    val companionModuleType = typeSymbolOfB.companionModule.tree.asInstanceOf[ValDef].tpt.tpe.asType
+    val companionModuleExpr = Ident(companionModule).asExpr
+    val mainAnnotationInstance = typeSymbolOfB.getAnnotation(mainAnnotation).getOrElse {
+      report.error(
+        s"cannot find @main annotation on ${companionModule.name}",
+        typeSymbolOfB.pos.get
+      )
+      ???
+    }
+    val annotatedMethod = TypeRepr.of[B].typeSymbol.companionModule.memberMethod("apply").head
+    companionModuleType match
+      case '[bCompanion] =>
+        val mainData = createMainData[B, bCompanion](annotatedMethod, mainAnnotationInstance)
+        '{
+          new ParserForClass[B](
+            ClassMains[B](${ mainData }.asInstanceOf[MainData[B, Any]], () => ${ Ident(companionModule).asExpr })
+          )
+        }
+  }
+
+  def createMainData[T: Type, B: Type](using Quotes)(method: quotes.reflect.Symbol, annotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
+    import quotes.reflect.*
+    val params = method.paramSymss.headOption.getOrElse(throw new Exception("Multiple parameter lists not supported"))
+    val defaultParams = getDefaultParams(method)
+    val argSigs = Expr.ofList(params.map { param =>
+      val paramTree = param.tree.asInstanceOf[ValDef]
+      val paramTpe = paramTree.tpt.tpe
+      val arg = param.getAnnotation(argAnnotation).map(_.asExpr.asInstanceOf[Expr[mainargs.arg]]).getOrElse('{ new mainargs.arg() })
+      val paramType = paramTpe.asType
+      paramType match
+        case '[t] =>
+          val defaultParam: Expr[Option[B => t]] = defaultParams.get(param) match {
+            case Some(v) => '{ Some(((_: B) => $v).asInstanceOf[B => t]) }
+            case None => '{ None }
+          }
+          val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse{
+            report.error(
+              s"No mainargs.ArgReader of ###companionModule### found for parameter ${param.name}",
+              param.pos.get
+            )
+            '{ ??? }
+          }
+          '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader })).asInstanceOf[ArgSig[Any, B]] }
+    })
+
+    val invokeRaw: Expr[(B, Seq[Any]) => T] = {
+      def callOf(args: Expr[Seq[Any]]) = call(method, '{ Seq( ${ args }) })
+      '{ ((b: B, params: Seq[Any]) => ${ callOf('{ params }) }).asInstanceOf[(B, Seq[Any]) => T] }
+    }
+    '{ MainData.create[T, B](${ Expr(method.name) }, ${ annotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
   }
 
   /** Call a method given by its symbol.
