@@ -32,11 +32,10 @@ object Macros {
     val companionModuleType = typeSymbolOfB.companionModule.tree.asInstanceOf[ValDef].tpt.tpe.asType
     val companionModuleExpr = Ident(companionModule).asExpr
     val mainAnnotationInstance = typeSymbolOfB.getAnnotation(mainAnnotation).getOrElse {
-      report.error(
+      report.throwError(
         s"cannot find @main annotation on ${companionModule.name}",
         typeSymbolOfB.pos.get
       )
-      ???
     }
     val annotatedMethod = TypeRepr.of[B].typeSymbol.companionModule.memberMethod("apply").head
     companionModuleType match
@@ -51,12 +50,12 @@ object Macros {
 
   def createMainData[T: Type, B: Type](using Quotes)(method: quotes.reflect.Symbol, annotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
     import quotes.reflect.*
-    val params = method.paramSymss.headOption.getOrElse(throw new Exception("Multiple parameter lists not supported"))
+    val params = method.paramSymss.headOption.getOrElse(report.throwError("Multiple parameter lists not supported"))
     val defaultParams = getDefaultParams(method)
     val argSigs = Expr.ofList(params.map { param =>
       val paramTree = param.tree.asInstanceOf[ValDef]
       val paramTpe = paramTree.tpt.tpe
-      val arg = param.getAnnotation(argAnnotation).map(_.asExpr.asInstanceOf[Expr[mainargs.arg]]).getOrElse('{ new mainargs.arg() })
+      val arg = param.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{ new mainargs.arg() })
       val paramType = paramTpe.asType
       paramType match
         case '[t] =>
@@ -64,12 +63,11 @@ object Macros {
             case Some(v) => '{ Some(((_: B) => $v).asInstanceOf[B => t]) }
             case None => '{ None }
           }
-          val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse{
-            report.error(
+          val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse {
+            report.throwError(
               s"No mainargs.ArgReader of ###companionModule### found for parameter ${param.name}",
               param.pos.get
             )
-            '{ ??? }
           }
           '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader })).asInstanceOf[ArgSig[Any, B]] }
     })
@@ -110,8 +108,7 @@ object Macros {
     val paramss = method.paramSymss
 
     if (paramss.isEmpty) {
-      report.error("At least one parameter list must be declared.", method.pos.get)
-      return '{???}
+      report.throwError("At least one parameter list must be declared.", method.pos.get)
     }
 
     val fct = Ref(method)
