@@ -65,7 +65,7 @@ object Macros {
           }
           val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse {
             report.throwError(
-              s"No mainargs.ArgReader of ###companionModule### found for parameter ${param.name}",
+              s"No mainargs.ArgReader found for parameter ${param.name}",
               param.pos.get
             )
           }
