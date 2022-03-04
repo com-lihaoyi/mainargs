@@ -60,7 +60,7 @@ object Macros {
       paramType match
         case '[t] =>
           val defaultParam: Expr[Option[B => t]] = defaultParams.get(param) match {
-            case Some(v) => '{ Some(((_: B) => $v).asInstanceOf[B => t]) }
+            case Some('{ $v: `t`}) => '{ Some(((_: B) => $v)) }
             case None => '{ None }
           }
           val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse {
