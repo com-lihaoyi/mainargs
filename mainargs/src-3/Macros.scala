@@ -40,10 +40,10 @@ object Macros {
     val annotatedMethod = TypeRepr.of[B].typeSymbol.companionModule.memberMethod("apply").head
     companionModuleType match
       case '[bCompanion] =>
-        val mainData = createMainData[B, bCompanion](annotatedMethod, mainAnnotationInstance)
+        val mainData = createMainData[B, Any](annotatedMethod, mainAnnotationInstance)
         '{
           new ParserForClass[B](
-            ClassMains[B](${ mainData }.asInstanceOf[MainData[B, Any]], () => ${ Ident(companionModule).asExpr })
+            ClassMains[B](${ mainData }, () => ${ Ident(companionModule).asExpr })
           )
         }
   }
