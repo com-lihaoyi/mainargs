@@ -73,8 +73,8 @@ object Macros {
     })
 
     val invokeRaw: Expr[(B, Seq[Any]) => T] = {
-      def callOf(args: Expr[Seq[Any]]) = call(method, '{ Seq( ${ args }) })
-      '{ ((b: B, params: Seq[Any]) => ${ callOf('{ params }) }).asInstanceOf[(B, Seq[Any]) => T] }
+      def callOf(args: Expr[Seq[Any]]) = call(method, '{ Seq( ${ args }) }).asExprOf[T]
+      '{ ((b: B, params: Seq[Any]) => ${ callOf('{ params }) }) }
     }
     '{ MainData.create[T, B](${ Expr(method.name) }, ${ annotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
   }
