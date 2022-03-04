@@ -3,8 +3,8 @@ package mainargs
 import scala.quoted._
 
 object Macros {
-  private def mainAnnotation(using Quotes) = quotes.reflect.TypeRepr.of[mainargs.main].typeSymbol
-  private def argAnnotation(using Quotes) = quotes.reflect.TypeRepr.of[mainargs.arg].typeSymbol
+  private def mainAnnotation(using Quotes) = quotes.reflect.Symbol.requiredClass("mainargs.main")
+  private def argAnnotation(using Quotes) = quotes.reflect.Symbol.requiredClass("mainargs.arg")
   def parserForMethods[B](base: Expr[B])(using Quotes, Type[B]): Expr[ParserForMethods[B]] = {
     import quotes.reflect._
     val allMethods = TypeRepr.of[B].typeSymbol.memberMethods
