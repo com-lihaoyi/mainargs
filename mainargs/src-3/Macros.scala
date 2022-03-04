@@ -17,7 +17,7 @@ object Macros {
 
     '{
       new ParserForMethods[B](
-        MethodMains[B](${ mainDatas }, () => ${ base })
+        MethodMains[B]($mainDatas, () => $base)
       )
     }
   }
