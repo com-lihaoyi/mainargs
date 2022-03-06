@@ -1,0 +1,23 @@
+package mainargs
+import utest._
+object NewVarargsTests extends VarargsTests {
+  object Base {
+    @main
+    def pureVariadic(nums: Leftover[Int]) = nums.value.sum
+
+    @main
+    def mixedVariadic(@arg(short = 'f') first: Int, args: Leftover[String]) = {
+      first + args.value.mkString
+    }
+    @main
+    def mixedVariadicWithDefault(
+        @arg(short = 'f') first: Int = 1337,
+        args: Leftover[String]
+    ) = {
+      first + args.value.mkString
+    }
+  }
+
+  val check = new Checker(ParserForMethods(Base), allowPositional = true)
+  val isNewVarargsTests = true
+}

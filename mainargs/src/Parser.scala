@@ -1,9 +1,11 @@
 package mainargs
+
+import acyclic.skipped
+
 import scala.language.experimental.macros
 import java.io.PrintStream
-object ParserForMethods{
-  def apply[B](base: B): ParserForMethods[B] = macro Macros.parserForMethods[B]
-}
+
+object ParserForMethods extends ParserForMethodsCompanionVersionSpecific
 class ParserForMethods[B](val mains: MethodMains[B]){
   def helpText(totalWidth: Int = 100,
                docsOnNewLine: Boolean = false,
@@ -102,9 +104,7 @@ class ParserForMethods[B](val mains: MethodMains[B]){
   }
 }
 
-object ParserForClass{
-  def apply[T]: ParserForClass[T] = macro Macros.parserForClass[T]
-}
+object ParserForClass extends ParserForClassCompanionVersionSpecific
 class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T]{
   def helpText(totalWidth: Int = 100,
                docsOnNewLine: Boolean = false,
