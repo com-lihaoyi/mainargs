@@ -1,4 +1,4 @@
-# mainargs 0.2.2
+# mainargs 0.2.3
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -11,20 +11,36 @@ in its scripts, as well as for command-line parsing for the
 
 - [Usage](#usage)
   - [Parsing Main Method Parameters](#parsing-main-method-parameters)
+    - [runOrExit](#runorexit)
+    - [runOrThrow](#runorthrow)
+    - [runEither](#runeither)
+    - [runRaw](#runraw)
   - [Multiple Main Methods](#multiple-main-methods)
-  - [Parsing Case Class Paramters](#parsing-case-class-parameters)
+  - [Parsing Case Class Parameters](#parsing-case-class-parameters)
   - [Re-using Argument Sets](#re-using-argument-sets)
+  - [Option or Sequence parameters](#option-or-sequence-parameters)
   - [Annotations](#annotations)
+    - [@main](#main)
+    - [@arg](#arg)
   - [Customization](#customization)
   - [Custom Argument Parsers](#custom-argument-parsers)
-  - [Handling Leftover Arguments](#handlings-leftover-arguments)
+  - [Handlings Leftover Arguments](#handlings-leftover-arguments)
+    - [Varargs Parameters](#varargs-parameters)
 - [Prior Art](#prior-art)
+  - [Ammonite & Mill](#ammonite--mill)
+  - [Case App](#case-app)
+  - [Scopt](#scopt)
 - [Changelog](#changelog)
+  - [0.2.3](#023)
+  - [0.2.2](#022)
+  - [0.2.1](#021)
+  - [0.1.7](#017)
+  - [0.1.4](#014)
 
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.2.2"
+ivy"com.lihaoyi::mainargs:0.2.3"
 ```
 
 ## Parsing Main Method Parameters
@@ -504,6 +520,10 @@ method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.2.3
+
+- Support Scala 3 [#18](https://github.com/com-lihaoyi/mainargs/pull/18)
 
 ## 0.2.2
 
