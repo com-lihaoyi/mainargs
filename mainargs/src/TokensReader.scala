@@ -21,14 +21,25 @@ object TokensReader{
   implicit def OptionRead[T: TokensReader]: TokensReader[Option[T]] = new TokensReader[Option[T]](
     implicitly[TokensReader[T]].shortName,
     strs => {
-      strs.lastOption match{
-        case None => Right(None)
-        case Some(s) => implicitly[TokensReader[T]].read(Seq(s)) match{
-          case Left(s) =>Left(s)
-          case Right(s) => Right(Some(s))
+      if (implicitly[TokensReader[T]].alwaysRepeatable) {
+        Option(strs).filter(_.nonEmpty) match{
+          case None => Right(None)
+          case Some(strs) => implicitly[TokensReader[T]].read(strs) match{
+            case Left(s) => Left(s)
+            case Right(s) => Right(Some(s))
+          }
+        }
+      } else {
+        strs.lastOption match{
+          case None => Right(None)
+          case Some(s) => implicitly[TokensReader[T]].read(Seq(s)) match{
+            case Left(s) => Left(s)
+            case Right(s) => Right(Some(s))
+          }
         }
       }
     },
+    alwaysRepeatable = implicitly[TokensReader[T]].alwaysRepeatable,
     allowEmpty = true
   )
   implicit def SeqRead[C[_] <: Iterable[_], T: TokensReader](implicit factory: Factory[T, C[T]]): TokensReader[C[T]] = new TokensReader[C[T]](
