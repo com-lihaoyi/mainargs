@@ -68,7 +68,7 @@ trait Common extends CrossScalaModule {
 }
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.0")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.1")
   def sources = T.sources(
     millSourcePath / "src",
     millSourcePath / s"src-$platform",
