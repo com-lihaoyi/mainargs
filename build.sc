@@ -28,6 +28,8 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
     if(mimaPreviousVersions().isEmpty) Agg.empty[Dep] else super.mimaPreviousArtifacts()
   }
 
+  override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
+
   override def artifactName = "mainargs"
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
