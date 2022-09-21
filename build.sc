@@ -1,5 +1,5 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
-import mill.scalalib.api.Util.isScala3
+import mill.scalalib.api.ZincWorkerUtil.isScala3
 import scalalib._
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.2.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
@@ -20,16 +20,15 @@ val scalaNativeVersions = scalaVersions.map((_, "0.4.7"))
 
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
   def publishVersion = VcsVersion.vcsState().format()
-  def mimaPreviousVersions = Seq(
-    VcsVersion
-      .vcsState()
-      .lastTag
-      .getOrElse(throw new Exception("Missing last tag"))
-  )
-  // Remove after Scala 3 artifacts are published
-  def mimaPreviousArtifacts = T{ if(isScala3(scalaVersion())) Seq() else super.mimaPreviousArtifacts() }
-  def artifactName = "mainargs"
+  override def mimaPreviousVersions =
+    Seq("0.2.3").filterNot(_ => scalaVersion().startsWith("3.") && this.isInstanceOf[ScalaNativeModule]) ++
+      Seq("0.3.0")
 
+  override def mimaPreviousArtifacts: T[Agg[Dep]] = T{
+    if(mimaPreviousVersions().isEmpty) Agg.empty[Dep] else super.mimaPreviousArtifacts()
+  }
+
+  override def artifactName = "mainargs"
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
     organization = "com.lihaoyi",
