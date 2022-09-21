@@ -16,7 +16,7 @@ val acyclic = "0.3.3"
 val scalaVersions = List(scala212, scala213, scala3)
 
 val scalaJSVersions = scalaVersions.map((_, "1.10.1"))
-val scalaNativeVersions = scalaVersions.map((_, "0.4.5"))
+val scalaNativeVersions = scalaVersions.map((_, "0.4.7"))
 
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
   def publishVersion = VcsVersion.vcsState().format()
