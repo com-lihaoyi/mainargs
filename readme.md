@@ -1,4 +1,4 @@
-# mainargs 0.2.3
+# mainargs 0.3.0
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -9,6 +9,7 @@ in its scripts, as well as for command-line parsing for the
 [Mill Build Tool](https://github.com/lihaoyi/mill) and for user-defined
 `T.command`s.
 
+- [mainargs 0.3.0](#mainargs-030)
 - [Usage](#usage)
   - [Parsing Main Method Parameters](#parsing-main-method-parameters)
     - [runOrExit](#runorexit)
@@ -31,6 +32,7 @@ in its scripts, as well as for command-line parsing for the
   - [Case App](#case-app)
   - [Scopt](#scopt)
 - [Changelog](#changelog)
+  - [0.3.0](#030)
   - [0.2.3](#023)
   - [0.2.2](#022)
   - [0.2.1](#021)
@@ -105,9 +107,7 @@ exception with the help text
 
 ### runEither
 
-Runs the given main method if argument parsing succeeds, returning `Right(v:
-Any)` containing the return value of the main method if it succeeds, or `Left(s:
-String)` containing the error message if it fails.
+Runs the given main method if argument parsing succeeds, returning `Right(v: Any)` containing the return value of the main method if it succeeds, or `Left(s: String)` containing the error message if it fails.
 
 ### runRaw
 
@@ -180,6 +180,7 @@ object Main{
   }
 }
 ```
+
 ```bash
 $ ./mill example.caseclass --foo "hello"
 Config(hello,2,Flag(false))
@@ -246,8 +247,7 @@ cowcow false
 ```
 
 This allows you to re-use common command-line parsing configuration without
-needing to duplicate it in every `@main` method in which it is needed. A `@main
-def` can make use of multiple `@main case class`es, and `@main case class`es can
+needing to duplicate it in every `@main` method in which it is needed. A `@main def` can make use of multiple `@main case class`es, and `@main case class`es can
 be nested arbitrarily deeply.
 
 ## Option or Sequence parameters
@@ -272,6 +272,7 @@ object Main{
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
 }
 ```
+
 ```bash
 $ ./mill example.optseq runOpt
 None
@@ -315,9 +316,7 @@ Apart from taking the name of the main `object` or config `case class`,
 of useful configuration values:
 
 - `allowPositional: Boolean`: allows you to pass CLI arguments "positionally"
-  without the `--name` of the parameter being provided, e.g. `./mill example.hello
-  -f hello --my-num 3 --bool` could be called via `./mill example.hello hello 3
-  --bool`. Defaults to `false`
+  without the `--name` of the parameter being provided, e.g. `./mill example.hello -f hello --my-num 3 --bool` could be called via `./mill example.hello hello 3 --bool`. Defaults to `false`
 
 - `allowRepeats: Boolean`: allows you to pass in a flag multiple times, and
   using the last provided value rather than raising an error. Defaults to
@@ -342,8 +341,7 @@ of useful configuration values:
 
 - `customName`/`customNames` and `customDoc`/`customDocs`: allows you to
   override the main method names and documentation strings at runtime. This
-  allows you to work around limitations in the use of the `@main(name = "...",
-  doc = "...")` annotation that only allows simple static strings.
+  allows you to work around limitations in the use of the `@main(name = "...", doc = "...")` annotation that only allows simple static strings.
 
 ## Custom Argument Parsers
 
@@ -368,6 +366,7 @@ object Main{
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
 }
 ```
+
 ```bash
 $ ./mill example.custom --from mainargs --to out
 from: /Users/lihaoyi/Github/mainargs/mainargs
@@ -416,6 +415,7 @@ object Main{
   def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
 }
 ```
+
 ```bash
 $ ./mill example.vararg --foo bar i am cow
 barbar List(i, am, cow)
@@ -439,6 +439,7 @@ object Main{
   }
 }
 ```
+
 ```bash
 $ ./mill example.vararg2 --foo bar i am cow
 Config(bar,2,Leftover(List(i, am, cow)))
@@ -490,8 +491,7 @@ command-line parameters for Ammonite and Mill themselves.
 Now all four implementations have been unified in the MainArgs library, which
 both Ammonite and Mill rely heavily upon. MainArgs also provides some additional
 features, such as making it easy to define short versions of flags like `-c` via
-the `short = '...'` parameter, or re-naming the command line flags via `name =
-"..."`.
+the `short = '...'` parameter, or re-naming the command line flags via `name = "..."`.
 
 ## Case App
 
@@ -513,13 +513,17 @@ MainArgs takes a lot of inspiration from the old Scala Scopt library:
 
 - https://github.com/scopt/scopt
 
-Unlike Scopt, MainArgs lets you call `@main` methods or instantiate `case
-class`es directly, without needing to separately define a `case class` and
+Unlike Scopt, MainArgs lets you call `@main` methods or instantiate `case class`es directly, without needing to separately define a `case class` and
 parser. This makes it usable with much less boilerplate than Scopt: a single
 method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.3.0
+
+- Update all dependencies to latest
+- Support for Scala Native on Scala 3
 
 ## 0.2.3
 
