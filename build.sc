@@ -3,7 +3,7 @@ import mill.scalalib.api.Util.isScala3
 import scalalib._
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.2.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.0.12`
+import $ivy.`com.github.lolgab::mill-mima::0.0.13`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.16"
@@ -21,13 +21,12 @@ val scalaNativeVersions = scalaVersions.map((_, "0.4.7"))
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
   def publishVersion = VcsVersion.vcsState().format()
   def mimaPreviousVersions = Seq(
+    "0.3.0",
     VcsVersion
       .vcsState()
       .lastTag
       .getOrElse(throw new Exception("Missing last tag"))
   )
-  // Remove after Scala 3 artifacts are published
-  def mimaPreviousArtifacts = T{ if(isScala3(scalaVersion())) Seq() else super.mimaPreviousArtifacts() }
   def artifactName = "mainargs"
 
   def pomSettings = PomSettings(
