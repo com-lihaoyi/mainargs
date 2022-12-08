@@ -52,7 +52,7 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
     ) else Agg.empty)
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
+    ivy"org.scala-lang.modules::scala-collection-compat::2.9.0"
   ) ++ Agg(ivy"com.lihaoyi::pprint:0.8.1")
 }
 
