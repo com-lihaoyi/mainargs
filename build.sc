@@ -7,7 +7,7 @@ import $ivy.`com.github.lolgab::mill-mima::0.0.13`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.16"
-val scala213 = "2.13.8"
+val scala213 = "2.13.10"
 val scala3 = "3.1.3"
 
 val osLib = "0.9.0"
