@@ -1,17 +1,18 @@
 package mainargs
 import utest._
 
+object HelloWorldTests extends TestSuite {
 
-object HelloWorldTests extends TestSuite{
-
-  object Main{
+  object Main {
     @main
-    def run(@arg(short = 'f', doc = "String to print repeatedly")
-            foo: String,
-            @arg(name = "my-num", doc = "How many times to print string")
-            myNum: Int = 2,
-            @arg(doc = "Example flag")
-            bool: Flag) = {
+    def run(
+        @arg(short = 'f', doc = "String to print repeatedly")
+        foo: String,
+        @arg(name = "my-num", doc = "How many times to print string")
+        myNum: Int = 2,
+        @arg(doc = "Example flag")
+        bool: Flag
+    ) = {
       foo * myNum + " " + bool.value
     }
   }
@@ -26,7 +27,7 @@ object HelloWorldTests extends TestSuite{
         "barbar false"
     }
     test("default") {
-      ParserForMethods(Main).runOrThrow(Array("--foo", "bar"))  ==>
+      ParserForMethods(Main).runOrThrow(Array("--foo", "bar")) ==>
         "barbar false"
     }
     test("positional") {

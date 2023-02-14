@@ -76,12 +76,14 @@ class Macros(val c: Context) {
     (vararg, unwrappedType)
   }
 
-  def extractMethod(methodName: TermName,
-                    flattenedArgLists: Seq[Symbol],
-                    methodPos: Position,
-                    mainAnnotation: Option[Annotation],
-                    curCls: c.universe.Type,
-                    returnType: c.universe.Type): c.universe.Tree = {
+  def extractMethod(
+      methodName: TermName,
+      flattenedArgLists: Seq[Symbol],
+      methodPos: Position,
+      mainAnnotation: Option[Annotation],
+      curCls: c.universe.Type,
+      returnType: c.universe.Type
+  ): c.universe.Tree = {
 
     val baseArgSym = TermName(c.freshName())
 
@@ -103,12 +105,12 @@ class Macros(val c: Context) {
       )
     }
 
-    val argSigs  = for((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
+    val argSigs = for ((arg, defaultOpt) <- flattenedArgLists.zip(defaults)) yield {
 
       val (vararg, varargUnwrappedType) = unwrapVarargType(arg)
       val argAnnotation = arg.annotations.find(_.tpe =:= typeOf[arg])
 
-      val instantiateArg = argAnnotation match{
+      val instantiateArg = argAnnotation match {
         case Some(annot) => q"new ${annot.tree.tpe}(..${annot.tree.children.tail})"
         case _ => q"new _root_.mainargs.arg()"
       }
@@ -125,7 +127,6 @@ class Macros(val c: Context) {
         ).widen[_root_.scala.Any]
       """
 
-
       c.internal.setPos(argSig, methodPos)
       argSig
     }
@@ -137,7 +138,7 @@ class Macros(val c: Context) {
       else q"$baseTree.asInstanceOf[_root_.mainargs.Leftover[$unwrappedType]].value: _*"
     }
 
-    val mainInstance = mainAnnotation match{
+    val mainInstance = mainAnnotation match {
       case Some(m) => q"new ${m.tree.tpe}(..${m.tree.children.tail})"
       case None => q"new _root_.mainargs.main()"
     }
@@ -157,19 +158,20 @@ class Macros(val c: Context) {
   }
 
   def hasmain(t: MethodSymbol) = t.annotations.exists(_.tpe =:= typeOf[main])
-  def getAllRoutesForClass(curCls: Type,
-                           pred: MethodSymbol => Boolean = hasmain)
-                            : Iterable[c.universe.Tree] = {
-    for(t <- getValsOrMeths(curCls) if pred(t))
-    yield {
-      extractMethod(
-        t.name,
-        t.paramss.flatten,
-        t.pos,
-        t.annotations.find(_.tpe =:= typeOf[main]),
-        curCls,
-        weakTypeOf[Any]
-      )
-    }
+  def getAllRoutesForClass(
+      curCls: Type,
+      pred: MethodSymbol => Boolean = hasmain
+  ): Iterable[c.universe.Tree] = {
+    for (t <- getValsOrMeths(curCls) if pred(t))
+      yield {
+        extractMethod(
+          t.name,
+          t.paramss.flatten,
+          t.pos,
+          t.annotations.find(_.tpe =:= typeOf[main]),
+          curCls,
+          weakTypeOf[Any]
+        )
+      }
   }
 }
