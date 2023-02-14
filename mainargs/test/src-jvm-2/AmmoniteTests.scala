@@ -126,10 +126,10 @@ object AmmoniteTests extends TestSuite {
   val parser = ParserForClass[AmmoniteConfig]
   val tests = Tests {
 
-    test("formatMainMethods") {
+    test("formatMainMethods.unsorted") {
       val customName = s"Ammonite REPL & Script-Runner"
       val customDoc = "usage: amm [ammonite-options] [script-file [script-options]]"
-      val rendered = parser.helpText(customName = customName, customDoc = customDoc).trim
+      val rendered = parser.helpText(customName = customName, customDoc = customDoc, sorted = false).trim
       val expected =
         """Ammonite REPL & Script-Runner
           |usage: amm [ammonite-options] [script-file [script-options]]
