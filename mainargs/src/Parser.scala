@@ -12,7 +12,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean = false,
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      sorted: Boolean = false
+      sorted: Boolean = true
   ): String = {
     Renderer.formatMainMethods(
       mains.value,
@@ -30,7 +30,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
       customDocs: Map[String, String]
-  ): String = helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted = false)
+  ): String = helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted = true)
 
   def runOrExit(
       args: Seq[String],
@@ -181,7 +181,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       docsOnNewLine: Boolean = false,
       customName: String = null,
       customDoc: String = null,
-      sorted: Boolean = false
+      sorted: Boolean = true
   ): String = {
     Renderer.formatMainMethodSignature(
       mains.main,
@@ -201,7 +201,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       docsOnNewLine: Boolean,
       customName: String,
       customDoc: String
-  ): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted = false)
+  ): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted = true)
 
   def constructOrExit(
       args: Seq[String],
@@ -270,7 +270,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
       customDoc: String = null,
-      sorted: Boolean = false
+      sorted: Boolean = true
   ): Either[String, T] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
@@ -315,7 +315,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
     autoPrintHelpAndExit,
     customName,
     customDoc,
-    sorted = false
+    sorted = true
   )
 
   def constructRaw(

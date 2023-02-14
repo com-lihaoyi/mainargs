@@ -120,7 +120,7 @@ object Renderer {
     docsOnNewLine,
     customNames,
     customDocs,
-    sorted = false
+    sorted = true
   )
 
   def formatMainMethodSignature(
@@ -181,7 +181,7 @@ object Renderer {
     docsOnNewLine,
     customName,
     customDoc,
-    sorted = false
+    sorted = true
   )
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
@@ -339,6 +339,6 @@ object Renderer {
     docsOnNewLine,
     customName,
     customDoc,
-    sorted = false
+    sorted = true
   )
 }
