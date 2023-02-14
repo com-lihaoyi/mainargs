@@ -11,16 +11,19 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       totalWidth: Int = 100,
       docsOnNewLine: Boolean = false,
       customNames: Map[String, String] = Map(),
-      customDocs: Map[String, String] = Map()
-  ) = {
+      customDocs: Map[String, String] = Map(),
+      sorted: Boolean = false
+  ): String = {
     Renderer.formatMainMethods(
       mains.value,
       totalWidth,
       docsOnNewLine,
       customNames,
-      customDocs
+      customDocs,
+      sorted
     )
   }
+
   def runOrExit(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -50,6 +53,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       case Right(v) => v
     }
   }
+
   def runOrThrow(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -76,6 +80,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       case Right(v) => v
     }
   }
+
   def runEither(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -85,11 +90,12 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
-      customDocs: Map[String, String] = Map()
+      customDocs: Map[String, String] = Map(),
+      sorted: Boolean = false
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
-      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs))
+      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted))
       Compat.exit(exitCode)
     } else runRaw0(args, allowPositional, allowRepeats) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
@@ -105,13 +111,15 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
                 printHelpOnExit,
                 docsOnNewLine,
                 customNames.get(main.name),
-                customDocs.get(main.name)
+                customDocs.get(main.name),
+                sorted
               )
             )
         }
 
     }
   }
+
   def runRaw(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -141,7 +149,8 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       totalWidth: Int = 100,
       docsOnNewLine: Boolean = false,
       customName: String = null,
-      customDoc: String = null
+      customDoc: String = null,
+      sorted: Boolean = false
   ) = {
     Renderer.formatMainMethodSignature(
       mains.main,
@@ -150,9 +159,11 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       Renderer.getLeftColWidth(mains.main.argSigs),
       docsOnNewLine,
       Option(customName),
-      Option(customDoc)
+      Option(customDoc),
+      sorted
     )
   }
+
   def constructOrExit(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -182,6 +193,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       case Right(v) => v
     }
   }
+
   def constructOrThrow(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -208,6 +220,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       case Right(v) => v
     }
   }
+
   def constructEither(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -217,11 +230,12 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
-      customDoc: String = null
+      customDoc: String = null,
+      sorted: Boolean = false
   ): Either[String, T] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
-      outputStream.println(helpText(totalWidth, docsOnNewLine, customName, customDoc))
+      outputStream.println(helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted))
       Compat.exit(exitCode)
     } else constructRaw(args, allowPositional, allowRepeats) match {
       case Result.Success(v) => Right(v)
@@ -234,7 +248,8 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
             printHelpOnExit,
             docsOnNewLine,
             Option(customName),
-            Option(customDoc)
+            Option(customDoc),
+            sorted
           )
         )
     }
