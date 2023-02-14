@@ -64,6 +64,7 @@ trait Common extends CrossScalaModule {
     millSourcePath / "src",
     millSourcePath / s"src-$platform",
     millSourcePath / s"src-${scalaMajor(scalaVersion())}",
+    millSourcePath / s"src-${platform}-${scalaMajor(scalaVersion())}",
   )
   def platform: String
 }
@@ -74,6 +75,7 @@ trait CommonTestModule extends ScalaModule with TestModule.Utest {
     millSourcePath / "src",
     millSourcePath / s"src-$platform",
     millSourcePath / s"src-${scalaMajor(scalaVersion())}",
+    millSourcePath / s"src-${platform}-${scalaMajor(scalaVersion())}",
   )
   def platform: String
 }
