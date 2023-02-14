@@ -1,10 +1,9 @@
 package mainargs
 import utest._
 
+object DashedArgumentName extends TestSuite {
 
-object DashedArgumentName extends TestSuite{
-
-  object Base{
+  object Base {
     @main
     def `opt-for-18+name`(`opt-for-18+arg`: Boolean) = `opt-for-18+arg`
     @main
@@ -14,16 +13,20 @@ object DashedArgumentName extends TestSuite{
 
   val tests = Tests {
     test - check(
-      List("opt-for-18+name", "--opt-for-18+arg", "true"), Result.Success(true)
+      List("opt-for-18+name", "--opt-for-18+arg", "true"),
+      Result.Success(true)
     )
     test - check(
-      List("opt-for-18+name", "--opt-for-18+arg", "false"), Result.Success(false)
+      List("opt-for-18+name", "--opt-for-18+arg", "false"),
+      Result.Success(false)
     )
     test - check(
-      List("opt-for-29+name", "--opt-for-29+arg", "true"), Result.Success(true)
+      List("opt-for-29+name", "--opt-for-29+arg", "true"),
+      Result.Success(true)
     )
     test - check(
-      List("opt-for-29+name", "--opt-for-29+arg", "false"), Result.Success(false)
+      List("opt-for-29+name", "--opt-for-29+arg", "false"),
+      Result.Success(false)
     )
   }
 }

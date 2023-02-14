@@ -11,7 +11,7 @@ object Renderer {
 
   val newLine = System.lineSeparator()
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
-  def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match{
+  def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match {
     case arg: ArgSig.Flag[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val nameSuffix = arg.name.map(s => s"--$s")
@@ -26,24 +26,27 @@ object Renderer {
       s"${arg.name0} <${arg.reader.shortName}>..."
   }
 
-
-  def renderArg(arg: ArgSig.Terminal[_, _],
-                leftOffset: Int,
-                wrappedWidth: Int): (String, String) = {
+  def renderArg(
+      arg: ArgSig.Terminal[_, _],
+      leftOffset: Int,
+      wrappedWidth: Int
+  ): (String, String) = {
     val wrapped = softWrap(arg.doc.getOrElse(""), leftOffset, wrappedWidth - leftOffset)
     (renderArgShort(arg), wrapped)
   }
 
-  def formatMainMethods(mainMethods: Seq[MainData[_, _]],
-                        totalWidth: Int,
-                        docsOnNewLine: Boolean,
-                        customNames: Map[String, String],
-                        customDocs: Map[String, String]) = {
+  def formatMainMethods(
+      mainMethods: Seq[MainData[_, _]],
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String]
+  ) = {
     val flattenedAll: Seq[ArgSig.Terminal[_, _]] =
       mainMethods.map(_.argSigs)
         .flatten
     val leftColWidth = getLeftColWidth(flattenedAll)
-    mainMethods match{
+    mainMethods match {
       case Seq() => ""
       case Seq(main) =>
         Renderer.formatMainMethodSignature(
@@ -57,10 +60,15 @@ object Renderer {
         )
       case _ =>
         val methods =
-          for(main <- mainMethods)
+          for (main <- mainMethods)
             yield formatMainMethodSignature(
-              main, 2, totalWidth, leftColWidth, docsOnNewLine,
-              customNames.get(main.name), customDocs.get(main.name)
+              main,
+              2,
+              totalWidth,
+              leftColWidth,
+              docsOnNewLine,
+              customNames.get(main.name),
+              customDocs.get(main.name)
             )
 
         normalizeNewlines(
@@ -71,13 +79,15 @@ object Renderer {
     }
   }
 
-  def formatMainMethodSignature(main: MainData[_, _],
-                                leftIndent: Int,
-                                totalWidth: Int,
-                                leftColWidth: Int,
-                                docsOnNewLine: Boolean,
-                                customName: Option[String],
-                                customDoc: Option[String]) = {
+  def formatMainMethodSignature(
+      main: MainData[_, _],
+      leftIndent: Int,
+      totalWidth: Int,
+      leftColWidth: Int,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String]
+  ) = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
     val args =
@@ -89,15 +99,15 @@ object Renderer {
       val lhsPadded = lhs.padTo(leftColWidth, ' ')
       val rhsPadded = rhs.linesIterator.mkString(newLine)
       if (rhs.isEmpty) s"$leftIndentStr  $lhs"
-      else if (docsOnNewLine){
+      else if (docsOnNewLine) {
         s"$leftIndentStr  $lhs\n$leftIndentStr        $rhsPadded"
-      }else {
+      } else {
         s"$leftIndentStr  $lhsPadded  $rhsPadded"
       }
     }
     val argStrings = for ((lhs, rhs) <- args) yield formatArg(lhs, rhs)
 
-    val mainDocSuffix = customDoc.orElse(main.doc) match{
+    val mainDocSuffix = customDoc.orElse(main.doc) match {
       case Some(d) => newLine + leftIndentStr + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
@@ -142,13 +152,15 @@ object Renderer {
       "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
-  def renderResult(main: MainData[_, _],
-                   result: Result.Failure,
-                   totalWidth: Int,
-                   printHelpOnError: Boolean,
-                   docsOnNewLine: Boolean,
-                   customName: Option[String],
-                   customDoc: Option[String]): String = {
+  def renderResult(
+      main: MainData[_, _],
+      result: Result.Failure,
+      totalWidth: Int,
+      printHelpOnError: Boolean,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String]
+  ): String = {
 
     def expectedMsg() = {
       if (printHelpOnError) {
@@ -163,10 +175,9 @@ object Renderer {
             customName,
             customDoc
           )
-      }
-      else ""
+      } else ""
     }
-    result match{
+    result match {
       case err: Result.Failure.Early => renderEarlyError(err)
       case Result.Failure.Exception(t) =>
         val s = new StringWriter()
@@ -184,12 +195,13 @@ object Renderer {
             s"Missing $argumentsStr: ${chunks.mkString(" ")}" + Renderer.newLine
           }
 
-
         val unknownStr =
           if (unknown.isEmpty) ""
           else {
             val argumentsStr = pluralize("argument", unknown.length)
-            s"Unknown $argumentsStr: " + unknown.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
+            s"Unknown $argumentsStr: " + unknown.map(Util.literalize(_)).mkString(
+              " "
+            ) + Renderer.newLine
           }
 
         val duplicateStr =
@@ -205,7 +217,7 @@ object Renderer {
             lines.mkString
 
           }
-        val incompleteStr = incomplete match{
+        val incompleteStr = incomplete match {
           case None => ""
           case Some(sig) =>
             s"Incomplete argument ${renderArgShort(sig)} is missing a corresponding value" +
@@ -219,7 +231,7 @@ object Renderer {
         )
 
       case Result.Failure.InvalidArguments(x) =>
-        val thingies = x.map{
+        val thingies = x.map {
           case Result.ParamError.Failed(p, vs, errMsg) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
             s"Invalid argument ${renderArgShort(p)} failed to parse $literalV due to $errMsg"

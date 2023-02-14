@@ -1,9 +1,8 @@
-
 package mainargs
 
 import scala.annotation.{switch, tailrec}
 
-object Util{
+object Util {
   def literalize(s: IndexedSeq[Char], unicode: Boolean = false) = {
     val sb = new StringBuilder
     sb.append('"')
@@ -35,10 +34,8 @@ object Util{
     else s
   }
 
-
-
   def appendMap[K, V](current: Map[K, Vector[V]], k: K, v: V): Map[K, Vector[V]] = {
-    if(current.contains(k)) current + (k -> (current(k) :+ v))
+    if (current.contains(k)) current + (k -> (current(k) :+ v))
     else current + (k -> Vector(v))
   }
 }
