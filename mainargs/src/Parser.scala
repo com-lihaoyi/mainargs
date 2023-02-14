@@ -24,6 +24,14 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     )
   }
 
+  /** binary compatibility shim. */
+  private[mainargs] def helpText(
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String]
+  ): String = helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted = false)
+
   def runOrExit(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -116,9 +124,32 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
               )
             )
         }
-
     }
   }
+
+  /** binary compatibility shim. */
+  private[mainargs] def runEither(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customNames: Map[String, String],
+      customDocs: Map[String, String]
+  ): Either[String, Any] = runEither(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customNames,
+    customDocs,
+    sorted = false
+  )
 
   def runRaw(
       args: Seq[String],
@@ -151,7 +182,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       customName: String = null,
       customDoc: String = null,
       sorted: Boolean = false
-  ) = {
+  ): String = {
     Renderer.formatMainMethodSignature(
       mains.main,
       0,
@@ -163,6 +194,14 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       sorted
     )
   }
+
+  /** binary compatibility shim. */
+  private[mainargs] def helpText(
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customName: String,
+      customDoc: String
+  ): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted = false)
 
   def constructOrExit(
       args: Seq[String],
@@ -253,8 +292,32 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
           )
         )
     }
-
   }
+
+  /** binary compatibility shim. */
+  private[mainargs] def constructEither(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customName: String,
+      customDoc: String
+  ): Either[String, T] = constructEither(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customName,
+    customDoc,
+    sorted = false
+  )
+
   def constructRaw(
       args: Seq[String],
       allowPositional: Boolean = false,
