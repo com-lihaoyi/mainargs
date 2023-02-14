@@ -24,7 +24,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     )
   }
 
-  /** binary compatibility shim. */
+  @deprecated("Binary compatibility shim, use other overload instead", "mainargs after 0.3.0")
   private[mainargs] def helpText(
       totalWidth: Int,
       docsOnNewLine: Boolean,
@@ -127,7 +127,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     }
   }
 
-  /** binary compatibility shim. */
+  @deprecated("Binary compatibility shim, use other overload instead", "mainargs after 0.3.0")
   private[mainargs] def runEither(
       args: Seq[String],
       allowPositional: Boolean,
@@ -195,7 +195,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
     )
   }
 
-  /** binary compatibility shim. */
+  @deprecated("Binary compatibility shim, use other overload instead", "mainargs after 0.3.0")
   private[mainargs] def helpText(
       totalWidth: Int,
       docsOnNewLine: Boolean,
