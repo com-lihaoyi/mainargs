@@ -1,6 +1,7 @@
 package mainargs
 
 import java.io.{PrintWriter, StringWriter}
+import scala.math
 
 object Renderer {
 
@@ -10,7 +11,9 @@ object Renderer {
   }
 
   val newLine = System.lineSeparator()
+
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
+
   def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match {
     case arg: ArgSig.Flag[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
@@ -24,6 +27,28 @@ object Renderer {
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
     case arg: ArgSig.Leftover[_, _] =>
       s"${arg.name0} <${arg.reader.shortName}>..."
+  }
+
+  /**
+   * Returns a `Some[string]` with the sortable string or a `None` if it is an leftover.
+   */
+  private def sortableName(arg: ArgSig.Terminal[_, _]): Option[String] = arg match {
+    case l: ArgSig.Leftover[_, _] =>
+      None
+    case a: ArgSig.Named[_, _] =>
+      a.shortName.map(_.toString).orElse(a.name).orElse(Some(""))
+    case a: ArgSig.Terminal[_, _] =>
+      a.name.orElse(Some(""))
+  }
+
+  object ArgOrd extends math.Ordering[ArgSig.Terminal[_, _]] {
+    override def compare(x: ArgSig.Terminal[_, _], y: ArgSig.Terminal[_, _]): Int =
+      (sortableName(x), sortableName(y)) match {
+        case (None, None) => 0 // don't sort leftovers
+        case (None, Some(_)) => 1 // keep left overs at the end
+        case (Some(_), None) => -1 // keep left overs at the end
+        case (Some(l), Some(r)) => l.compare(r)
+      }
   }
 
   def renderArg(
@@ -40,8 +65,9 @@ object Renderer {
       totalWidth: Int,
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
-      customDocs: Map[String, String]
-  ) = {
+      customDocs: Map[String, String],
+      sorted: Boolean
+  ): String = {
     val flattenedAll: Seq[ArgSig.Terminal[_, _]] =
       mainMethods.map(_.argSigs)
         .flatten
@@ -56,7 +82,8 @@ object Renderer {
           leftColWidth,
           docsOnNewLine,
           customNames.get(main.name),
-          customDocs.get(main.name)
+          customDocs.get(main.name),
+          sorted
         )
       case _ =>
         val methods =
@@ -68,7 +95,8 @@ object Renderer {
               leftColWidth,
               docsOnNewLine,
               customNames.get(main.name),
-              customDocs.get(main.name)
+              customDocs.get(main.name),
+              sorted
             )
 
         normalizeNewlines(
@@ -79,6 +107,22 @@ object Renderer {
     }
   }
 
+  @deprecated("Use other overload instead", "mainargs after 0.3.0")
+  def formatMainMethods(
+      mainMethods: Seq[MainData[_, _]],
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String]
+  ): String = formatMainMethods(
+    mainMethods,
+    totalWidth,
+    docsOnNewLine,
+    customNames,
+    customDocs,
+    sorted = true
+  )
+
   def formatMainMethodSignature(
       main: MainData[_, _],
       leftIndent: Int,
@@ -86,12 +130,17 @@ object Renderer {
       leftColWidth: Int,
       docsOnNewLine: Boolean,
       customName: Option[String],
-      customDoc: Option[String]
-  ) = {
+      customDoc: Option[String],
+      sorted: Boolean
+  ): String = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
-    val args =
-      main.argSigs.map(renderArg(_, argLeftCol, totalWidth))
+
+    val sortedArgs =
+      if (sorted) main.argSigs.sorted(ArgOrd)
+      else main.argSigs
+
+    val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth))
 
     val leftIndentStr = " " * leftIndent
 
@@ -114,6 +163,26 @@ object Renderer {
     s"""$leftIndentStr${customName.getOrElse(main.name)}$mainDocSuffix
        |${argStrings.map(_ + newLine).mkString}""".stripMargin
   }
+
+  @deprecated("Use other overload instead", "mainargs after 0.3.0")
+  def formatMainMethodSignature(
+      main: MainData[_, _],
+      leftIndent: Int,
+      totalWidth: Int,
+      leftColWidth: Int,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String]
+  ): String = formatMainMethodSignature(
+    main,
+    leftIndent,
+    totalWidth,
+    leftColWidth,
+    docsOnNewLine,
+    customName,
+    customDoc,
+    sorted = true
+  )
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
     if (s.isEmpty) s
@@ -152,6 +221,7 @@ object Renderer {
       "To select a subcommand to run, you don't need --s." + Renderer.newLine +
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
+
   def renderResult(
       main: MainData[_, _],
       result: Result.Failure,
@@ -159,7 +229,8 @@ object Renderer {
       printHelpOnError: Boolean,
       docsOnNewLine: Boolean,
       customName: Option[String],
-      customDoc: Option[String]
+      customDoc: Option[String],
+      sorted: Boolean
   ): String = {
 
     def expectedMsg() = {
@@ -173,7 +244,8 @@ object Renderer {
             leftColWidth,
             docsOnNewLine,
             customName,
-            customDoc
+            customDoc,
+            sorted
           )
       } else ""
     }
@@ -249,4 +321,24 @@ object Renderer {
         )
     }
   }
+
+  @deprecated("Use other overload instead", "mainargs after 0.3.0")
+  def renderResult(
+      main: MainData[_, _],
+      result: Result.Failure,
+      totalWidth: Int,
+      printHelpOnError: Boolean,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String]
+  ): String = renderResult(
+    main,
+    result,
+    totalWidth,
+    printHelpOnError,
+    docsOnNewLine,
+    customName,
+    customDoc,
+    sorted = true
+  )
 }
