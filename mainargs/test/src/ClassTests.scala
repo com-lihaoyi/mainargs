@@ -38,7 +38,8 @@ object ClassTests extends TestSuite {
                 None,
                 None,
                 mainargs.TokensReader.IntRead,
-                false
+                positional = false,
+                isHidden = false
               )
             ),
             List(),
@@ -68,7 +69,8 @@ object ClassTests extends TestSuite {
                   None,
                   None,
                   mainargs.TokensReader.IntRead,
-                  false
+                  positional = false,
+                  isHidden = false
                 )
               ),
               List(),
@@ -89,7 +91,8 @@ object ClassTests extends TestSuite {
                   None,
                   None,
                   mainargs.TokensReader.StringRead,
-                  false
+                  positional = false,
+                  isHidden = false
                 )
               ),
               List(),
@@ -111,7 +114,8 @@ object ClassTests extends TestSuite {
                   None,
                   None,
                   mainargs.TokensReader.IntRead,
-                  false
+                  positional = false,
+                  isHidden = false
                 ),
                 ArgSig.Simple(
                   Some("zzzz"),
@@ -119,7 +123,8 @@ object ClassTests extends TestSuite {
                   None,
                   None,
                   mainargs.TokensReader.StringRead,
-                  false
+                  positional = false,
+                  isHidden = false
                 )
               ),
               List(),
@@ -138,12 +143,12 @@ object ClassTests extends TestSuite {
             case Result.Failure.InvalidArguments(
                   Seq(
                     Result.ParamError.Failed(
-                      ArgSig.Simple(None, Some('x'), None, None, _, false),
+                      ArgSig.Simple(None, Some('x'), None, None, _, false, _),
                       Seq("xxx"),
                       _
                     ),
                     Result.ParamError.Failed(
-                      ArgSig.Simple(None, Some('y'), None, None, _, false),
+                      ArgSig.Simple(None, Some('y'), None, None, _, false, _),
                       Seq("hohoho"),
                       _
                     )

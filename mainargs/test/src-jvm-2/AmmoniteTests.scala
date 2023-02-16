@@ -1,4 +1,5 @@
 package mainargs
+
 import utest._
 
 object AmmoniteDefaults {
@@ -12,6 +13,7 @@ object AmmoniteDefaults {
 
   def ammoniteHome = os.Path(System.getProperty("user.home")) / ".ammonite"
 }
+
 @main
 case class AmmoniteConfig(
     core: AmmoniteConfig.Core,
@@ -204,7 +206,7 @@ object AmmoniteTests extends TestSuite {
     }
 
     test("parseInvoke") {
-      parser.constructEither(Array("--code", "println(1)")) ==>
+      parser.constructEither(Array("--code", "println(1)").toIndexedSeq) ==>
         Right(
           AmmoniteConfig(
             AmmoniteConfig.Core(

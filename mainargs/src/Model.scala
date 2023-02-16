@@ -21,13 +21,14 @@ object ArgSig {
       case c => Some(c)
     }
     val docOpt = scala.Option(arg.doc)
+    val isHidden = arg.isHidden
     argParser match {
-      case ArgReader.Flag() => ArgSig.Flag[B](nameOpt, shortOpt, docOpt)
+      case ArgReader.Flag() => ArgSig.Flag[B](nameOpt, shortOpt, docOpt, isHidden)
       case ArgReader.Class(parser) => Class(parser.mains)
       case ArgReader.Leftover(reader: TokensReader[T]) =>
         Leftover[T, B](scala.Option(arg.name).getOrElse(name0), docOpt, reader)
       case ArgReader.Simple(reader) =>
-        Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader, arg.positional)
+        Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader, arg.positional, isHidden)
     }
   }
 
@@ -38,6 +39,7 @@ object ArgSig {
 
   sealed trait Named[T, B] extends Terminal[T, B] {
     def shortName: Option[Char]
+    def isHidden: Boolean
   }
 
   /**
@@ -47,18 +49,23 @@ object ArgSig {
    * possible a function that can compute its default value
    */
   case class Simple[T, B](
-      name: Option[String],
-      shortName: Option[Char],
-      doc: Option[String],
+      override val name: Option[String],
+      override val shortName: Option[Char],
+      override val doc: Option[String],
       default: Option[B => T],
       reader: TokensReader[T],
-      positional: Boolean
+      positional: Boolean,
+      override val isHidden: Boolean
   ) extends ArgSig.Named[T, B] {
     def typeString = reader.shortName
   }
 
-  case class Flag[B](name: Option[String], shortName: Option[Char], doc: Option[String])
-      extends ArgSig.Named[mainargs.Flag, B]
+  case class Flag[B](
+      override val name: Option[String],
+      override val shortName: Option[Char],
+      override val doc: Option[String],
+      override val isHidden: Boolean
+  ) extends ArgSig.Named[mainargs.Flag, B]
 
   def flatten[T, B](x: ArgSig[T, B]): Seq[Terminal[T, B]] = x match {
     case x: Terminal[T, B] => Seq(x)
