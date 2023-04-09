@@ -3,7 +3,7 @@ import mill.scalalib.api.ZincWorkerUtil.isScala3
 import scalalib._
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.0.13`
+import $ivy.`com.github.lolgab::mill-mima::0.0.17`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
