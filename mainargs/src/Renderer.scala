@@ -7,7 +7,7 @@ object Renderer {
 
   def getLeftColWidth(items: Seq[ArgSig.Terminal[_, _]]) = {
     if (items.isEmpty) 0
-    else items.map(renderArgShort(_).length).max
+    else items.filter(nonHidden).map(renderArgShort(_).length).max
   }
 
   val newLine = System.lineSeparator()
@@ -49,6 +49,11 @@ object Renderer {
         case (Some(_), None) => -1 // keep left overs at the end
         case (Some(l), Some(r)) => l.compare(r)
       }
+  }
+
+  private[this] val nonHidden: ArgSig.Terminal[_, _] => Boolean = {
+    case arg: ArgSig.Named[_, _] => !arg.isHidden
+    case _ => true
   }
 
   def renderArg(
@@ -140,7 +145,7 @@ object Renderer {
       if (sorted) main.argSigs.sorted(ArgOrd)
       else main.argSigs
 
-    val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth))
+    val args = sortedArgs.filter(nonHidden).map(renderArg(_, argLeftCol, totalWidth))
 
     val leftIndentStr = " " * leftIndent
 

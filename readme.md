@@ -310,6 +310,8 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
+- `isHidden: Boolean`: if `true` this arg will not be included in the rendered help text.
+
 ## Customization
 
 Apart from taking the name of the main `object` or config `case class`,
@@ -343,6 +345,8 @@ of useful configuration values:
 - `customName`/`customNames` and `customDoc`/`customDocs`: allows you to
   override the main method names and documentation strings at runtime. This
   allows you to work around limitations in the use of the `@main(name = "...", doc = "...")` annotation that only allows simple static strings.
+
+- `sorted: Boolean`: whether to sort the arguments alphabetically in the help text. Defaults to `true`
 
 ## Custom Argument Parsers
 
