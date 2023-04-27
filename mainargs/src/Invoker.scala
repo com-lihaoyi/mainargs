@@ -30,11 +30,9 @@ object Invoker {
     val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] =
       for (a <- mainData.argSigs0) yield {
         a match {
-          case a: ArgSig.Flag[B] =>
-            Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
-
           case a: ArgSig.Simple[T, B] =>
             a.reader match{
+              case r: TokensReader.Flag => Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
               case r: TokensReader.Simple[T] => Right(makeReadCall(kvs, base, a, r))
               case r: TokensReader.Leftover[T, _] => Right(makeReadVarargsCall(a, extras, r))
             }

@@ -5,6 +5,7 @@ import scala.collection.mutable
 sealed trait TokensReader[T]{
   def read(strs: Seq[String]): Either[String, T]
   def isLeftover: Boolean
+  def isFlag: Boolean
   def shortName: String
 }
 
@@ -14,10 +15,19 @@ object TokensReader {
     def alwaysRepeatable: Boolean = false
     def allowEmpty: Boolean = false
     def isLeftover = false
+    def isFlag = false
+  }
+
+  trait Flag extends TokensReader[mainargs.Flag] {
+    def shortName = ""
+    def read(strs: Seq[String]) = ???
+    def isLeftover = false
+    def isFlag = true
   }
 
   trait Leftover[T, V] extends TokensReader[T]{
     def isLeftover = true
+    def isFlag = false
     def wrapped: TokensReader[V]
     def shortName = wrapped.shortName
   }
@@ -26,6 +36,7 @@ object TokensReader {
     try Right(f)
     catch { case e: Throwable => Left(e.toString) }
 
+  implicit object FlagRead extends Flag
   implicit object StringRead extends Simple[String]{
     def shortName = "str"
     def read(strs: Seq[String]) = Right(strs.last)

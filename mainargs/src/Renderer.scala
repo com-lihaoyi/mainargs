@@ -15,13 +15,13 @@ object Renderer {
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
 
   def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match {
-    case arg: ArgSig.Flag[_] =>
-      val shortPrefix = arg.shortName.map(c => s"-$c")
-      val nameSuffix = arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix).mkString(" ")
-
     case arg: ArgSig.Simple[_, _] =>
       arg.reader match{
+        case r: TokensReader.Flag =>
+          val shortPrefix = arg.shortName.map(c => s"-$c")
+          val nameSuffix = arg.name.map(s => s"--$s")
+          (shortPrefix ++ nameSuffix).mkString(" ")
+
         case r: TokensReader.Simple[_] =>
           val shortPrefix = arg.shortName.map(c => s"-$c")
           val typeSuffix = s"<${r.shortName}>"

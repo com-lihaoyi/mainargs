@@ -37,7 +37,7 @@ object TokenGrouping {
         case head :: rest =>
           if (head.startsWith("-") && head.exists(_ != '-')) {
             keywordArgMap.get(head) match {
-              case Some(cliArg: ArgSig.Flag[_]) =>
+              case Some(cliArg: ArgSig.Simple[_, _]) if cliArg.reader.isFlag  =>
                 rec(rest, Util.appendMap(current, cliArg, ""))
               case Some(cliArg: ArgSig.Simple[_, _]) if !cliArg.reader.isLeftover =>
                 rest match {
@@ -66,9 +66,9 @@ object TokenGrouping {
 
       val duplicates = current
         .filter {
-          case (a: ArgSig.Flag[_], vs) => vs.size > 1 && !allowRepeats
           case (a: ArgSig.Simple[_, _], vs) =>
             a.reader match{
+              case r: TokensReader.Flag => vs.size > 1 && !allowRepeats
               case r: TokensReader.Simple[_] => vs.size > 1 && !r.alwaysRepeatable && !allowRepeats
               case r: TokensReader.Leftover[_, _] => false
             }
@@ -84,7 +84,7 @@ object TokenGrouping {
               !r.allowEmpty &&
               x.default.isEmpty &&
               !current.contains(x)
-            case r: TokensReader.Leftover[_, _] => false
+            case _ => false
           }
         }
 

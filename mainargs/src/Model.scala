@@ -15,7 +15,6 @@ object ArgSig {
     }
     val docOpt = scala.Option(arg.doc)
     argParser match {
-      case ArgReader.Flag() => ArgSig.Flag[B](nameOpt, shortOpt, docOpt)
       case ArgReader.Class(parser) => Class(parser.mains)
       case ArgReader.Simple(reader) =>
         Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader, arg.positional)
@@ -46,9 +45,6 @@ object ArgSig {
       positional: Boolean
   ) extends ArgSig.Named[T, B]
 
-  case class Flag[B](name: Option[String], shortName: Option[Char], doc: Option[String])
-      extends ArgSig.Named[mainargs.Flag, B]
-
   def flatten[T, B](x: ArgSig[T, B]): Seq[Terminal[T, B]] = x match {
     case x: Terminal[T, B] => Seq(x)
     case x: Class[T, B] =>
@@ -65,9 +61,6 @@ object ArgReader {
 
   implicit def createClass[T: SubParser]: Class[T] = Class(implicitly[SubParser[T]])
   case class Class[T](x: SubParser[T]) extends ArgReader[T]
-
-  implicit def createFlag: Flag = Flag()
-  case class Flag() extends ArgReader[mainargs.Flag]
 }
 
 trait SubParser[T] {
