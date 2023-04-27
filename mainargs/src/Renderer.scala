@@ -20,8 +20,8 @@ object Renderer {
       val nameSuffix = arg.name.map(s => s"--$s")
       (shortPrefix ++ nameSuffix).mkString(" ")
 
-    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover => None
-      s"${arg.name} <${arg.reader.shortName}>..."
+    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover =>
+      s"${arg.name.get} <${arg.reader.asInstanceOf[TokensReader.LeftoverRead[_]].wrapped.shortName}>..."
 
     case arg: ArgSig.Simple[_, _] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")

@@ -18,6 +18,7 @@ object TokenGrouping {
 
     val positionalArgSigs = argSigs
       .filter {
+        case x: ArgSig.Simple[_, _] if x.reader.isLeftover => false
         case x: ArgSig.Simple[_, _] if x.reader.noTokens => false
         case x: ArgSig.Simple[_, _] if x.positional => true
         case x => allowPositional
@@ -39,14 +40,14 @@ object TokenGrouping {
             keywordArgMap.get(head) match {
               case Some(cliArg: ArgSig.Flag[_]) =>
                 rec(rest, Util.appendMap(current, cliArg, ""))
-              case Some(cliArg: ArgSig.Simple[_, _]) =>
+              case Some(cliArg: ArgSig.Simple[_, _]) if !cliArg.reader.isLeftover =>
                 rest match {
                   case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
                   case Nil =>
                     Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
                 }
 
-              case None => complete(remaining, current)
+              case _ => complete(remaining, current)
             }
           } else {
             positionalArgSigs.find(!current.contains(_)) match {
@@ -56,9 +57,9 @@ object TokenGrouping {
           }
 
         case _ => complete(remaining, current)
-
       }
     }
+
     def complete(
         remaining: List[String],
         current: Map[ArgSig.Named[_, B], Vector[String]]
@@ -73,12 +74,13 @@ object TokenGrouping {
         .toSeq
 
       val missing = argSigs
-        .collect { case x: ArgSig.Simple[_, _] => x }
+        .collect { case x: ArgSig.Simple[_, _] if !x.reader.isLeftover => x }
         .filter { x =>
           !x.reader.allowEmpty &&
           x.default.isEmpty &&
           !current.contains(x)
         }
+
       val unknown = if (allowLeftover) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty) {
         Result.Failure.MismatchedArguments(

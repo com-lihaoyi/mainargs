@@ -26,18 +26,19 @@ object TokensReader {
       extends TokensReader[Float]("float", strs => tryEither(strs.last.toFloat))
   implicit object DoubleRead
       extends TokensReader[Double]("double", strs => tryEither(strs.last.toDouble))
-  implicit def LeftoverRead[T: TokensReader]: TokensReader[Leftover[T]] =
-    new TokensReader[Leftover[T]](
-      "leftover",
-      strs => {
-        val (failures, successes) =
-          strs.map(s => implicitly[TokensReader[T]].read(Seq(s))).partitionMap(identity)
+  class LeftoverRead[T](implicit val wrapped: TokensReader[T]) extends TokensReader[Leftover[T]](
+    "leftover",
+    strs => {
+      val (failures, successes) = strs
+        .map(s => implicitly[TokensReader[T]].read(Seq(s)))
+        .partitionMap(identity)
 
-        if (failures.nonEmpty) Left(failures.head)
-        else Right(Leftover(successes:_*))
-      },
-      isLeftover = true
-    )
+      if (failures.nonEmpty) Left(failures.head)
+      else Right(Leftover(successes: _*))
+    },
+    isLeftover = true
+  )
+  implicit def LeftoverRead[T: TokensReader]: TokensReader[Leftover[T]] = new LeftoverRead[T]
 
   implicit def OptionRead[T: TokensReader]: TokensReader[Option[T]] = new TokensReader[Option[T]](
     implicitly[TokensReader[T]].shortName,

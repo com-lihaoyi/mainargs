@@ -20,6 +20,7 @@ object Invoker {
       )
       .flatMap(invoke(cep.companion(), cep.main, _))
   }
+
   def invoke0[T, B](
       base: B,
       mainData: MainData[T, B],
@@ -34,7 +35,7 @@ object Invoker {
 
           case a: ArgSig.Simple[T, B] =>
             if (!a.reader.isLeftover) Right(makeReadCall(kvs, base, a))
-            else Right(makeReadVarargsCall(a, extras).map(x => Leftover(x: _*).asInstanceOf[T]))
+            else Right(makeReadVarargsCall(a, extras))
 
           case a: ArgSig.Class[T, B] =>
             Left(
@@ -158,21 +159,20 @@ object Invoker {
   def makeReadVarargsCall[T, B](
       arg: ArgSig.Simple[T, B],
       values: Seq[String]
-  ): ParamResult[Seq[T]] = {
-    val attempts =
-      for (token <- values)
-        yield tryEither(
-          arg.reader.read(Seq(token)),
-          Result.ParamError.Exception(arg, Seq(token), _)
-        ) match {
-          case Left(x) => Left(x)
-          case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, Seq(token), errMsg))
-          case Right(Right(v)) => Right(v)
-        }
+  ): ParamResult[T] = {
+    val eithers =
+      tryEither(
+        arg.reader.read(values),
+        Result.ParamError.Exception(arg, values, _)
+      ) match {
+        case Left(x) => Left(x)
+        case Right(Left(errMsg)) => Left(Result.ParamError.Failed(arg, values, errMsg))
+        case Right(Right(v)) => Right(v)
+      }
 
-    attempts.collect { case Left(x) => x } match {
-      case Nil => ParamResult.Success(attempts.collect { case Right(x) => x })
-      case bad => ParamResult.Failure(bad)
+    eithers match{
+      case Left(s) => ParamResult.Failure(Seq(s))
+      case Right(v) => ParamResult.Success(v)
     }
   }
 }
