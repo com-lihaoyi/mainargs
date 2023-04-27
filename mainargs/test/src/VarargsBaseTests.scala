@@ -42,7 +42,7 @@ trait VarargsBaseTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig(Some("nums"), _, _, _, _, _),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
                   Seq("--nums", "31337"),
                   """java.lang.NumberFormatException: For input string: "--nums"""" |
                   """java.lang.NumberFormatException: --nums"""
@@ -57,7 +57,7 @@ trait VarargsBaseTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig(Some("nums"), _, _, _, _, _),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
                   Seq("1", "2", "3", "--nums", "4"),
                   "java.lang.NumberFormatException: For input string: \"--nums\"" |
                   "java.lang.NumberFormatException: --nums"
@@ -75,7 +75,7 @@ trait VarargsBaseTests extends TestSuite {
     test("notEnoughNormalArgsStillFails") {
       assertMatch(check.parseInvoke(List("mixedVariadic"))) {
         case Result.Failure.MismatchedArguments(
-              Seq(ArgSig(Some("first"), _, _, _, _, _)),
+              Seq(ArgSig(Some("first"), _, _, _, _, _, _)),
               Nil,
               Nil,
               None
@@ -89,7 +89,7 @@ trait VarargsBaseTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig(Some("nums"), _, _, _, _, _),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
                   Seq("aa", "bb", "3"),
                   "java.lang.NumberFormatException: For input string: \"aa\"" |
                   "java.lang.NumberFormatException: aa"
@@ -104,7 +104,7 @@ trait VarargsBaseTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig(Some("first"), _, _, _, _, _),
+                  ArgSig(Some("first"), _, _, _, _, _, _),
                   Seq("aa"),
                   "java.lang.NumberFormatException: For input string: \"aa\"" |
                   "java.lang.NumberFormatException: aa"

@@ -236,7 +236,8 @@ object ArgSig {
       docOpt,
       defaultOpt.asInstanceOf[Option[Any => Any]],
       tokensReader,
-      arg.positional
+      arg.positional,
+      arg.hidden
     )
   }
 
@@ -258,7 +259,8 @@ case class ArgSig(
     doc: Option[String],
     default: Option[Any => Any],
     reader: TokensReader[_],
-    positional: Boolean
+    positional: Boolean,
+    hidden: Boolean
 )
 
 case class MethodMains[B](value: Seq[MainData[Any, B]], base: () => B)
@@ -281,9 +283,9 @@ case class MainData[T, B](
 
   val flattenedArgSigs: Seq[ArgSig] =
     argSigs0.iterator.flatMap[ArgSig](ArgSig.flatten(_)).toVector
-    
+
   val renderedArgSigs: Seq[ArgSig] =
-    flattenedArgSigs.filter(!_.reader.isConstant)
+    flattenedArgSigs.filter(a => !a.hidden && !a.reader.isConstant)
 }
 
 object MainData {

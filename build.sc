@@ -1,16 +1,16 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
 import scalalib._
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.0`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.0.18`
+import $ivy.`com.github.lolgab::mill-mima::0.0.19`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
 val scala213 = "2.13.10"
 val scala3 = "3.1.3"
 
-val osLib = "0.9.0"
+val osLib = "0.9.1"
 val acyclic = "0.3.6"
 
 val scalaVersions = List(scala212, scala213, scala3)
