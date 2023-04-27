@@ -8,9 +8,9 @@ object VarargsCustomTests extends VarargsBaseTests {
   class Wrapper[T](val unwrap: Seq[T])
   class WrapperRead[T](implicit val wrapped: TokensReader[T]) extends TokensReader.Leftover[Wrapper[T], T]{
     def read(strs: Seq[String]) = {
-      val (failures, successes) = strs
-        .map(s => implicitly[TokensReader[T]].read(Seq(s)))
-        .partitionMap(identity)
+      val results = strs.map(s => implicitly[TokensReader[T]].read(Seq(s)))
+      val failures = results.collect{case Left(x) => x}
+      val successes = results.collect{case Right(x) => x}
 
       if (failures.nonEmpty) Left(failures.head)
       else Right(new Wrapper(successes))
