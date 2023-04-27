@@ -5,14 +5,15 @@ import scala.collection.mutable
 /**
  * Represents the ability to parse CLI input arguments into a type [[T]]
  *
- * Has a fixed number of direct subtypes - [[Simple]], [[Flag]], [[Leftover]],
- * and [[Class]] - but each of those can be extended by an arbitrary number of
- * user-specified instances.
+ * Has a fixed number of direct subtypes - [[Simple]], [[Constant]], [[Flag]],
+ * [[Leftover]], and [[Class]] - but each of those can be extended by an
+ * arbitrary number of user-specified instances.
  */
 sealed trait TokensReader[T] {
   def isLeftover = false
   def isFlag = false
   def isClass = false
+  def isConstant = false
   def isSimple = false
 }
 
@@ -52,6 +53,17 @@ object TokensReader {
      */
     def allowEmpty: Boolean = false
     override def isSimple = true
+  }
+
+  /**
+   * A [[TokensReader]] that doesn't read any tokens and just returns a value.
+   * Useful sometimes for injecting things into main methods that aren't
+   * strictly computed from CLI argument tokens but nevertheless need to get
+   * passed in.
+   */
+  trait Constant[T] extends Terminal[T] {
+    def read(): Either[String, T]
+    override def isConstant = true
   }
 
   /**
@@ -121,7 +133,7 @@ object TokensReader {
     def read(strs: Seq[String]) = tryEither(strs.last.toDouble)
   }
 
-  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.ShortNamed[mainargs.Leftover[T]] =
+  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.Leftover[mainargs.Leftover[T], T] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
 
   class LeftoverRead[T](implicit val wrapped: TokensReader.Simple[T])

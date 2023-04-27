@@ -18,7 +18,7 @@ object TokenGrouping {
 
     val positionalArgSigs = argSigs
       .filter {
-        case x: ArgSig if x.reader.isLeftover => false
+        case x: ArgSig if x.reader.isLeftover || x.reader.isConstant => false
         case x: ArgSig if x.positional => true
         case x => allowPositional
       }
@@ -71,6 +71,7 @@ object TokenGrouping {
               case r: TokensReader.Flag => vs.size > 1 && !allowRepeats
               case r: TokensReader.Simple[_] => vs.size > 1 && !r.alwaysRepeatable && !allowRepeats
               case r: TokensReader.Leftover[_, _] => false
+              case r: TokensReader.Constant[_] => false
             }
 
         }
