@@ -281,6 +281,9 @@ case class MainData[T, B](
 
   val flattenedArgSigs: Seq[ArgSig] =
     argSigs0.iterator.flatMap[ArgSig](ArgSig.flatten(_)).toVector
+    
+  val renderedArgSigs: Seq[ArgSig] =
+    flattenedArgSigs.filter(!_.reader.isConstant)
 }
 
 object MainData {

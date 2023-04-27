@@ -138,8 +138,8 @@ object Renderer {
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
 
     val sortedArgs =
-      if (sorted) main.flattenedArgSigs.sorted(ArgOrd)
-      else main.flattenedArgSigs
+      if (sorted) main.renderedArgSigs.sorted(ArgOrd)
+      else main.renderedArgSigs
 
     val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth))
 
@@ -236,7 +236,7 @@ object Renderer {
 
     def expectedMsg() = {
       if (printHelpOnError) {
-        val leftColWidth = getLeftColWidth(main.flattenedArgSigs)
+        val leftColWidth = getLeftColWidth(main.renderedArgSigs)
         "Expected Signature: " +
           Renderer.formatMainMethodSignature(
             main,

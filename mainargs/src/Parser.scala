@@ -188,7 +188,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       main,
       0,
       totalWidth,
-      Renderer.getLeftColWidth(main.flattenedArgSigs),
+      Renderer.getLeftColWidth(main.renderedArgSigs),
       docsOnNewLine,
       Option(customName),
       Option(customDoc),
