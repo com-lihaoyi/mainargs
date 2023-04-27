@@ -37,10 +37,8 @@ class Macros(val c: Context) {
 
     q"""
       new _root_.mainargs.ParserForClass(
-        _root_.mainargs.ClassMains[${weakTypeOf[T]}](
-          $route.asInstanceOf[_root_.mainargs.MainData[${weakTypeOf[T]}, Any]],
-          () => $companionObj
-        )
+        $route.asInstanceOf[_root_.mainargs.MainData[${weakTypeOf[T]}, Any]],
+        () => $companionObj
       )
     """
   }
@@ -119,13 +117,13 @@ class Macros(val c: Context) {
                 ${arg.name.decoded},
                 $instantiateArg,
                 $defaultOpt
-              ).widen[_root_.scala.Any]
+              )
       """ else q"""
         _root_.mainargs.ArgSig.create[$varargUnwrappedType, $curCls](
           ${arg.name.decoded},
           $instantiateArg,
           $defaultOpt
-        ).widen[_root_.scala.Any]
+        )
       """
 
       c.internal.setPos(argSig, methodPos)

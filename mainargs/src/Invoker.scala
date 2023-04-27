@@ -2,7 +2,7 @@ package mainargs
 
 object Invoker {
   def construct[T](
-      cep: ClassMains[T],
+      cep: TokensReader.Class[T],
       args: Seq[String],
       allowPositional: Boolean,
       allowRepeats: Boolean
@@ -10,42 +10,37 @@ object Invoker {
     TokenGrouping
       .groupArgs(
         args,
-        cep.main.argSigs,
+        cep.main.flattenedArgSigs,
         allowPositional,
         allowRepeats,
-        cep.main.argSigs0.exists {
-          case x: ArgSig.Simple[_, _] => x.reader.isLeftover
-          case _ => false
-        }
+        cep.main.argSigs0.exists(_.reader.isLeftover)
       )
-      .flatMap(invoke(cep.companion(), cep.main, _))
+      .flatMap((group: TokenGrouping[Any]) => invoke(cep.companion(), cep.main, group))
   }
 
   def invoke0[T, B](
       base: B,
       mainData: MainData[T, B],
-      kvs: Map[ArgSig.Named[_, B], Seq[String]],
+      kvs: Map[ArgSig, Seq[String]],
       extras: Seq[String]
   ): Result[T] = {
     val readArgValues: Seq[Either[Result[Any], ParamResult[_]]] =
       for (a <- mainData.argSigs0) yield {
-        a match {
-          case a: ArgSig.Simple[T, B] =>
-            a.reader match{
-              case r: TokensReader.Flag => Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
-              case r: TokensReader.Simple[T] => Right(makeReadCall(kvs, base, a, r))
-              case r: TokensReader.Leftover[T, _] => Right(makeReadVarargsCall(a, extras, r))
-            }
-
-          case a: ArgSig.Class[T, B] =>
+        a.reader match {
+          case r: TokensReader.Flag =>
+            Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
+          case r: TokensReader.Simple[T] => Right(makeReadCall(kvs, base, a, r))
+          case r: TokensReader.Leftover[T, _] => Right(makeReadVarargsCall(a, extras, r))
+          case r: TokensReader.Class[T] =>
             Left(
               invoke0[T, B](
-                a.reader.companion().asInstanceOf[B],
-                a.reader.main.asInstanceOf[MainData[T, B]],
+                r.companion().asInstanceOf[B],
+                r.main.asInstanceOf[MainData[T, B]],
                 kvs,
                 extras
               )
             )
+
         }
       }
 
@@ -85,21 +80,25 @@ object Invoker {
       allowPositional: Boolean,
       allowRepeats: Boolean
   ): Either[Result.Failure.Early, (MainData[Any, B], Result[Any])] = {
-    def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = Right(
-      main,
-      TokenGrouping
-        .groupArgs(
-          argsList,
-          main.argSigs,
-          allowPositional,
-          allowRepeats,
-          main.argSigs0.exists {
-            case x: ArgSig.Simple[_, _] => x.reader.isLeftover
-            case _ => false
-          }
-        )
-        .flatMap(Invoker.invoke(mains.base(), main, _))
-    )
+    def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = {
+      def invokeLocal(group: TokenGrouping[Any]) =
+        invoke(mains.base(), main.asInstanceOf[MainData[Any, Any]], group)
+      Right(
+        main,
+        TokenGrouping
+          .groupArgs(
+            argsList,
+            main.flattenedArgSigs,
+            allowPositional,
+            allowRepeats,
+            main.argSigs0.exists {
+              case x: ArgSig => x.reader.isLeftover
+              case _ => false
+            }
+          )
+          .flatMap(invokeLocal)
+      )
+    }
     mains.value match {
       case Seq() => Left(Result.Failure.Early.NoMainMethodsDetected())
       case Seq(main) => groupArgs(main, args)
@@ -124,11 +123,11 @@ object Invoker {
     try Right(t)
     catch { case e: Throwable => Left(error(e)) }
   }
-  def makeReadCall[T, B](
-      dict: Map[ArgSig.Named[_, B], Seq[String]],
-      base: B,
-      arg: ArgSig.Simple[T, B],
-      reader: TokensReader.Simple[T]
+  def makeReadCall[T](
+      dict: Map[ArgSig, Seq[String]],
+      base: Any,
+      arg: ArgSig,
+      reader: TokensReader.Simple[_]
   ): ParamResult[T] = {
     def prioritizedDefault = tryEither(
       arg.default.map(_(base)),
@@ -154,13 +153,13 @@ object Invoker {
           case Right(Right(v)) => ParamResult.Success(Some(v))
         }
     }
-    optResult.map(_.get)
+    optResult.map(_.get.asInstanceOf[T])
   }
 
-  def makeReadVarargsCall[T, B](
-      arg: ArgSig.Simple[T, B],
+  def makeReadVarargsCall[T](
+      arg: ArgSig,
       values: Seq[String],
-      reader: TokensReader.Leftover[T, _]
+      reader: TokensReader.Leftover[_, _]
   ): ParamResult[T] = {
     val eithers =
       tryEither(
@@ -172,9 +171,9 @@ object Invoker {
         case Right(Right(v)) => Right(v)
       }
 
-    eithers match{
+    eithers match {
       case Left(s) => ParamResult.Failure(Seq(s))
-      case Right(v) => ParamResult.Success(v)
+      case Right(v) => ParamResult.Success(v.asInstanceOf[T])
     }
   }
 }

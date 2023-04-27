@@ -1,12 +1,12 @@
 package mainargs
 import utest._
 
-
 object VarargsWrappedTests extends VarargsBaseTests {
   // Test that we are able to wrap the `Leftover` type we use for Varargs in
   // our own custom types, and have things work
   class Wrapper[T](val unwrap: T)
-  class WrapperRead[T](implicit val wrapped: TokensReader[T]) extends TokensReader.Leftover[Wrapper[T], T]{
+  class WrapperRead[T](implicit val wrapped: TokensReader[T])
+      extends TokensReader.Leftover[Wrapper[T], T] {
     def read(strs: Seq[String]) = wrapped.read(strs).map(new Wrapper(_))
   }
 

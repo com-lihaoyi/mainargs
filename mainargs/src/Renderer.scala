@@ -5,7 +5,7 @@ import scala.math
 
 object Renderer {
 
-  def getLeftColWidth(items: Seq[ArgSig.Terminal[_, _]]) = {
+  def getLeftColWidth(items: Seq[ArgSig]) = {
     if (items.isEmpty) 0
     else items.map(renderArgShort(_).length).max
   }
@@ -14,39 +14,36 @@ object Renderer {
 
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
 
-  def renderArgShort(arg: ArgSig.Terminal[_, _]) = arg match {
-    case arg: ArgSig.Simple[_, _] =>
-      arg.reader match{
-        case r: TokensReader.Flag =>
-          val shortPrefix = arg.shortName.map(c => s"-$c")
-          val nameSuffix = arg.name.map(s => s"--$s")
-          (shortPrefix ++ nameSuffix).mkString(" ")
+  def renderArgShort(arg: ArgSig) = arg.reader match {
+    case r: TokensReader.Flag =>
+      val shortPrefix = arg.shortName.map(c => s"-$c")
+      val nameSuffix = arg.name.map(s => s"--$s")
+      (shortPrefix ++ nameSuffix).mkString(" ")
 
-        case r: TokensReader.Simple[_] =>
-          val shortPrefix = arg.shortName.map(c => s"-$c")
-          val typeSuffix = s"<${r.shortName}>"
-          val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
-          (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
+    case r: TokensReader.Simple[_] =>
+      val shortPrefix = arg.shortName.map(c => s"-$c")
+      val typeSuffix = s"<${r.shortName}>"
+      val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
+      (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
 
-        case r: TokensReader.Leftover[_, _] =>
-          s"${arg.name.get} <${r.wrapped.shortName}>..."
-      }
+    case r: TokensReader.Leftover[_, _] =>
+      s"${arg.name.get} <${r.wrapped.shortName}>..."
   }
 
   /**
    * Returns a `Some[string]` with the sortable string or a `None` if it is an leftover.
    */
-  private def sortableName(arg: ArgSig.Terminal[_, _]): Option[String] = arg match {
-    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover => None
+  private def sortableName(arg: ArgSig): Option[String] = arg match {
+    case arg: ArgSig if arg.reader.isLeftover => None
 
-    case a: ArgSig.Named[_, _] =>
+    case a: ArgSig =>
       a.shortName.map(_.toString).orElse(a.name).orElse(Some(""))
-    case a: ArgSig.Terminal[_, _] =>
+    case a: ArgSig =>
       a.name.orElse(Some(""))
   }
 
-  object ArgOrd extends math.Ordering[ArgSig.Terminal[_, _]] {
-    override def compare(x: ArgSig.Terminal[_, _], y: ArgSig.Terminal[_, _]): Int =
+  object ArgOrd extends math.Ordering[ArgSig] {
+    override def compare(x: ArgSig, y: ArgSig): Int =
       (sortableName(x), sortableName(y)) match {
         case (None, None) => 0 // don't sort leftovers
         case (None, Some(_)) => 1 // keep left overs at the end
@@ -56,7 +53,7 @@ object Renderer {
   }
 
   def renderArg(
-      arg: ArgSig.Terminal[_, _],
+      arg: ArgSig,
       leftOffset: Int,
       wrappedWidth: Int
   ): (String, String) = {
@@ -72,8 +69,8 @@ object Renderer {
       customDocs: Map[String, String],
       sorted: Boolean
   ): String = {
-    val flattenedAll: Seq[ArgSig.Terminal[_, _]] =
-      mainMethods.map(_.argSigs)
+    val flattenedAll: Seq[ArgSig] =
+      mainMethods.map(_.flattenedArgSigs)
         .flatten
     val leftColWidth = getLeftColWidth(flattenedAll)
     mainMethods match {
@@ -141,8 +138,8 @@ object Renderer {
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
 
     val sortedArgs =
-      if (sorted) main.argSigs.sorted(ArgOrd)
-      else main.argSigs
+      if (sorted) main.flattenedArgSigs.sorted(ArgOrd)
+      else main.flattenedArgSigs
 
     val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth))
 
@@ -239,7 +236,7 @@ object Renderer {
 
     def expectedMsg() = {
       if (printHelpOnError) {
-        val leftColWidth = getLeftColWidth(main.argSigs)
+        val leftColWidth = getLeftColWidth(main.flattenedArgSigs)
         "Expected Signature: " +
           Renderer.formatMainMethodSignature(
             main,

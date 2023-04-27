@@ -47,10 +47,10 @@ object Result {
      * did not line up with the arguments expected
      */
     case class MismatchedArguments(
-        missing: Seq[ArgSig.Simple[_, _]] = Nil,
+        missing: Seq[ArgSig] = Nil,
         unknown: Seq[String] = Nil,
-        duplicate: Seq[(ArgSig.Named[_, _], Seq[String])] = Nil,
-        incomplete: Option[ArgSig.Simple[_, _]] = None
+        duplicate: Seq[(ArgSig, Seq[String])] = Nil,
+        incomplete: Option[ArgSig] = None
     ) extends Failure
 
     /**
@@ -66,21 +66,21 @@ object Result {
     /**
      * Something went wrong trying to de-serialize the input parameter
      */
-    case class Failed(arg: ArgSig.Terminal[_, _], tokens: Seq[String], errMsg: String)
+    case class Failed(arg: ArgSig, tokens: Seq[String], errMsg: String)
         extends ParamError
 
     /**
      * Something went wrong trying to de-serialize the input parameter;
      * the thrown exception is stored in [[ex]]
      */
-    case class Exception(arg: ArgSig.Terminal[_, _], tokens: Seq[String], ex: Throwable)
+    case class Exception(arg: ArgSig, tokens: Seq[String], ex: Throwable)
         extends ParamError
 
     /**
      * Something went wrong trying to evaluate the default value
      * for this input parameter
      */
-    case class DefaultFailed(arg: ArgSig.Simple[_, _], ex: Throwable) extends ParamError
+    case class DefaultFailed(arg: ArgSig, ex: Throwable) extends ParamError
   }
 }
 
