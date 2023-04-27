@@ -20,16 +20,17 @@ object Renderer {
       val nameSuffix = arg.name.map(s => s"--$s")
       (shortPrefix ++ nameSuffix).mkString(" ")
 
-    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover =>
-      s"${arg.name.get} <${arg.reader.asInstanceOf[TokensReader.LeftoverRead[_]].wrapped.shortName}>..."
-
     case arg: ArgSig.Simple[_, _] =>
-      val shortPrefix = arg.shortName.map(c => s"-$c")
-      val typeSuffix = s"<${arg.typeString}>"
+      arg.reader match{
+        case r: TokensReader.Simple[_] =>
+          val shortPrefix = arg.shortName.map(c => s"-$c")
+          val typeSuffix = s"<${r.shortName}>"
+          val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
+          (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
 
-      val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
-
+        case r: TokensReader.Leftover[_, _] =>
+          s"${arg.name.get} <${r.wrapped.shortName}>..."
+      }
   }
 
   /**

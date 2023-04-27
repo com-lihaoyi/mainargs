@@ -1,7 +1,7 @@
 package mainargs
 import utest._
 
-trait VarargsTests extends TestSuite {
+trait VarargsBaseTests extends TestSuite {
   def check: Checker[_]
   def isNewVarargsTests: Boolean
   val tests = Tests {

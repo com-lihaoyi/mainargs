@@ -44,9 +44,7 @@ object ArgSig {
       default: Option[B => T],
       reader: TokensReader[T],
       positional: Boolean
-  ) extends ArgSig.Named[T, B] {
-    def typeString = reader.shortName
-  }
+  ) extends ArgSig.Named[T, B]
 
   case class Flag[B](name: Option[String], shortName: Option[Char], doc: Option[String])
       extends ArgSig.Named[mainargs.Flag, B]

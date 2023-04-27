@@ -68,16 +68,24 @@ object TokenGrouping {
         .filter {
           case (a: ArgSig.Flag[_], vs) => vs.size > 1 && !allowRepeats
           case (a: ArgSig.Simple[_, _], vs) =>
-            vs.size > 1 && !a.reader.alwaysRepeatable && !allowRepeats
+            a.reader match{
+              case r: TokensReader.Simple[_] => vs.size > 1 && !r.alwaysRepeatable && !allowRepeats
+              case r: TokensReader.Leftover[_, _] => false
+            }
+
         }
         .toSeq
 
       val missing = argSigs
         .collect { case x: ArgSig.Simple[_, _] if !x.reader.isLeftover => x }
         .filter { x =>
-          !x.reader.allowEmpty &&
-          x.default.isEmpty &&
-          !current.contains(x)
+          x.reader match {
+            case r: TokensReader.Simple[_] =>
+              !r.allowEmpty &&
+              x.default.isEmpty &&
+              !current.contains(x)
+            case r: TokensReader.Leftover[_, _] => false
+          }
         }
 
       val unknown = if (allowLeftover) Nil else remaining

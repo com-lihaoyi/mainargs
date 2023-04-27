@@ -21,8 +21,11 @@ case class AmmoniteConfig(
 )
 
 object AmmoniteConfig {
-  implicit object PathRead
-      extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
+  implicit object PathRead extends TokensReader.Simple[os.Path]{
+    def shortName = "path"
+    def read(strs: Seq[String]) = Right(os.Path(strs.head, os.pwd))
+  }
+
   @main
   case class Core(
       @arg(
