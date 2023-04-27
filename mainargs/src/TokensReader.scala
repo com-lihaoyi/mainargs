@@ -10,8 +10,10 @@ import scala.collection.mutable
  * user-specified instances.
  */
 sealed trait TokensReader[T] {
-  def isLeftover: Boolean
-  def isFlag: Boolean
+  def isLeftover = false
+  def isFlag = false
+  def isClass = false
+  def isSimple = false
 }
 
 object TokensReader {
@@ -19,36 +21,66 @@ object TokensReader {
   sealed trait Terminal[T] extends TokensReader[T]
 
   sealed trait ShortNamed[T] extends Terminal[T] {
+    /**
+     * The label that shows up in the CLI help message, e.g. the `bar` in
+     * `--foo <bar>`
+     */
     def shortName: String
   }
 
+  /**
+   * A [[TokensReader]] for a single CLI parameter that takes a value
+   * e.g. `--foo bar`
+   */
   trait Simple[T] extends ShortNamed[T] {
-    def shortName: String
+    /**
+     * Converts the given input tokens to a [[T]] or an error `String`.
+     * The input is a `Seq` because input tokens can be passed more than once,
+     * e.g. `--foo bar --foo qux` will result in [[read]] being passed
+     * `["foo", "qux"]`
+     */
     def read(strs: Seq[String]): Either[String, T]
+
+    /**
+     * Whether is CLI param is repeatable
+     */
     def alwaysRepeatable: Boolean = false
+
+    /**
+     * Whether this CLI param can be no passed from the CLI, even if a default
+     * value is not specified. In that case, [[read]] receives an empty `Seq`
+     */
     def allowEmpty: Boolean = false
-    def isLeftover = false
-    def isFlag = false
+    override def isSimple = true
   }
 
+  /**
+   * A [[TokensReader]] for a flag that does not take any value, e.g. `--foo`
+   */
   trait Flag extends Terminal[mainargs.Flag] {
-    def isLeftover = false
-    def isFlag = true
+    override def isFlag = true
   }
 
+  /**
+   * A [[TokensReader]] for parsing the left-over parameters that do not belong
+   * to any other flag or parameter.
+   */
   trait Leftover[T, V] extends ShortNamed[T] {
-    def isLeftover = true
-    def isFlag = false
     def read(strs: Seq[String]): Either[String, T]
+
     def wrapped: ShortNamed[V]
     def shortName = wrapped.shortName
+    override def isLeftover = true
   }
 
+  /**
+   * A [[TokensReader]] that can parse an instance of the class [[T]], which
+   * may contain multiple fields each parsed by their own [[TokensReader]]
+   */
   trait Class[T] extends TokensReader[T] {
-    def isLeftover = false
-    def isFlag = false
     def companion: () => Any
     def main: MainData[T, Any]
+    override def isClass = true
   }
 
   def tryEither[T](f: => T) =
