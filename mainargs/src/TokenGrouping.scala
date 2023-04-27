@@ -77,7 +77,6 @@ object TokenGrouping {
         .toSeq
 
       val missing = argSigs
-        .collect { case x: ArgSig.Simple[_, _] if !x.reader.isLeftover => x }
         .filter { x =>
           x.reader match {
             case r: TokensReader.Simple[_] =>
