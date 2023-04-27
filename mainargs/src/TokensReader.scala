@@ -47,7 +47,6 @@ object TokensReader {
   trait Class[T] extends TokensReader[T] {
     def isLeftover = false
     def isFlag = false
-    def shortName = ???
     def companion: () => Any
     def main: MainData[T, Any]
   }
