@@ -1,5 +1,5 @@
 package mainargs
 
-object Compat{
+object Compat {
   def exit(n: Int) = sys.exit(n)
 }

@@ -1,4 +1,4 @@
-# mainargs 0.3.0
+# mainargs
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -9,7 +9,7 @@ in its scripts, as well as for command-line parsing for the
 [Mill Build Tool](https://github.com/lihaoyi/mill) and for user-defined
 `T.command`s.
 
-- [mainargs 0.3.0](#mainargs-030)
+- [mainargs](#mainargs)
 - [Usage](#usage)
   - [Parsing Main Method Parameters](#parsing-main-method-parameters)
     - [runOrExit](#runorexit)
@@ -32,6 +32,7 @@ in its scripts, as well as for command-line parsing for the
   - [Case App](#case-app)
   - [Scopt](#scopt)
 - [Changelog](#changelog)
+  - [0.4.0](#040) 
   - [0.3.0](#030)
   - [0.2.3](#023)
   - [0.2.2](#022)
@@ -42,7 +43,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.3.0"
+ivy"com.lihaoyi::mainargs:0.4.0"
 ```
 
 ## Parsing Main Method Parameters
@@ -519,6 +520,12 @@ method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.4.0
+
+- Support sorting to args in help text and sort by default
+- Various dependency updates
+- This release is binary compatible with mainargs 0.3.0
 
 ## 0.3.0
 

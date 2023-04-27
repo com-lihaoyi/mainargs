@@ -1,7 +1,7 @@
 package example.optseq
 import mainargs.{main, arg, ParserForMethods, ArgReader}
 
-object Main{
+object Main {
   @main
   def runOpt(opt: Option[Int]) = println(opt)
 
