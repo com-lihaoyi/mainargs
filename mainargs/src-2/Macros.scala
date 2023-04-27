@@ -115,10 +115,11 @@ class Macros(val c: Context) {
         case _ => q"new _root_.mainargs.arg()"
       }
       val argSig = if (vararg) q"""
-        _root_.mainargs.ArgSig.createVararg[$varargUnwrappedType, $curCls](
-          ${arg.name.decoded},
-          $instantiateArg,
-        ).widen[_root_.scala.Any]
+        _root_.mainargs.ArgSig.create[_root_.mainargs.Leftover[$varargUnwrappedType], $curCls](
+                ${arg.name.decoded},
+                $instantiateArg,
+                $defaultOpt
+              ).widen[_root_.scala.Any]
       """ else q"""
         _root_.mainargs.ArgSig.create[$varargUnwrappedType, $curCls](
           ${arg.name.decoded},

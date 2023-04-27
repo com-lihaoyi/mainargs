@@ -4,13 +4,6 @@ sealed trait ArgSig[T, B] {
   def widen[V >: T] = this.asInstanceOf[ArgSig[V, B]]
 }
 object ArgSig {
-  def createVararg[T, B](name0: String, arg: mainargs.arg)(implicit
-      argParser: ArgReader.Leftover[T]
-  ) = {
-    val name = scala.Option(arg.name).getOrElse(name0)
-    val docOpt = scala.Option(arg.doc)
-    Leftover[T, B](name, docOpt, argParser.reader)
-  }
   def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])(implicit
       argParser: ArgReader[T]
   ): ArgSig[T, B] = {
@@ -24,8 +17,6 @@ object ArgSig {
     argParser match {
       case ArgReader.Flag() => ArgSig.Flag[B](nameOpt, shortOpt, docOpt)
       case ArgReader.Class(parser) => Class(parser.mains)
-      case ArgReader.Leftover(reader: TokensReader[T]) =>
-        Leftover[T, B](scala.Option(arg.name).getOrElse(name0), docOpt, reader)
       case ArgReader.Simple(reader) =>
         Simple[T, B](nameOpt, shortOpt, docOpt, defaultOpt, reader, arg.positional)
     }
@@ -67,11 +58,6 @@ object ArgSig {
   }
 
   case class Class[T, B](reader: ClassMains[T]) extends ArgSig[T, B]
-
-  case class Leftover[T, B](name0: String, doc: Option[String], reader: TokensReader[T])
-      extends ArgSig.Terminal[T, B] {
-    def name = Some(name0)
-  }
 }
 
 sealed trait ArgReader[T]
@@ -81,9 +67,6 @@ object ArgReader {
 
   implicit def createClass[T: SubParser]: Class[T] = Class(implicitly[SubParser[T]])
   case class Class[T](x: SubParser[T]) extends ArgReader[T]
-
-  implicit def createLeftover[T: TokensReader]: Leftover[T] = Leftover(implicitly[TokensReader[T]])
-  case class Leftover[T](reader: TokensReader[T]) extends ArgReader[mainargs.Leftover[T]]
 
   implicit def createFlag: Flag = Flag()
   case class Flag() extends ArgReader[mainargs.Flag]
@@ -115,9 +98,6 @@ case class MainData[T, B](
 
   val argSigs: Seq[ArgSig.Terminal[_, B]] =
     argSigs0.iterator.flatMap[ArgSig.Terminal[_, B]](ArgSig.flatten(_)).toVector
-  val leftoverArgSig: Seq[ArgSig.Leftover[_, _]] =
-    argSigs.collect { case x: ArgSig.Leftover[_, B] => x }
-
 }
 
 object MainData {

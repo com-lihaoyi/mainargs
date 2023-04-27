@@ -13,7 +13,10 @@ object Invoker {
         cep.main.argSigs,
         allowPositional,
         allowRepeats,
-        cep.main.leftoverArgSig.nonEmpty
+        cep.main.argSigs0.exists {
+          case x: ArgSig.Simple[_, _] => x.reader.isLeftover
+          case _ => false
+        }
       )
       .flatMap(invoke(cep.companion(), cep.main, _))
   }
@@ -28,9 +31,11 @@ object Invoker {
         a match {
           case a: ArgSig.Flag[B] =>
             Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
-          case a: ArgSig.Simple[T, B] => Right(makeReadCall(kvs, base, a))
-          case a: ArgSig.Leftover[T, B] =>
-            Right(makeReadVarargsCall(a, extras).map(x => Leftover(x: _*).asInstanceOf[T]))
+
+          case a: ArgSig.Simple[T, B] =>
+            if (!a.reader.isLeftover) Right(makeReadCall(kvs, base, a))
+            else Right(makeReadVarargsCall(a, extras).map(x => Leftover(x: _*).asInstanceOf[T]))
+
           case a: ArgSig.Class[T, B] =>
             Left(
               invoke0[T, B](
@@ -87,7 +92,10 @@ object Invoker {
           main.argSigs,
           allowPositional,
           allowRepeats,
-          main.leftoverArgSig.nonEmpty
+          main.argSigs0.exists {
+            case x: ArgSig.Simple[_, _] => x.reader.isLeftover
+            case _ => false
+          }
         )
         .flatMap(Invoker.invoke(mains.base(), main, _))
     )
@@ -148,7 +156,7 @@ object Invoker {
   }
 
   def makeReadVarargsCall[T, B](
-      arg: ArgSig.Leftover[T, B],
+      arg: ArgSig.Simple[T, B],
       values: Seq[String]
   ): ParamResult[Seq[T]] = {
     val attempts =

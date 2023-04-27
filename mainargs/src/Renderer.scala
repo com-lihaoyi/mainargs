@@ -19,22 +19,25 @@ object Renderer {
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val nameSuffix = arg.name.map(s => s"--$s")
       (shortPrefix ++ nameSuffix).mkString(" ")
+
+    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover => None
+      s"${arg.name} <${arg.reader.shortName}>..."
+
     case arg: ArgSig.Simple[_, _] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${arg.typeString}>"
 
       val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
-    case arg: ArgSig.Leftover[_, _] =>
-      s"${arg.name0} <${arg.reader.shortName}>..."
+
   }
 
   /**
    * Returns a `Some[string]` with the sortable string or a `None` if it is an leftover.
    */
   private def sortableName(arg: ArgSig.Terminal[_, _]): Option[String] = arg match {
-    case l: ArgSig.Leftover[_, _] =>
-      None
+    case arg: ArgSig.Simple[_, _] if arg.reader.isLeftover => None
+
     case a: ArgSig.Named[_, _] =>
       a.shortName.map(_.toString).orElse(a.name).orElse(Some(""))
     case a: ArgSig.Terminal[_, _] =>
