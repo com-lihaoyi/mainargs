@@ -11,7 +11,6 @@ object WrappedVarargsTests extends VarargsTests {
     args => wrapped.read(args).map(new Wrapper(_)),
     wrapped.alwaysRepeatable,
     wrapped.allowEmpty,
-    wrapped.noTokens,
     wrapped.isLeftover,
   )
 

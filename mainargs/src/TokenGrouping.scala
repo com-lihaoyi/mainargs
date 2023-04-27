@@ -19,7 +19,6 @@ object TokenGrouping {
     val positionalArgSigs = argSigs
       .filter {
         case x: ArgSig.Simple[_, _] if x.reader.isLeftover => false
-        case x: ArgSig.Simple[_, _] if x.reader.noTokens => false
         case x: ArgSig.Simple[_, _] if x.positional => true
         case x => allowPositional
       }

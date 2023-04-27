@@ -6,7 +6,6 @@ class TokensReader[T](
     val read: Seq[String] => Either[String, T],
     val alwaysRepeatable: Boolean = false,
     val allowEmpty: Boolean = false,
-    val noTokens: Boolean = false,
     val isLeftover: Boolean = false
 )
 object TokensReader {
