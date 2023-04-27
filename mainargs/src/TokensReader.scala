@@ -4,16 +4,25 @@ import scala.collection.mutable
 
 /**
  * Represents the ability to parse CLI input arguments into a type [[T]]
+ *
+ * Has a fixed number of direct subtypes - [[Simple]], [[Flag]], [[Leftover]],
+ * and [[Class]] - but each of those can be extended by an arbitrary number of
+ * user-specified instances.
  */
 sealed trait TokensReader[T] {
   def isLeftover: Boolean
   def isFlag: Boolean
-  def shortName: String
 }
 
 object TokensReader {
+
   sealed trait Terminal[T] extends TokensReader[T]
-  trait Simple[T] extends Terminal[T] {
+
+  sealed trait ShortNamed[T] extends Terminal[T] {
+    def shortName: String
+  }
+
+  trait Simple[T] extends ShortNamed[T] {
     def shortName: String
     def read(strs: Seq[String]): Either[String, T]
     def alwaysRepeatable: Boolean = false
@@ -23,16 +32,15 @@ object TokensReader {
   }
 
   trait Flag extends Terminal[mainargs.Flag] {
-    def shortName = ""
     def isLeftover = false
     def isFlag = true
   }
 
-  trait Leftover[T, V] extends Terminal[T] {
+  trait Leftover[T, V] extends ShortNamed[T] {
     def isLeftover = true
     def isFlag = false
     def read(strs: Seq[String]): Either[String, T]
-    def wrapped: TokensReader[V]
+    def wrapped: ShortNamed[V]
     def shortName = wrapped.shortName
   }
 
@@ -82,7 +90,7 @@ object TokensReader {
     def read(strs: Seq[String]) = tryEither(strs.last.toDouble)
   }
 
-  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader[mainargs.Leftover[T]] =
+  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.ShortNamed[mainargs.Leftover[T]] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
 
   class LeftoverRead[T](implicit val wrapped: TokensReader.Simple[T])
