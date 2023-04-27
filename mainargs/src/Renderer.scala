@@ -27,7 +27,7 @@ object Renderer {
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
 
     case r: TokensReader.Leftover[_, _] =>
-      s"${arg.name.get} <${r.wrapped.shortName}>..."
+      s"${arg.name.get} <${r.shortName}>..."
   }
 
   /**

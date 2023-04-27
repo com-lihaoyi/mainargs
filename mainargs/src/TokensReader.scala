@@ -80,8 +80,7 @@ object TokensReader {
   trait Leftover[T, V] extends ShortNamed[T] {
     def read(strs: Seq[String]): Either[String, T]
 
-    def wrapped: ShortNamed[V]
-    def shortName = wrapped.shortName
+    def shortName: String
     override def isLeftover = true
   }
 
@@ -136,7 +135,7 @@ object TokensReader {
   implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.Leftover[mainargs.Leftover[T], T] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
 
-  class LeftoverRead[T](implicit val wrapped: TokensReader.Simple[T])
+  class LeftoverRead[T](implicit wrapped: TokensReader.Simple[T])
       extends Leftover[mainargs.Leftover[T], T] {
     def read(strs: Seq[String]) = {
       val (failures, successes) = strs
@@ -151,6 +150,7 @@ object TokensReader {
       if (failures.nonEmpty) Left(failures.head)
       else Right(Leftover(successes: _*))
     }
+    def shortName = wrapped.shortName
   }
 
   implicit def OptionRead[T: TokensReader.Simple]: TokensReader[Option[T]] = new OptionRead[T]
