@@ -7,7 +7,9 @@ object VarargsWrappedTests extends VarargsBaseTests {
   class Wrapper[T](val unwrap: T)
   class WrapperRead[T](implicit val wrapped: TokensReader[T])
       extends TokensReader.Leftover[Wrapper[T], T] {
-    def read(strs: Seq[String]) = wrapped.read(strs).map(new Wrapper(_))
+    def read(strs: Seq[String]) = wrapped
+      .asInstanceOf[TokensReader.Leftover[T, _]]
+      .read(strs).map(new Wrapper(_))
   }
 
   implicit def WrapperRead[T: TokensReader]: TokensReader[Wrapper[T]] = new WrapperRead[T]

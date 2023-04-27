@@ -6,7 +6,6 @@ import scala.collection.mutable
  * Represents the ability to parse CLI input arguments into a type [[T]]
  */
 sealed trait TokensReader[T] {
-  def read(strs: Seq[String]): Either[String, T]
   def isLeftover: Boolean
   def isFlag: Boolean
   def shortName: String
@@ -16,6 +15,7 @@ object TokensReader {
   sealed trait Terminal[T] extends TokensReader[T]
   trait Simple[T] extends Terminal[T] {
     def shortName: String
+    def read(strs: Seq[String]): Either[String, T]
     def alwaysRepeatable: Boolean = false
     def allowEmpty: Boolean = false
     def isLeftover = false
@@ -24,7 +24,6 @@ object TokensReader {
 
   trait Flag extends Terminal[mainargs.Flag] {
     def shortName = ""
-    def read(strs: Seq[String]) = ???
     def isLeftover = false
     def isFlag = true
   }
@@ -32,6 +31,7 @@ object TokensReader {
   trait Leftover[T, V] extends Terminal[T] {
     def isLeftover = true
     def isFlag = false
+    def read(strs: Seq[String]): Either[String, T]
     def wrapped: TokensReader[V]
     def shortName = wrapped.shortName
   }
@@ -40,7 +40,6 @@ object TokensReader {
     def isLeftover = false
     def isFlag = false
     def shortName = ???
-    def read(strs: Seq[String]) = ???
     def companion: () => Any
     def main: MainData[T, Any]
   }
@@ -90,7 +89,12 @@ object TokensReader {
       extends Leftover[mainargs.Leftover[T], T] {
     def read(strs: Seq[String]) = {
       val (failures, successes) = strs
-        .map(s => implicitly[TokensReader[T]].read(Seq(s)))
+        .map(s =>
+          implicitly[TokensReader[T]] match{
+            case r: TokensReader.Simple[T] => r.read(Seq(s))
+            case r: TokensReader.Leftover[T, _] => r.read(Seq(s))
+          }
+        )
         .partitionMap(identity)
 
       if (failures.nonEmpty) Left(failures.head)
@@ -104,7 +108,7 @@ object TokensReader {
     def read(strs: Seq[String]) = {
       strs.lastOption match {
         case None => Right(None)
-        case Some(s) => implicitly[TokensReader[T]].read(Seq(s)) match {
+        case Some(s) => implicitly[TokensReader.Simple[T]].read(Seq(s)) match {
             case Left(s) => Left(s)
             case Right(s) => Right(Some(s))
           }
@@ -126,7 +130,7 @@ object TokensReader {
         .foldLeft(Right(factory.newBuilder): Either[String, mutable.Builder[T, C[T]]]) {
           case (Left(s), _) => Left(s)
           case (Right(builder), token) =>
-            implicitly[TokensReader[T]].read(Seq(token)) match {
+            implicitly[TokensReader.Simple[T]].read(Seq(token)) match {
               case Left(s) => Left(s)
               case Right(v) =>
                 builder += v
@@ -139,9 +143,9 @@ object TokensReader {
     override def allowEmpty = true
   }
 
-  implicit def MapRead[K: TokensReader, V: TokensReader]: TokensReader[Map[K, V]] =
+  implicit def MapRead[K: TokensReader.Simple, V: TokensReader.Simple]: TokensReader[Map[K, V]] =
     new MapRead[K, V]
-  class MapRead[K: TokensReader, V: TokensReader] extends Simple[Map[K, V]] {
+  class MapRead[K: TokensReader.Simple, V: TokensReader.Simple] extends Simple[Map[K, V]] {
     def shortName = "k=v"
     def read(strs: Seq[String]) = {
       strs.foldLeft[Either[String, Map[K, V]]](Right(Map())) {
@@ -152,8 +156,8 @@ object TokensReader {
               for {
                 tuple <- Right((k, v)): Either[String, (String, String)]
                 (k, v) = tuple
-                key <- implicitly[TokensReader[K]].read(Seq(k))
-                value <- implicitly[TokensReader[V]].read(Seq(v))
+                key <- implicitly[TokensReader.Simple[K]].read(Seq(k))
+                value <- implicitly[TokensReader.Simple[V]].read(Seq(v))
               } yield prev + (key -> value)
 
             case _ => Left("parameter must be in k=v format")

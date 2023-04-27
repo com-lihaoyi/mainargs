@@ -5,10 +5,10 @@ object VarargsCustomTests extends VarargsBaseTests {
   // Test that we are able to replace the `Leftover` type entirely with our
   // own implementation
   class Wrapper[T](val unwrap: Seq[T])
-  class WrapperRead[T](implicit val wrapped: TokensReader[T])
+  class WrapperRead[T](implicit val wrapped: TokensReader.Simple[T])
       extends TokensReader.Leftover[Wrapper[T], T] {
     def read(strs: Seq[String]) = {
-      val results = strs.map(s => implicitly[TokensReader[T]].read(Seq(s)))
+      val results = strs.map(s => implicitly[TokensReader.Simple[T]].read(Seq(s)))
       val failures = results.collect { case Left(x) => x }
       val successes = results.collect { case Right(x) => x }
 
@@ -17,7 +17,8 @@ object VarargsCustomTests extends VarargsBaseTests {
     }
   }
 
-  implicit def WrapperRead[T: TokensReader]: TokensReader[Wrapper[T]] = new WrapperRead[T]
+  implicit def WrapperRead[T: TokensReader.Simple]: TokensReader[Wrapper[T]] =
+    new WrapperRead[T]
 
   object Base {
     @main
