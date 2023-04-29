@@ -59,8 +59,8 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
           List("foo", "bar", "qux", "ex")
       )
       val evaledArgs = check.mains.value.map(_.flattenedArgSigs.map {
-        case ArgSig(name, s, docs, None, parser, _, _) => (s, docs, None, parser)
-        case ArgSig(name, s, docs, Some(default), parser, _, _) =>
+        case (ArgSig(name, s, docs, None, parser, _, _), _) => (s, docs, None, parser)
+        case (ArgSig(name, s, docs, Some(default), parser, _, _), _) =>
           (s, docs, Some(default(CoreBase)), parser)
       })
 

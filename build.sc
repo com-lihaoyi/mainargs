@@ -62,7 +62,7 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
 
   def ivyDeps = Agg(
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
-  ) ++ Agg(ivy"com.lihaoyi::pprint:0.8.1")
+  )
 }
 
 def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"

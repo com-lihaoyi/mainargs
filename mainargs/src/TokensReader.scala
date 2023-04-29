@@ -241,8 +241,8 @@ object ArgSig {
     )
   }
 
-  def flatten[T](x: ArgSig): Seq[ArgSig] = x.reader match {
-    case _: TokensReader.Terminal[T] => Seq(x)
+  def flatten[T](x: ArgSig): Seq[(ArgSig, TokensReader.Terminal[_])] = x.reader match {
+    case r: TokensReader.Terminal[T] => Seq((x, r))
     case cls: TokensReader.Class[_] => cls.main.argSigs0.flatMap(flatten(_))
   }
 }
@@ -281,11 +281,11 @@ case class MainData[T, B](
     invokeRaw: (B, Seq[Any]) => T
 ) {
 
-  val flattenedArgSigs: Seq[ArgSig] =
-    argSigs0.iterator.flatMap[ArgSig](ArgSig.flatten(_)).toVector
+  val flattenedArgSigs: Seq[(ArgSig, TokensReader.Terminal[_])] =
+    argSigs0.iterator.flatMap[(ArgSig, TokensReader.Terminal[_])](ArgSig.flatten(_)).toVector
 
   val renderedArgSigs: Seq[ArgSig] =
-    flattenedArgSigs.filter(a => !a.hidden && !a.reader.isConstant)
+    flattenedArgSigs.collect{case (a, r) if !a.hidden && !r.isConstant => a}
 }
 
 object MainData {
