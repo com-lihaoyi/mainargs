@@ -32,14 +32,14 @@ object ClassTests extends TestSuite {
         fooParser.constructRaw(Seq("-x", "1")) ==>
           Result.Failure.MismatchedArguments(
             Seq(
-              ArgSig.Simple(
+              ArgSig(
                 None,
                 Some('y'),
                 None,
                 None,
                 mainargs.TokensReader.IntRead,
                 positional = false,
-                isHidden = false
+                hidden = false
               )
             ),
             List(),
@@ -63,14 +63,14 @@ object ClassTests extends TestSuite {
           barParser.constructRaw(Seq("-w", "-x", "1", "-z", "xxx")) ==>
             Result.Failure.MismatchedArguments(
               Seq(
-                ArgSig.Simple(
+                ArgSig(
                   None,
                   Some('y'),
                   None,
                   None,
                   mainargs.TokensReader.IntRead,
                   positional = false,
-                  isHidden = false
+                  hidden = false
                 )
               ),
               List(),
@@ -85,14 +85,14 @@ object ClassTests extends TestSuite {
           barParser.constructRaw(Seq("-w", "-x", "1", "-y", "2")) ==>
             Result.Failure.MismatchedArguments(
               Seq(
-                ArgSig.Simple(
+                ArgSig(
                   Some("zzzz"),
                   Some('z'),
                   None,
                   None,
                   mainargs.TokensReader.StringRead,
                   positional = false,
-                  isHidden = false
+                  hidden = false
                 )
               ),
               List(),
@@ -108,23 +108,23 @@ object ClassTests extends TestSuite {
           barParser.constructRaw(Seq("-w", "-x", "1")) ==>
             Result.Failure.MismatchedArguments(
               Seq(
-                ArgSig.Simple(
+                ArgSig(
                   None,
                   Some('y'),
                   None,
                   None,
                   mainargs.TokensReader.IntRead,
                   positional = false,
-                  isHidden = false
+                  hidden = false
                 ),
-                ArgSig.Simple(
+                ArgSig(
                   Some("zzzz"),
                   Some('z'),
                   None,
                   None,
                   mainargs.TokensReader.StringRead,
                   positional = false,
-                  isHidden = false
+                  hidden = false
                 )
               ),
               List(),
@@ -143,12 +143,12 @@ object ClassTests extends TestSuite {
             case Result.Failure.InvalidArguments(
                   Seq(
                     Result.ParamError.Failed(
-                      ArgSig.Simple(None, Some('x'), None, None, _, false, _),
+                      ArgSig(None, Some('x'), None, None, _, false, _),
                       Seq("xxx"),
                       _
                     ),
                     Result.ParamError.Failed(
-                      ArgSig.Simple(None, Some('y'), None, None, _, false, _),
+                      ArgSig(None, Some('y'), None, None, _, false, _),
                       Seq("hohoho"),
                       _
                     )

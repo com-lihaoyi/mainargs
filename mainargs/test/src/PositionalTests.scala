@@ -14,23 +14,23 @@ object PositionalTests extends TestSuite {
       List("true", "true", "true"),
       Result.Failure.MismatchedArguments(
         Vector(
-          ArgSig.Simple(
+          ArgSig(
             None,
             Some('x'),
             None,
             None,
             TokensReader.BooleanRead,
             positional = false,
-            isHidden = false
+            hidden = false
           ),
-          ArgSig.Simple(
+          ArgSig(
             None,
             Some('z'),
             None,
             None,
             TokensReader.BooleanRead,
             positional = false,
-            isHidden = false
+            hidden = false
           )
         ),
         List("true", "true"),
@@ -46,23 +46,23 @@ object PositionalTests extends TestSuite {
       List("-x", "true", "-y", "false", "-z", "false"),
       Result.Failure.MismatchedArguments(
         Vector(
-          ArgSig.Simple(
+          ArgSig(
             None,
             Some('y'),
             None,
             None,
             TokensReader.BooleanRead,
             positional = true,
-            isHidden = false
+            hidden = false
           ),
-          ArgSig.Simple(
+          ArgSig(
             None,
             Some('z'),
             None,
             None,
             TokensReader.BooleanRead,
             positional = false,
-            isHidden = false
+            hidden = false
           )
         ),
         List("-y", "false", "-z", "false"),

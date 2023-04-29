@@ -3,9 +3,11 @@ package mainargs
 import utest._
 
 object MillTests extends TestSuite {
+  implicit object PathRead extends TokensReader.Simple[os.Path] {
+    def shortName = "path"
+    def read(strs: Seq[String]) = Right(os.Path(strs.head, os.pwd))
+  }
 
-  implicit object PathRead
-      extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
   @main(
     name = "Mill Build Tool",
     doc = "usage: mill [mill-options] [target [target-options]]"
@@ -69,6 +71,7 @@ object MillTests extends TestSuite {
       )
       threadCount: Int = 1,
       ammoniteConfig: AmmoniteConfig.Core = AmmoniteConfig.Core(
+        injectedConstant = AmmoniteConfig.InjectedConstant(),
         noDefaultPredef = Flag(),
         silent = Flag(),
         watch = Flag(),
@@ -78,7 +81,7 @@ object MillTests extends TestSuite {
       ),
       @arg(
         name = "hidden-dummy",
-        isHidden = true
+        hidden = true
       )
       hiddenDummy: String = ""
   )

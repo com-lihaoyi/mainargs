@@ -23,10 +23,19 @@ case class AmmoniteConfig(
 )
 
 object AmmoniteConfig {
-  implicit object PathRead
-      extends TokensReader[os.Path]("path", strs => Right(os.Path(strs.head, os.pwd)))
+  implicit object PathRead extends TokensReader.Simple[os.Path] {
+    def shortName = "path"
+    def read(strs: Seq[String]) = Right(os.Path(strs.head, os.pwd))
+  }
+
+  case class InjectedConstant()
+
+  implicit object InjectedTokensReader extends TokensReader.Constant[InjectedConstant] {
+      def read() = Right(new InjectedConstant())
+    }
   @main
   case class Core(
+      injectedConstant: InjectedConstant,
       @arg(
         name = "no-default-predef",
         doc = "Disable the default predef and run Ammonite with the minimal predef possible"
@@ -211,6 +220,7 @@ object AmmoniteTests extends TestSuite {
         Right(
           AmmoniteConfig(
             AmmoniteConfig.Core(
+              injectedConstant = AmmoniteConfig.InjectedConstant(),
               noDefaultPredef = Flag(),
               silent = Flag(),
               watch = Flag(),

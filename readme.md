@@ -310,7 +310,7 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
-- `isHidden: Boolean`: if `true` this arg will not be included in the rendered help text.
+- `hidden: Boolean`: if `true` this arg will not be included in the rendered help text.
 
 ## Customization
 

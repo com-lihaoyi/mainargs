@@ -175,7 +175,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 }
 
 object ParserForClass extends ParserForClassCompanionVersionSpecific
-class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
+class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
+    extends TokensReader.Class[T] {
   def helpText(
       totalWidth: Int = 100,
       docsOnNewLine: Boolean = false,
@@ -184,10 +185,10 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       sorted: Boolean = true
   ): String = {
     Renderer.formatMainMethodSignature(
-      mains.main,
+      main,
       0,
       totalWidth,
-      Renderer.getLeftColWidth(mains.main.argSigs),
+      Renderer.getLeftColWidth(main.renderedArgSigs),
       docsOnNewLine,
       Option(customName),
       Option(customDoc),
@@ -281,7 +282,7 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       case f: Result.Failure =>
         Left(
           Renderer.renderResult(
-            mains.main,
+            main,
             f,
             totalWidth,
             printHelpOnExit,
@@ -323,6 +324,6 @@ class ParserForClass[T](val mains: ClassMains[T]) extends SubParser[T] {
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false
   ): Result[T] = {
-    Invoker.construct[T](mains, args, allowPositional, allowRepeats)
+    Invoker.construct[T](this, args, allowPositional, allowRepeats)
   }
 }

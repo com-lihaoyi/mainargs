@@ -7,7 +7,7 @@ class arg(
     val doc: String = null,
     val noDefaultName: Boolean = false,
     val positional: Boolean = false,
-    val isHidden: Boolean = false
+    val hidden: Boolean = false
 ) extends ClassfileAnnotation
 
 class main(val name: String = null, val doc: String = null) extends ClassfileAnnotation
