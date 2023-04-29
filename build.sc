@@ -19,7 +19,7 @@ val scalaJSVersions = scalaVersions.map((_, "1.10.1"))
 val scalaNativeVersions = scalaVersions.map((_, "0.4.7"))
 
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
-  def publishVersion = "0.5.0-M1"
+  def publishVersion = VcsVersion.vcsState().format()
   override def mimaPreviousVersions =
     Seq("0.2.3").filterNot(_ =>
       scalaVersion().startsWith("3.") && this.isInstanceOf[ScalaNativeModule]
