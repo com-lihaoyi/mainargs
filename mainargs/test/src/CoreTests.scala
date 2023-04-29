@@ -58,9 +58,9 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
         names ==
           List("foo", "bar", "qux", "ex")
       )
-      val evaledArgs = check.mains.value.map(_.argSigs.map {
-        case ArgSig.Simple(name, s, docs, None, parser, _) => (s, docs, None, parser)
-        case ArgSig.Simple(name, s, docs, Some(default), parser, _) =>
+      val evaledArgs = check.mains.value.map(_.flattenedArgSigs.map {
+        case (ArgSig(name, s, docs, None, parser, _, _), _) => (s, docs, None, parser)
+        case (ArgSig(name, s, docs, Some(default), parser, _, _), _) =>
           (s, docs, Some(default(CoreBase)), parser)
       })
 
@@ -113,7 +113,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
       test("missingParams") {
         test - assertMatch(check.parseInvoke(List("bar"))) {
           case Result.Failure.MismatchedArguments(
-                Seq(ArgSig.Simple(None, Some('i'), _, _, _, _)),
+                Seq(ArgSig(None, Some('i'), _, _, _, _, _)),
                 Nil,
                 Nil,
                 None
@@ -121,7 +121,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
         }
         test - assertMatch(check.parseInvoke(List("qux", "-s", "omg"))) {
           case Result.Failure.MismatchedArguments(
-                Seq(ArgSig.Simple(None, Some('i'), _, _, _, _)),
+                Seq(ArgSig(None, Some('i'), _, _, _, _, _)),
                 Nil,
                 Nil,
                 None
@@ -150,21 +150,45 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
       test - check(
         List("bar", "2"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple(None, Some('i'), None, None, TokensReader.IntRead, false)),
+          missing = List(ArgSig(
+            None,
+            Some('i'),
+            None,
+            None,
+            TokensReader.IntRead,
+            positional = false,
+            hidden = false
+          )),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "2"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple(None, Some('i'), None, None, TokensReader.IntRead, false)),
+          missing = List(ArgSig(
+            None,
+            Some('i'),
+            None,
+            None,
+            TokensReader.IntRead,
+            positional = false,
+            hidden = false
+          )),
           unknown = List("2")
         )
       )
       test - check(
         List("qux", "3", "x"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple(None, Some('i'), None, None, TokensReader.IntRead, false)),
+          missing = List(ArgSig(
+            None,
+            Some('i'),
+            None,
+            None,
+            TokensReader.IntRead,
+            positional = false,
+            hidden = false
+          )),
           unknown = List("3", "x")
         )
       )
@@ -178,7 +202,15 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
       test("invalidParams") - check(
         List("bar", "lol"),
         MismatchedArguments(
-          missing = List(ArgSig.Simple(None, Some('i'), None, None, TokensReader.IntRead, false)),
+          missing = List(ArgSig(
+            None,
+            Some('i'),
+            None,
+            None,
+            TokensReader.IntRead,
+            positional = false,
+            hidden = false
+          )),
           unknown = List("lol")
         )
       )
@@ -187,7 +219,7 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
     test("redundantParams") - check(
       List("qux", "1", "-i", "2"),
       MismatchedArguments(
-        missing = List(ArgSig.Simple(None, Some('i'), None, None, TokensReader.IntRead, false)),
+        missing = List(ArgSig(None, Some('i'), None, None, TokensReader.IntRead, positional = false, hidden = false)),
         unknown = List("1", "-i", "2")
       )
     )
@@ -217,7 +249,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite {
       ) {
         case Result.Failure.InvalidArguments(
               List(Result.ParamError.Failed(
-                ArgSig.Simple(None, Some('i'), _, _, _, _),
+                ArgSig(None, Some('i'), _, _, _, _, _),
                 Seq("lol"),
                 _
               ))
@@ -230,7 +262,7 @@ object CorePositionalEnabledOnlyTests extends TestSuite {
           case Result.Failure.MismatchedArguments(
                 Nil,
                 Nil,
-                Seq((ArgSig.Simple(None, Some('i'), _, _, _, _), Seq("1", "2"))),
+                Seq((ArgSig(None, Some('i'), _, _, _, _, _), Seq("1", "2"))),
                 None
               ) =>
         }

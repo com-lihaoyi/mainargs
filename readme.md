@@ -1,4 +1,4 @@
-# mainargs
+# mainargs 0.5.0
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -32,6 +32,7 @@ in its scripts, as well as for command-line parsing for the
   - [Case App](#case-app)
   - [Scopt](#scopt)
 - [Changelog](#changelog)
+  - [0.5.0](#050) 
   - [0.4.0](#040) 
   - [0.3.0](#030)
   - [0.2.3](#023)
@@ -39,11 +40,12 @@ in its scripts, as well as for command-line parsing for the
   - [0.2.1](#021)
   - [0.1.7](#017)
   - [0.1.4](#014)
+- [Scaladoc](https://javadoc.io/doc/com.lihaoyi/mainargs_2.13/latest/mainargs/index.html)
 
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.4.0"
+ivy"com.lihaoyi::mainargs:0.5.0"
 ```
 
 ## Parsing Main Method Parameters
@@ -310,6 +312,8 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
+- `hidden: Boolean`: if `true` this arg will not be included in the rendered help text.
+
 ## Customization
 
 Apart from taking the name of the main `object` or config `case class`,
@@ -344,6 +348,8 @@ of useful configuration values:
   override the main method names and documentation strings at runtime. This
   allows you to work around limitations in the use of the `@main(name = "...", doc = "...")` annotation that only allows simple static strings.
 
+- `sorted: Boolean`: whether to sort the arguments alphabetically in the help text. Defaults to `true`
+
 ## Custom Argument Parsers
 
 If you want to parse arguments into types that are not provided by the library,
@@ -354,10 +360,11 @@ package testcustom
 import mainargs.{main, arg, ParserForMethods, TokensReader}
 
 object Main{
-  implicit object PathRead extends TokensReader[os.Path](
-    "path",
-    strs => Right(os.Path(strs.head, os.pwd))
-  )
+  implicit object PathRead extends TokensReader.Simple[os.Path]{
+    def shortName = "path"
+    def read(strs: Seq[String]) = Right(os.Path(strs.head, os.pwd))
+  }
+
   @main
   def run(from: os.Path, to: os.Path) = {
     println("from: " + from)
@@ -376,25 +383,16 @@ to:   /Users/lihaoyi/Github/mainargs/out
 
 In this example, we define an implicit `PathRead` to teach MainArgs how to parse
 `os.Path`s from the [OS-Lib](https://github.com/lihaoyi/os-lib) library.
-`ArgReader` requires the following fields:
-
-```scala
-class ArgReader[T](val shortName: String, // what to print in <...> in the help text
-                   val read: Seq[String] => Either[String, T],
-                   val alwaysRepeatable: Boolean = false, // used to allow Seq[T]-like parsers
-                   val allowEmpty: Boolean = false) // used to allow Option[T]-like parsers
-```
 
 Note that `read` takes all tokens that were passed to a particular parameter.
 Normally this is a `Seq` of length `1`, but if `allowEmpty` is `true` it could
 be an empty `Seq`, and if `alwaysRepeatable` is `true` then it could be
 arbitrarily long.
 
-The `allowRepeats` parameter can also result in multiple tokens being passed to
-your `ArgReader`; for `ArgReader`s that do not expect that, the convention is to
-simply pick the last token in the list. There is no need to raise an error on
-duplicates, as you can simply disable `allowRepeats` if you want the parser to
-raise an error when a parameter is provided more than once.
+You can see the Scaladoc for `TokenReaders.Simple` for other things you can override:
+
+- [mainargs.TokenReaders.Simple](https://javadoc.io/doc/com.lihaoyi/mainargs_2.13/latest/mainargs/TokensReader$$Simple.html)
+
 
 ## Handlings Leftover Arguments
 
@@ -520,6 +518,17 @@ method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.5.0
+
+- Remove hard-code support for mainargs.Leftover/Flag/Subparser to support
+  alternate implementations [#62](https://github.com/com-lihaoyi/mainargs/pull/62).
+  Note that this is a binary-incompatible change, and any custom 
+  `mainargs.TokenReader`s you may implement will need to be updated to implement
+  the `mainargs.TokenReader.Simple` trait 
+  
+- Fix argument parsing of flags in the presence of `allowPositional=true`
+  [#66](https://github.com/com-lihaoyi/mainargs/pull/66)
 
 ## 0.4.0
 

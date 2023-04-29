@@ -1,7 +1,7 @@
 package mainargs
 import utest._
 
-object OldVarargsTests extends VarargsTests {
+object VarargsOldTests extends VarargsBaseTests {
   object Base {
 
     @main

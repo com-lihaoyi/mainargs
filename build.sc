@@ -1,9 +1,9 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
 import scalalib._
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.0`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
-import $ivy.`com.github.lolgab::mill-mima::0.0.18`
+import $ivy.`com.github.lolgab::mill-mima::0.0.19`
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
@@ -62,7 +62,7 @@ trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mim
 
   def ivyDeps = Agg(
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
-  ) ++ Agg(ivy"com.lihaoyi::pprint:0.8.1")
+  )
 }
 
 def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"
