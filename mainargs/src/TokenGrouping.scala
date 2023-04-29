@@ -7,25 +7,22 @@ case class TokenGrouping[B](remaining: List[String], grouped: Map[ArgSig, Seq[St
 object TokenGrouping {
   def groupArgs[B](
       flatArgs0: Seq[String],
-      argSigs0: Seq[ArgSig],
+      argSigs: Seq[(ArgSig, TokensReader.Terminal[_])],
       allowPositional: Boolean,
       allowRepeats: Boolean,
       allowLeftover: Boolean
   ): Result[TokenGrouping[B]] = {
-    val argSigs: Seq[ArgSig] = argSigs0
-      .map(ArgSig.flatten(_).collect { case x: ArgSig => x })
-      .flatten
-
-    val positionalArgSigs = argSigs
-      .filter {
-        case x: ArgSig if x.reader.isLeftover || x.reader.isConstant => false
-        case x: ArgSig if x.positional => true
-        case x => allowPositional
-      }
+    val positionalArgSigs = argSigs.collect {
+      case (a, r: TokensReader.Simple[_]) if allowPositional | a.positional =>
+        a
+    }
 
     val flatArgs = flatArgs0.toList
     val keywordArgMap = argSigs
-      .filter { case x: ArgSig if x.positional => false; case _ => true }
+      .collect {
+        case (a, r: TokensReader.Simple[_]) if !a.positional => a
+        case (a, r: TokensReader.Flag) => a
+      }
       .flatMap { x => (x.name.map("--" + _) ++ x.shortName.map("-" + _)).map(_ -> x) }
       .toMap[String, ArgSig]
 
@@ -77,17 +74,13 @@ object TokenGrouping {
         }
         .toSeq
 
-      val missing = argSigs
-        .collect { case x: ArgSig => x }
-        .filter { x =>
-          x.reader match {
-            case r: TokensReader.Simple[_] =>
-              !r.allowEmpty &&
-              x.default.isEmpty &&
-              !current.contains(x)
-            case _ => false
-          }
-        }
+      val missing = argSigs.collect {
+        case (a, r: TokensReader.Simple[_])
+          if !r.allowEmpty
+          && a.default.isEmpty
+          && !current.contains(a) =>
+            a
+      }
 
       val unknown = if (allowLeftover) Nil else remaining
       if (missing.nonEmpty || duplicates.nonEmpty || unknown.nonEmpty) {

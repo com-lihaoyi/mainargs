@@ -72,6 +72,8 @@ object Renderer {
     val flattenedAll: Seq[ArgSig] =
       mainMethods.map(_.flattenedArgSigs)
         .flatten
+        .map(_._1)
+
     val leftColWidth = getLeftColWidth(flattenedAll)
     mainMethods match {
       case Seq() => ""
