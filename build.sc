@@ -1,7 +1,7 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1-6-e80da7`
-import $ivy.`com.github.lolgab::mill-mima::0.0.20`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1-8-37c08a`
+import $ivy.`com.github.lolgab::mill-mima::0.0.21`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 import com.github.lolgab.mill.mima._
 
@@ -46,11 +46,10 @@ trait MainArgsPublishModule
 
   def compileIvyDeps =
     super.compileIvyDeps() ++
-    (if (!isScala3(crossScalaVersion)) Agg(
+    Agg.when(!isScala3(crossScalaVersion))(
       ivy"com.lihaoyi:::acyclic:${acyclic}",
       ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
     )
-    else Agg.empty)
 
   def ivyDeps = Agg(
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
