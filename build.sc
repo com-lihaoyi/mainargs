@@ -21,10 +21,7 @@ val scalaNativeVersions = scalaVersions.map((_, "0.4.7"))
 trait MainArgsPublishModule extends PublishModule with CrossScalaModule with Mima {
   def publishVersion = VcsVersion.vcsState().format()
   override def mimaPreviousVersions =
-    Seq("0.2.3").filterNot(_ =>
-      scalaVersion().startsWith("3.") && this.isInstanceOf[ScalaNativeModule]
-    ) ++
-      Seq("0.3.0")
+    Seq("0.5.0")
 
   override def mimaPreviousArtifacts: T[Agg[Dep]] = T {
     if (mimaPreviousVersions().isEmpty) Agg.empty[Dep] else super.mimaPreviousArtifacts()
