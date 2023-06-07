@@ -1,7 +1,7 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.3.1-14-7e2bd2`
-import $ivy.`com.github.lolgab::mill-mima::0.0.22`
+import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
+import $ivy.`com.github.lolgab::mill-mima::0.0.23`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 import com.github.lolgab.mill.mima._
 
@@ -65,7 +65,7 @@ trait CommonTestModule extends ScalaModule with TestModule.Utest {
 object mainargs extends Module {
   object jvm extends Cross[JvmMainArgsModule](scalaVersions)
   trait JvmMainArgsModule extends MainArgsPublishModule {
-    object test extends ScalaModuleTests with CommonTestModule {
+    object test extends ScalaTests with CommonTestModule {
       def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::os-lib:${osLib}")
     }
   }
@@ -73,13 +73,13 @@ object mainargs extends Module {
   object js extends Cross[JSMainArgsModule](scalaVersions)
   trait JSMainArgsModule extends MainArgsPublishModule with ScalaJSModule {
     def scalaJSVersion = "1.10.1"
-    object test extends ScalaJSModuleTests with CommonTestModule
+    object test extends ScalaJSTests with CommonTestModule
   }
 
   object native extends Cross[NativeMainArgsModule](scalaVersions)
   trait NativeMainArgsModule extends MainArgsPublishModule with ScalaNativeModule {
     def scalaNativeVersion = "0.4.7"
-    object test extends ScalaNativeModuleTests with CommonTestModule
+    object test extends ScalaNativeTests with CommonTestModule
   }
 }
 
