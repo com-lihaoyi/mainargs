@@ -3,6 +3,7 @@ import mill.scalalib.api.ZincWorkerUtil.isScala3
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
 import $ivy.`com.github.lolgab::mill-mima::0.0.23`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
+
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
@@ -10,7 +11,7 @@ val scala213 = "2.13.10"
 val scala3 = "3.1.3"
 
 val osLib = "0.9.1"
-val acyclic = "0.3.6"
+val acyclic = "0.3.8"
 
 val scalaVersions = List(scala212, scala213, scala3)
 
@@ -21,7 +22,9 @@ trait MainArgsPublishModule
     with PlatformScalaModule {
 
   def publishVersion = VcsVersion.vcsState().format()
+
   override def mimaPreviousVersions = Seq("0.5.0")
+
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
