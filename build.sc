@@ -7,7 +7,7 @@ import de.tobiasroeser.mill.vcs.version.VcsVersion
 import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
-val scala213 = "2.13.10"
+val scala213 = "2.13.11"
 val scala3 = "3.1.3"
 
 val osLib = "0.9.1"
@@ -16,7 +16,7 @@ val acyclic = "0.3.8"
 val scalaVersions = List(scala212, scala213, scala3)
 
 trait MainArgsPublishModule
-  extends PublishModule
+    extends PublishModule
     with CrossScalaModule
     with Mima
     with PlatformScalaModule {
@@ -24,7 +24,6 @@ trait MainArgsPublishModule
   def publishVersion = VcsVersion.vcsState().format()
 
   override def mimaPreviousVersions = Seq("0.5.0")
-
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
@@ -41,18 +40,18 @@ trait MainArgsPublishModule
 
   def scalacOptions =
     super.scalacOptions() ++
-    Option.when(!isScala3(scalaVersion()))("-P:acyclic:force")
+      Option.when(!isScala3(scalaVersion()))("-P:acyclic:force")
 
   def scalacPluginIvyDeps =
     super.scalacPluginIvyDeps() ++
-    Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
+      Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
 
   def compileIvyDeps =
     super.compileIvyDeps() ++
-    Agg.when(!isScala3(crossScalaVersion))(
-      ivy"com.lihaoyi:::acyclic:${acyclic}",
-      ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
-    )
+      Agg.when(!isScala3(crossScalaVersion))(
+        ivy"com.lihaoyi:::acyclic:${acyclic}",
+        ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
+      )
 
   def ivyDeps = Agg(
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
