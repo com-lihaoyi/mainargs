@@ -31,8 +31,8 @@ object AmmoniteConfig {
   case class InjectedConstant()
 
   implicit object InjectedTokensReader extends TokensReader.Constant[InjectedConstant] {
-      def read() = Right(new InjectedConstant())
-    }
+    def read() = Right(new InjectedConstant())
+  }
   @main
   case class Core(
       injectedConstant: InjectedConstant,
