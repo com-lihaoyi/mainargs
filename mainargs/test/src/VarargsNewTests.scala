@@ -1,6 +1,6 @@
 package mainargs
 import utest._
-object NewVarargsTests extends VarargsTests {
+object VarargsNewTests extends VarargsBaseTests {
   object Base {
     @main
     def pureVariadic(nums: Leftover[Int]) = nums.value.sum

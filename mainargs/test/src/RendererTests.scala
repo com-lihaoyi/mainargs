@@ -28,14 +28,14 @@ object RenderedTests extends TestSuite{
       val expected =
         """apply
           |   -a <int>
-          |  [-b <int>]
-          |  [-c <int>]
-          |  [-d <int>]*
-          |  [-e <int>]*
           |   --a1 <int>    this one has a doc
+          |  [-b <int>]
           |  [--b1 <int>]   this one has a doc
+          |  [-c <int>]
           |  [--c1 <int>]   this one has a doc
+          |  [-d <int>]*
           |  [--d1 <int>]*  this one has a doc
+          |  [-e <int>]*
           |  [--e1 <int>]*  this one has a doc
           |""".stripMargin
 
