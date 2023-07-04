@@ -1,11 +1,11 @@
 package example.custom
 import mainargs.{main, arg, ParserForMethods, TokensReader}
 
-object Main{
+object Main {
   implicit object PathRead extends TokensReader[os.Path](
-    "path",
-    strs => Right(os.Path(strs.head, os.pwd))
-  )
+        "path",
+        strs => Right(os.Path(strs.head, os.pwd))
+      )
   @main
   def run(from: os.Path, to: os.Path) = {
     println("from: " + from)

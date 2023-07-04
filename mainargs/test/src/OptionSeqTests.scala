@@ -1,9 +1,8 @@
 package mainargs
 import utest._
 
-
-object OptionSeqTests extends TestSuite{
-  object Main{
+object OptionSeqTests extends TestSuite {
+  object Main {
     @main
     def runOpt(opt: Option[Int]) = opt
 
@@ -63,7 +62,7 @@ object OptionSeqTests extends TestSuite{
       }
     }
 
-    test("vec"){
+    test("vec") {
       ParserForMethods(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
         Vector(123, 456)
     }
@@ -79,18 +78,20 @@ object OptionSeqTests extends TestSuite{
           Map("abc" -> "123")
       }
       test {
-        ParserForMethods(Main).runOrThrow(Array("runMap", "--map", "abc=123", "--map", "def=456")) ==>
+        ParserForMethods(Main).runOrThrow(
+          Array("runMap", "--map", "abc=123", "--map", "def=456")
+        ) ==>
           Map("abc" -> "123", "def" -> "456")
       }
     }
-    test("allowRepeats"){
-      test("true"){
+    test("allowRepeats") {
+      test("true") {
         ParserForMethods(Main)
           .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = true) ==>
           456
       }
-      test("false"){
-        intercept[Exception]{
+      test("false") {
+        intercept[Exception] {
           ParserForMethods(Main)
             .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = false)
         }

@@ -1,7 +1,7 @@
 package mainargs
 import utest._
 
-trait VarargsTests extends TestSuite {
+trait VarargsBaseTests extends TestSuite {
   def check: Checker[_]
   def isNewVarargsTests: Boolean
   val tests = Tests {
@@ -42,8 +42,8 @@ trait VarargsTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig.Leftover("nums", _, _),
-                  Seq("--nums"),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
+                  Seq("--nums", "31337"),
                   """java.lang.NumberFormatException: For input string: "--nums"""" |
                   """java.lang.NumberFormatException: --nums"""
                 )
@@ -57,8 +57,8 @@ trait VarargsTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig.Leftover("nums", _, _),
-                  Seq("--nums"),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
+                  Seq("1", "2", "3", "--nums", "4"),
                   "java.lang.NumberFormatException: For input string: \"--nums\"" |
                   "java.lang.NumberFormatException: --nums"
                 )
@@ -75,7 +75,7 @@ trait VarargsTests extends TestSuite {
     test("notEnoughNormalArgsStillFails") {
       assertMatch(check.parseInvoke(List("mixedVariadic"))) {
         case Result.Failure.MismatchedArguments(
-              Seq(ArgSig.Simple(Some("first"), _, _, _, _, _)),
+              Seq(ArgSig(Some("first"), _, _, _, _, _, _)),
               Nil,
               Nil,
               None
@@ -89,16 +89,10 @@ trait VarargsTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig.Leftover("nums", _, _),
-                  Seq("aa"),
+                  ArgSig(Some("nums"), _, _, _, _, _, _),
+                  Seq("aa", "bb", "3"),
                   "java.lang.NumberFormatException: For input string: \"aa\"" |
                   "java.lang.NumberFormatException: aa"
-                ),
-                Result.ParamError.Failed(
-                  ArgSig.Leftover("nums", _, _),
-                  Seq("bb"),
-                  "java.lang.NumberFormatException: For input string: \"bb\"" |
-                  "java.lang.NumberFormatException: bb"
                 )
               )
             ) =>
@@ -110,7 +104,7 @@ trait VarargsTests extends TestSuite {
         case Result.Failure.InvalidArguments(
               List(
                 Result.ParamError.Failed(
-                  ArgSig.Simple(Some("first"), _, _, _, _, _),
+                  ArgSig(Some("first"), _, _, _, _, _, _),
                   Seq("aa"),
                   "java.lang.NumberFormatException: For input string: \"aa\"" |
                   "java.lang.NumberFormatException: aa"

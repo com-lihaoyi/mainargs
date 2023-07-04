@@ -1,11 +1,9 @@
 package example.vararg
 import mainargs.{main, arg, ParserForMethods, Leftover}
 
-object Main{
+object Main {
   @main
-  def run(foo: String,
-          myNum: Int = 2,
-          rest: Leftover[String]) = {
+  def run(foo: String, myNum: Int = 2, rest: Leftover[String]) = {
     println(foo * myNum + " " + rest.value)
   }
 

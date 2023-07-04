@@ -41,11 +41,7 @@ object Macros {
     companionModuleType match
       case '[bCompanion] =>
         val mainData = createMainData[B, Any](annotatedMethod, mainAnnotationInstance)
-        '{
-          new ParserForClass[B](
-            ClassMains[B](${ mainData }, () => ${ Ident(companionModule).asExpr })
-          )
-        }
+        '{ new ParserForClass[B](${ mainData }, () => ${ Ident(companionModule).asExpr }) }
   }
 
   def createMainData[T: Type, B: Type](using Quotes)(method: quotes.reflect.Symbol, annotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
@@ -63,13 +59,13 @@ object Macros {
             case Some('{ $v: `t`}) => '{ Some(((_: B) => $v)) }
             case None => '{ None }
           }
-          val argReader = Expr.summon[mainargs.ArgReader[t]].getOrElse {
+          val tokensReader = Expr.summon[mainargs.TokensReader[t]].getOrElse {
             report.throwError(
               s"No mainargs.ArgReader found for parameter ${param.name}",
               param.pos.get
             )
           }
-          '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ argReader })).asInstanceOf[ArgSig[Any, B]] }
+          '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ tokensReader })) }
     })
 
     val invokeRaw: Expr[(B, Seq[Any]) => T] = {
