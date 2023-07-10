@@ -3,6 +3,7 @@ import utest._
 
 
 object RenderedTests extends TestSuite{
+  @main
   case class Config(
     a: Int,
     b: Int = 0,
