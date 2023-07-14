@@ -31,9 +31,9 @@ object Invoker {
             Right(ParamResult.Success(Flag(kvs.contains(a)).asInstanceOf[T]))
           case r: TokensReader.Simple[T] => Right(makeReadCall(kvs, base, a, r))
           case r: TokensReader.Constant[T] => Right(r.read() match {
-            case Left(s) => ParamResult.Failure(Seq(Result.ParamError.Failed(a, Nil, s)))
-            case Right(v) => ParamResult.Success(v)
-          })
+              case Left(s) => ParamResult.Failure(Seq(Result.ParamError.Failed(a, Nil, s)))
+              case Right(v) => ParamResult.Success(v)
+            })
           case r: TokensReader.Leftover[T, _] => Right(makeReadVarargsCall(a, extras, r))
           case r: TokensReader.Class[T] =>
             Left(
