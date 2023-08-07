@@ -5,9 +5,11 @@ object IssueTests extends TestSuite {
 
   object Main {
     @main
-    def mycmd(@arg(name = "the-flag") f: mainargs.Flag = mainargs.Flag(false),
-              @arg str: String = "s",
-              args: Leftover[String]) = {
+    def mycmd(
+        @arg(name = "the-flag") f: mainargs.Flag = mainargs.Flag(false),
+        @arg str: String = "s",
+        args: Leftover[String]
+    ) = {
       (f.value, str, args.value)
     }
   }
