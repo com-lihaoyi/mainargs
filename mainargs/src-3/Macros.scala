@@ -134,12 +134,21 @@ object Macros {
     val defaults = collection.mutable.Map.empty[Symbol, Expr[Any]]
 
     val Name = (method.name + """\$default\$(\d+)""").r
+    val InitName = """\$lessinit\$greater\$default\$(\d+)""".r
 
     val idents = method.owner.tree.asInstanceOf[ClassDef].body
+
     idents.foreach{
       case deff @ DefDef(Name(idx), _, _, _) =>
         val expr = Ref(deff.symbol).asExpr
         defaults += (params(idx.toInt - 1) -> expr)
+
+      // The `apply` method re-uses the default param factory methods from `<init>`,
+      // so make sure to check if those exist too
+      case deff @ DefDef(InitName(idx), _, _, _) if method.name == "apply" =>
+        val expr = Ref(deff.symbol).asExpr
+        defaults += (params(idx.toInt - 1) -> expr)
+
       case _ =>
     }
 

@@ -51,11 +51,8 @@ object ParserTests extends TestSuite {
       ) ==> Right("xxxxx")
     }
     test("constructEither") {
-      TestUtils.scala2Only {
-        // default values in classes not working on Scala 3
-        classParser.constructEither(Array("--code", "println(1)")) ==>
-          Right(ClassBase(code = Some("println(1)"), other = "hello"))
-      }
+      classParser.constructEither(Array("--code", "println(1)")) ==>
+        Right(ClassBase(code = Some("println(1)"), other = "hello"))
     }
   }
 }
