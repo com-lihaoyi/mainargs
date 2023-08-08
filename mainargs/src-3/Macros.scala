@@ -40,18 +40,37 @@ object Macros {
     val annotatedMethod = TypeRepr.of[B].typeSymbol.companionModule.memberMethod("apply").head
     companionModuleType match
       case '[bCompanion] =>
-        val mainData = createMainData[B, Any](annotatedMethod, mainAnnotationInstance)
+        val mainData = createMainData[B, Any](
+          annotatedMethod,
+          mainAnnotationInstance,
+          // Somehow the `apply` method parameter annotations don't end up on
+          // the `apply` method parameters, but end up in the `<init>` method
+          // parameters, so use those for getting the annotations instead
+          TypeRepr.of[B].typeSymbol.primaryConstructor.paramSymss
+        )
         '{ new ParserForClass[B](${ mainData }, () => ${ Ident(companionModule).asExpr }) }
   }
 
-  def createMainData[T: Type, B: Type](using Quotes)(method: quotes.reflect.Symbol, annotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
+  def createMainData[T: Type, B: Type](using Quotes)
+                                      (method: quotes.reflect.Symbol,
+                                       mainAnnotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
+    createMainData[T, B](method, mainAnnotation, method.paramSymss)
+  }
+
+  def createMainData[T: Type, B: Type](using Quotes)
+                                      (method: quotes.reflect.Symbol,
+                                       mainAnnotation: quotes.reflect.Term,
+                                       annotatedParamsLists: List[List[quotes.reflect.Symbol]]): Expr[MainData[T, B]] = {
+
     import quotes.reflect.*
     val params = method.paramSymss.headOption.getOrElse(report.throwError("Multiple parameter lists not supported"))
     val defaultParams = getDefaultParams(method)
-    val argSigs = Expr.ofList(params.map { param =>
+    val argSigsExprs = params.zip(annotatedParamsLists.flatten).map { paramAndAnnotParam =>
+      val param = paramAndAnnotParam._1
+      val annotParam = paramAndAnnotParam._2
       val paramTree = param.tree.asInstanceOf[ValDef]
       val paramTpe = paramTree.tpt.tpe
-      val arg = param.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{ new mainargs.arg() })
+      val arg = annotParam.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{ new mainargs.arg() })
       val paramType = paramTpe.asType
       paramType match
         case '[t] =>
@@ -66,13 +85,14 @@ object Macros {
             )
           }
           '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ tokensReader })) }
-    })
+    }
+    val argSigs = Expr.ofList(argSigsExprs)
 
     val invokeRaw: Expr[(B, Seq[Any]) => T] = {
       def callOf(args: Expr[Seq[Any]]) = call(method, '{ Seq( ${ args }) }).asExprOf[T]
       '{ ((b: B, params: Seq[Any]) => ${ callOf('{ params }) }) }
     }
-    '{ MainData.create[T, B](${ Expr(method.name) }, ${ annotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
+    '{ MainData.create[T, B](${ Expr(method.name) }, ${ mainAnnotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
   }
 
   /** Call a method given by its symbol.
@@ -134,12 +154,21 @@ object Macros {
     val defaults = collection.mutable.Map.empty[Symbol, Expr[Any]]
 
     val Name = (method.name + """\$default\$(\d+)""").r
+    val InitName = """\$lessinit\$greater\$default\$(\d+)""".r
 
     val idents = method.owner.tree.asInstanceOf[ClassDef].body
+
     idents.foreach{
       case deff @ DefDef(Name(idx), _, _, _) =>
         val expr = Ref(deff.symbol).asExpr
         defaults += (params(idx.toInt - 1) -> expr)
+
+      // The `apply` method re-uses the default param factory methods from `<init>`,
+      // so make sure to check if those exist too
+      case deff @ DefDef(InitName(idx), _, _, _) if method.name == "apply" =>
+        val expr = Ref(deff.symbol).asExpr
+        defaults += (params(idx.toInt - 1) -> expr)
+
       case _ =>
     }
 

@@ -58,121 +58,108 @@ object ClassTests extends TestSuite {
           Bar(Flag(true), Foo(1, 2), "xxx")
       }
       test("missingInner") {
-        // Blocked by https://github.com/lampepfl/dotty/issues/12492
-        TestUtils.scala2Only {
-          barParser.constructRaw(Seq("-w", "-x", "1", "-z", "xxx")) ==>
-            Result.Failure.MismatchedArguments(
-              Seq(
-                ArgSig(
-                  None,
-                  Some('y'),
-                  None,
-                  None,
-                  mainargs.TokensReader.IntRead,
-                  positional = false,
-                  hidden = false
-                )
-              ),
-              List(),
-              List(),
-              None
-            )
-        }
+        barParser.constructRaw(Seq("-w", "-x", "1", "-z", "xxx")) ==>
+          Result.Failure.MismatchedArguments(
+            Seq(
+              ArgSig(
+                None,
+                Some('y'),
+                None,
+                None,
+                mainargs.TokensReader.IntRead,
+                positional = false,
+                hidden = false
+              )
+            ),
+            List(),
+            List(),
+            None
+          )
       }
       test("missingOuter") {
-        // Blocked by https://github.com/lampepfl/dotty/issues/12492
-        TestUtils.scala2Only {
-          barParser.constructRaw(Seq("-w", "-x", "1", "-y", "2")) ==>
-            Result.Failure.MismatchedArguments(
-              Seq(
-                ArgSig(
-                  Some("zzzz"),
-                  Some('z'),
-                  None,
-                  None,
-                  mainargs.TokensReader.StringRead,
-                  positional = false,
-                  hidden = false
-                )
-              ),
-              List(),
-              List(),
-              None
-            )
-        }
+        barParser.constructRaw(Seq("-w", "-x", "1", "-y", "2")) ==>
+          Result.Failure.MismatchedArguments(
+            Seq(
+              ArgSig(
+                Some("zzzz"),
+                Some('z'),
+                None,
+                None,
+                mainargs.TokensReader.StringRead,
+                positional = false,
+                hidden = false
+              )
+            ),
+            List(),
+            List(),
+            None
+          )
       }
 
       test("missingInnerOuter") {
-        // Blocked by https://github.com/lampepfl/dotty/issues/12492
-        TestUtils.scala2Only {
-          barParser.constructRaw(Seq("-w", "-x", "1")) ==>
-            Result.Failure.MismatchedArguments(
-              Seq(
-                ArgSig(
-                  None,
-                  Some('y'),
-                  None,
-                  None,
-                  mainargs.TokensReader.IntRead,
-                  positional = false,
-                  hidden = false
-                ),
-                ArgSig(
-                  Some("zzzz"),
-                  Some('z'),
-                  None,
-                  None,
-                  mainargs.TokensReader.StringRead,
-                  positional = false,
-                  hidden = false
-                )
+        barParser.constructRaw(Seq("-w", "-x", "1")) ==>
+          Result.Failure.MismatchedArguments(
+            Seq(
+              ArgSig(
+                None,
+                Some('y'),
+                None,
+                None,
+                mainargs.TokensReader.IntRead,
+                positional = false,
+                hidden = false
               ),
-              List(),
-              List(),
-              None
-            )
-        }
+              ArgSig(
+                Some("zzzz"),
+                Some('z'),
+                None,
+                None,
+                mainargs.TokensReader.StringRead,
+                positional = false,
+                hidden = false
+              )
+            ),
+            List(),
+            List(),
+            None
+          )
       }
+
       test("failedInnerOuter") {
-        TestUtils.scala2Only {
-          assertMatch(
-            barParser.constructRaw(
-              Seq("-w", "-x", "xxx", "-y", "hohoho", "-z", "xxx")
-            )
-          ) {
-            case Result.Failure.InvalidArguments(
-                  Seq(
-                    Result.ParamError.Failed(
-                      ArgSig(None, Some('x'), None, None, _, false, _),
-                      Seq("xxx"),
-                      _
-                    ),
-                    Result.ParamError.Failed(
-                      ArgSig(None, Some('y'), None, None, _, false, _),
-                      Seq("hohoho"),
-                      _
-                    )
+        assertMatch(
+          barParser.constructRaw(
+            Seq("-w", "-x", "xxx", "-y", "hohoho", "-z", "xxx")
+          )
+        ) {
+          case Result.Failure.InvalidArguments(
+                Seq(
+                  Result.ParamError.Failed(
+                    ArgSig(None, Some('x'), None, None, _, false, _),
+                    Seq("xxx"),
+                    _
+                  ),
+                  Result.ParamError.Failed(
+                    ArgSig(None, Some('y'), None, None, _, false, _),
+                    Seq("hohoho"),
+                    _
                   )
-                ) =>
-          }
+                )
+              ) =>
+
         }
       }
     }
 
     test("doubleNested") {
-      TestUtils.scala2Only {
-        quxParser.constructOrThrow(
-          Seq("-w", "-x", "1", "-y", "2", "-z", "xxx", "--moo", "cow")
-        ) ==>
-          Qux("cow", Bar(Flag(true), Foo(1, 2), "xxx"))
-      }
+      quxParser.constructOrThrow(
+        Seq("-w", "-x", "1", "-y", "2", "-z", "xxx", "--moo", "cow")
+      ) ==>
+        Qux("cow", Bar(Flag(true), Foo(1, 2), "xxx"))
     }
     test("success") {
-      TestUtils.scala2Only {
-        ParserForMethods(Main).runOrThrow(
-          Seq("-x", "1", "-y", "2", "-z", "hello")
-        ) ==> "false 1 2 hello false"
-      }
+      ParserForMethods(Main).runOrThrow(
+        Seq("-x", "1", "-y", "2", "-z", "hello")
+      ) ==> "false 1 2 hello false"
     }
   }
 }

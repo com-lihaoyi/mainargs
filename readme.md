@@ -519,6 +519,11 @@ command-line friendly tool.
 
 # Changelog
 
+## master
+
+- Fix handling of case class main method parameter default parameters in Scala 3
+  [#88](https://github.com/com-lihaoyi/mainargs/pull/88)
+
 ## 0.5.0
 
 - Remove hard-code support for mainargs.Leftover/Flag/Subparser to support

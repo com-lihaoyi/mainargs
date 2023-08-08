@@ -55,7 +55,8 @@ trait MainArgsPublishModule
     )
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
+    ivy"org.scala-lang.modules::scala-collection-compat::2.8.1",
+    ivy"com.lihaoyi::pprint:0.8.1"
   )
 }
 
