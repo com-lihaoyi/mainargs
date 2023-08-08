@@ -12,11 +12,7 @@ object Macros {
       methodSymbol.getAnnotation(mainAnnotation).map(methodSymbol -> _)
     }.sortBy(_._1.pos.map(_.start))
     val mainDatas = Expr.ofList(annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotationInstance) =>
-      createMainData[Any, B](
-        annotatedMethod,
-        mainAnnotationInstance,
-        annotatedMethod.paramSymss
-      )
+      createMainData[Any, B](annotatedMethod, mainAnnotationInstance)
     })
 
     '{
@@ -53,6 +49,12 @@ object Macros {
           TypeRepr.of[B].typeSymbol.primaryConstructor.paramSymss
         )
         '{ new ParserForClass[B](${ mainData }, () => ${ Ident(companionModule).asExpr }) }
+  }
+
+  def createMainData[T: Type, B: Type](using Quotes)
+                                      (method: quotes.reflect.Symbol,
+                                       mainAnnotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
+    createMainData[T, B](method, mainAnnotation, method.paramSymss)
   }
 
   def createMainData[T: Type, B: Type](using Quotes)
