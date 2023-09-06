@@ -76,10 +76,10 @@ object TokenGrouping {
 
       val missing = argSigs.collect {
         case (a, r: TokensReader.Simple[_])
-          if !r.allowEmpty
-          && a.default.isEmpty
-          && !current.contains(a) =>
-            a
+            if !r.allowEmpty
+              && a.default.isEmpty
+              && !current.contains(a) =>
+          a
       }
 
       val unknown = if (allowLeftover) Nil else remaining

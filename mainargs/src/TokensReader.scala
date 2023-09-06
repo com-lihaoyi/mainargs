@@ -22,6 +22,7 @@ object TokensReader {
   sealed trait Terminal[T] extends TokensReader[T]
 
   sealed trait ShortNamed[T] extends Terminal[T] {
+
     /**
      * The label that shows up in the CLI help message, e.g. the `bar` in
      * `--foo <bar>`
@@ -34,6 +35,7 @@ object TokensReader {
    * e.g. `--foo bar`
    */
   trait Simple[T] extends ShortNamed[T] {
+
     /**
      * Converts the given input tokens to a [[T]] or an error `String`.
      * The input is a `Seq` because input tokens can be passed more than once,
@@ -132,7 +134,8 @@ object TokensReader {
     def read(strs: Seq[String]) = tryEither(strs.last.toDouble)
   }
 
-  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.Leftover[mainargs.Leftover[T], T] =
+  implicit def LeftoverRead[T: TokensReader.Simple]
+      : TokensReader.Leftover[mainargs.Leftover[T], T] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
 
   class LeftoverRead[T](implicit wrapped: TokensReader.Simple[T])
@@ -140,7 +143,7 @@ object TokensReader {
     def read(strs: Seq[String]) = {
       val (failures, successes) = strs
         .map(s =>
-          implicitly[TokensReader[T]] match{
+          implicitly[TokensReader[T]] match {
             case r: TokensReader.Simple[T] => r.read(Seq(s))
             case r: TokensReader.Leftover[T, _] => r.read(Seq(s))
           }
@@ -221,8 +224,9 @@ object TokensReader {
 }
 
 object ArgSig {
-  def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])
-                  (implicit tokensReader: TokensReader[T]): ArgSig = {
+  def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])(implicit
+      tokensReader: TokensReader[T]
+  ): ArgSig = {
     val nameOpt = scala.Option(arg.name).orElse(if (name0.length == 1 || arg.noDefaultName) None
     else Some(name0))
     val shortOpt = arg.short match {
@@ -285,7 +289,7 @@ case class MainData[T, B](
     argSigs0.iterator.flatMap[(ArgSig, TokensReader.Terminal[_])](ArgSig.flatten(_)).toVector
 
   val renderedArgSigs: Seq[ArgSig] =
-    flattenedArgSigs.collect{case (a, r) if !a.hidden && !r.isConstant => a}
+    flattenedArgSigs.collect { case (a, r) if !a.hidden && !r.isConstant => a }
 }
 
 object MainData {
