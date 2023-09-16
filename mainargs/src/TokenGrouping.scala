@@ -32,18 +32,29 @@ object TokenGrouping {
     ): Result[TokenGrouping[B]] = {
       remaining match {
         case head :: rest =>
+
           if (head.startsWith("-") && head.exists(_ != '-')) {
-            keywordArgMap.get(head) match {
-              case Some(cliArg: ArgSig) if cliArg.reader.isFlag =>
-                rec(rest, Util.appendMap(current, cliArg, ""))
-              case Some(cliArg: ArgSig) if !cliArg.reader.isLeftover =>
-                rest match {
-                  case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
-                  case Nil =>
-                    Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+            head.split("=", 2) match{
+              case Array(first, second) =>
+                keywordArgMap.get(first) match {
+                  case Some(cliArg) if !cliArg.reader.isLeftover && !cliArg.reader.isFlag =>
+                    rec(rest, Util.appendMap(current, cliArg, second))
+
+                  case _ => complete(remaining, current)
                 }
 
-              case _ => complete(remaining, current)
+              case _ =>
+                keywordArgMap.get(head) match {
+                  case Some(cliArg) if cliArg.reader.isFlag =>
+                    rec(rest, Util.appendMap(current, cliArg, ""))
+                  case Some(cliArg) if !cliArg.reader.isLeftover =>
+                    rest match {
+                      case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
+                      case Nil =>
+                        Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+                    }
+                  case _ => complete(remaining, current)
+                }
             }
           } else {
             positionalArgSigs.find(!current.contains(_)) match {
