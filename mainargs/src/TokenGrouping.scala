@@ -39,21 +39,25 @@ object TokenGrouping {
       remaining match {
         case head :: rest =>
 
+          def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
+            m.get(k).map(a => (a, a.reader))
+          }
+
           if (head.startsWith("-") && head.exists(_ != '-')) {
             head.split("=", 2) match{
               case Array(first, second) =>
-                longKeywordArgMap.get(first) match {
-                  case Some(cliArg) if !cliArg.reader.isLeftover && !cliArg.reader.isFlag =>
+                lookupArgMap(first, longKeywordArgMap) match {
+                  case Some((cliArg, _: TokensReader.Simple[_])) =>
                     rec(rest, Util.appendMap(current, cliArg, second))
 
                   case _ => complete(remaining, current)
                 }
 
               case _ =>
-                keywordArgMap.get(head) match {
-                  case Some(cliArg) if cliArg.reader.isFlag =>
+                lookupArgMap(head, keywordArgMap) match {
+                  case Some((cliArg, _: TokensReader.Flag)) =>
                     rec(rest, Util.appendMap(current, cliArg, ""))
-                  case Some(cliArg) if !cliArg.reader.isLeftover =>
+                  case Some((cliArg, _: TokensReader.Simple[_])) =>
                     rest match {
                       case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
                       case Nil =>
