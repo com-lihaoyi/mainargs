@@ -18,13 +18,19 @@ object TokenGrouping {
     }
 
     val flatArgs = flatArgs0.toList
-    val keywordArgMap = argSigs
+    def makeKeywordArgMap(getNames: ArgSig => Iterable[String]) = argSigs
       .collect {
         case (a, r: TokensReader.Simple[_]) if !a.positional => a
         case (a, r: TokensReader.Flag) => a
       }
-      .flatMap { x => (x.name.map("--" + _) ++ x.shortName.map("-" + _)).map(_ -> x) }
+      .flatMap { x => getNames(x).map(_ -> x) }
       .toMap[String, ArgSig]
+
+    lazy val keywordArgMap = makeKeywordArgMap(
+      x => x.name.map("--" + _) ++ x.shortName.map("-" + _)
+    )
+
+    lazy val longKeywordArgMap = makeKeywordArgMap(x => x.name.map("--" + _))
 
     @tailrec def rec(
         remaining: List[String],
@@ -32,18 +38,33 @@ object TokenGrouping {
     ): Result[TokenGrouping[B]] = {
       remaining match {
         case head :: rest =>
+
+          def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
+            m.get(k).map(a => (a, a.reader))
+          }
+
           if (head.startsWith("-") && head.exists(_ != '-')) {
-            keywordArgMap.get(head) match {
-              case Some(cliArg: ArgSig) if cliArg.reader.isFlag =>
-                rec(rest, Util.appendMap(current, cliArg, ""))
-              case Some(cliArg: ArgSig) if !cliArg.reader.isLeftover =>
-                rest match {
-                  case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
-                  case Nil =>
-                    Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+            head.split("=", 2) match{
+              case Array(first, second) =>
+                lookupArgMap(first, longKeywordArgMap) match {
+                  case Some((cliArg, _: TokensReader.Simple[_])) =>
+                    rec(rest, Util.appendMap(current, cliArg, second))
+
+                  case _ => complete(remaining, current)
                 }
 
-              case _ => complete(remaining, current)
+              case _ =>
+                lookupArgMap(head, keywordArgMap) match {
+                  case Some((cliArg, _: TokensReader.Flag)) =>
+                    rec(rest, Util.appendMap(current, cliArg, ""))
+                  case Some((cliArg, _: TokensReader.Simple[_])) =>
+                    rest match {
+                      case next :: rest2 => rec(rest2, Util.appendMap(current, cliArg, next))
+                      case Nil =>
+                        Result.Failure.MismatchedArguments(Nil, Nil, Nil, incomplete = Some(cliArg))
+                    }
+                  case _ => complete(remaining, current)
+                }
             }
           } else {
             positionalArgSigs.find(!current.contains(_)) match {
