@@ -18,13 +18,19 @@ object TokenGrouping {
     }
 
     val flatArgs = flatArgs0.toList
-    val keywordArgMap = argSigs
+    def makeKeywordArgMap(getNames: ArgSig => Iterable[String]) = argSigs
       .collect {
         case (a, r: TokensReader.Simple[_]) if !a.positional => a
         case (a, r: TokensReader.Flag) => a
       }
-      .flatMap { x => (x.name.map("--" + _) ++ x.shortName.map("-" + _)).map(_ -> x) }
+      .flatMap { x => getNames(x).map(_ -> x) }
       .toMap[String, ArgSig]
+
+    lazy val keywordArgMap = makeKeywordArgMap(
+      x => x.name.map("--" + _) ++ x.shortName.map("-" + _)
+    )
+
+    lazy val longKeywordArgMap = makeKeywordArgMap(x => x.name.map("--" + _))
 
     @tailrec def rec(
         remaining: List[String],
@@ -36,7 +42,7 @@ object TokenGrouping {
           if (head.startsWith("-") && head.exists(_ != '-')) {
             head.split("=", 2) match{
               case Array(first, second) =>
-                keywordArgMap.get(first) match {
+                longKeywordArgMap.get(first) match {
                   case Some(cliArg) if !cliArg.reader.isLeftover && !cliArg.reader.isFlag =>
                     rec(rest, Util.appendMap(current, cliArg, second))
 
