@@ -13,18 +13,32 @@ object Renderer {
   val newLine = System.lineSeparator()
 
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
+  def makeOptional(s: String) = s"[$s]"
+  def makeRequired(s: String) = s" $s"
+  def makeVarargs(s: String) = s"[$s]*"
+  def makeOnePlus(s: String) = s"[$s]+"
 
   def renderArgShort(arg: ArgSig) = arg.reader match {
     case r: TokensReader.Flag =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val nameSuffix = arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix).mkString(" ")
+      makeOptional((shortPrefix ++ nameSuffix).mkString(" "))
 
     case r: TokensReader.Simple[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${r.shortName}>"
       val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
-      (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
+      val rendered = (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
+      if (r.allowEmpty && r.alwaysRepeatable)
+        makeVarargs(rendered)
+      else if (r.alwaysRepeatable)
+        makeOnePlus(rendered)
+      else if (r.allowEmpty)
+        makeOptional(rendered)
+      else if (arg.default.isDefined)
+        makeOptional(rendered)
+      else
+        makeRequired(rendered)
 
     case r: TokensReader.Leftover[_, _] =>
       s"${arg.name.get} <${r.shortName}>..."
