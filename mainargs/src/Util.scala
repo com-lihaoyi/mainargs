@@ -6,13 +6,13 @@ object Util {
   def nullNameMapper(s: String): Option[String] = None
 
   def kebabCaseNameMapper(s: String): Option[String] = {
-    baseNameMapper(s, "-")
+    baseNameMapper(s, '-')
   }
   def snakeCaseNameMapper(s: String): Option[String] = {
-    baseNameMapper(s, "_")
+    baseNameMapper(s, '_')
   }
 
-  def baseNameMapper(s: String, sep: String): Option[String] = {
+  def baseNameMapper(s: String, sep: Char): Option[String] = {
     val chars = new collection.mutable.StringBuilder
     // 'D' -> digit
     // 'U' -> uppercase
