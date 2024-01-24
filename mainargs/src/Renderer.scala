@@ -67,7 +67,16 @@ object Renderer {
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
       customDocs: Map[String, String],
-      sorted: Boolean
+      sorted: Boolean,
+  ): String = formatMainMethods(mainMethods, totalWidth, docsOnNewLine, customNames, customDocs, sorted, Util.kebabCaseNameMapper)
+  def formatMainMethods(
+      mainMethods: Seq[MainData[_, _]],
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+      sorted: Boolean,
+      nameMapper: String => Option[String]
   ): String = {
     val flattenedAll: Seq[ArgSig] =
       mainMethods.map(_.flattenedArgSigs)
@@ -84,9 +93,10 @@ object Renderer {
           totalWidth,
           leftColWidth,
           docsOnNewLine,
-          customNames.get(main.name),
-          customDocs.get(main.name),
-          sorted
+          customNames.get(main.name(nameMapper)),
+          customDocs.get(main.name(nameMapper)),
+          sorted,
+          nameMapper
         )
       case _ =>
         val methods =
@@ -97,9 +107,10 @@ object Renderer {
               totalWidth,
               leftColWidth,
               docsOnNewLine,
-              customNames.get(main.name),
-              customDocs.get(main.name),
-              sorted
+              customNames.get(main.name(nameMapper)),
+              customDocs.get(main.name(nameMapper)),
+              sorted,
+              nameMapper
             )
 
         normalizeNewlines(
@@ -116,14 +127,15 @@ object Renderer {
       totalWidth: Int,
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
-      customDocs: Map[String, String]
+      customDocs: Map[String, String],
   ): String = formatMainMethods(
     mainMethods,
     totalWidth,
     docsOnNewLine,
     customNames,
     customDocs,
-    sorted = true
+    sorted = true,
+    Util.kebabCaseNameMapper
   )
 
   def formatMainMethodSignature(
@@ -134,7 +146,8 @@ object Renderer {
       docsOnNewLine: Boolean,
       customName: Option[String],
       customDoc: Option[String],
-      sorted: Boolean
+      sorted: Boolean,
+      nameMapper: String => Option[String]
   ): String = {
 
     val argLeftCol = if (docsOnNewLine) leftIndent + 8 else leftColWidth + leftIndent + 2 + 2
@@ -163,7 +176,7 @@ object Renderer {
       case Some(d) => newLine + leftIndentStr + softWrap(d, leftIndent, totalWidth)
       case None => ""
     }
-    s"""$leftIndentStr${customName.getOrElse(main.name)}$mainDocSuffix
+    s"""$leftIndentStr${customName.getOrElse(main.name(nameMapper))}$mainDocSuffix
        |${argStrings.map(_ + newLine).mkString}""".stripMargin
   }
 
@@ -184,7 +197,29 @@ object Renderer {
     docsOnNewLine,
     customName,
     customDoc,
-    sorted = true
+    sorted = true,
+  )
+
+  @deprecated("Binary Compatibility Shim")
+  def formatMainMethodSignature(
+      main: MainData[_, _],
+      leftIndent: Int,
+      totalWidth: Int,
+      leftColWidth: Int,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String],
+      sorted: Boolean
+  ): String = formatMainMethodSignature(
+    main,
+    leftIndent,
+    totalWidth,
+    leftColWidth,
+    docsOnNewLine,
+    customName,
+    customDoc,
+    sorted,
+    Util.kebabCaseNameMapper
   )
 
   def softWrap(s: String, leftOffset: Int, maxWidth: Int) = {
@@ -233,7 +268,28 @@ object Renderer {
       docsOnNewLine: Boolean,
       customName: Option[String],
       customDoc: Option[String],
-      sorted: Boolean
+      sorted: Boolean,
+  ): String = renderResult(
+    main,
+    result,
+    totalWidth,
+    printHelpOnError,
+    docsOnNewLine,
+    customName,
+    customDoc,
+    sorted,
+    Util.kebabCaseNameMapper
+  )
+  def renderResult(
+      main: MainData[_, _],
+      result: Result.Failure,
+      totalWidth: Int,
+      printHelpOnError: Boolean,
+      docsOnNewLine: Boolean,
+      customName: Option[String],
+      customDoc: Option[String],
+      sorted: Boolean,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): String = {
 
     def expectedMsg() = {
@@ -248,7 +304,8 @@ object Renderer {
             docsOnNewLine,
             customName,
             customDoc,
-            sorted
+            sorted,
+            nameMapper
           )
       } else ""
     }

@@ -519,6 +519,10 @@ command-line friendly tool.
 
 # Changelog
 
+## 0.5.5
+
+- Automatically map a
+
 ## 0.5.4
 
 - Remove unnecessary PPrint dependency

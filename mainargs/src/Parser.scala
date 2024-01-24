@@ -7,12 +7,23 @@ import java.io.PrintStream
 
 object ParserForMethods extends ParserForMethodsCompanionVersionSpecific
 class ParserForMethods[B](val mains: MethodMains[B]) {
+  @deprecated("Binary Compatibility Shim")
+  def helpText(
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+      sorted: Boolean): String = {
+    helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, Util.kebabCaseNameMapper)
+  }
+
   def helpText(
       totalWidth: Int = 100,
       docsOnNewLine: Boolean = false,
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      sorted: Boolean = true
+      sorted: Boolean = true,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): String = {
     Renderer.formatMainMethods(
       mains.value,
@@ -20,7 +31,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine,
       customNames,
       customDocs,
-      sorted
+      sorted,
+      nameMapper
     )
   }
 
@@ -64,6 +76,28 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 
   def runOrThrow(
       args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+  ): Any = runOrThrow(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customNames,
+    customDocs,
+  )
+
+  def runOrThrow(
+      args: Seq[String],
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false,
       totalWidth: Int = 100,
@@ -71,7 +105,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
-      customDocs: Map[String, String] = Map()
+      customDocs: Map[String, String] = Map(),
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Any = {
     runEither(
       args,
@@ -82,7 +117,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine,
       autoPrintHelpAndExit,
       customNames,
-      customDocs
+      customDocs,
+      nameMapper = nameMapper
     ) match {
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
@@ -99,7 +135,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      sorted: Boolean = false
+      sorted: Boolean = false,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
@@ -118,8 +155,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
                 totalWidth,
                 printHelpOnExit,
                 docsOnNewLine,
-                customNames.get(main.name),
-                customDocs.get(main.name),
+                customNames.get(main.name(nameMapper)),
+                customDocs.get(main.name(nameMapper)),
                 sorted
               )
             )
@@ -151,12 +188,47 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     sorted = false
   )
 
+
+
+  @deprecated("Binary Compatibility Shim")
+  def runEither(
+                 args: Seq[String],
+                 allowPositional: Boolean,
+                 allowRepeats: Boolean,
+                 totalWidth: Int,
+                 printHelpOnExit: Boolean,
+                 docsOnNewLine: Boolean,
+                 autoPrintHelpAndExit: Option[(Int, PrintStream)],
+                 customNames: Map[String, String],
+                 customDocs: Map[String, String],
+                 sorted: Boolean
+               ): Either[String, Any] = runEither(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customNames,
+    customDocs,
+    sorted
+  )
+  @deprecated("Binary Compatibility Shim")
+  def runRaw(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+  ): Result[Any] = runRaw(
+    args, allowPositional, allowRepeats, Util.kebabCaseNameMapper
+  )
   def runRaw(
       args: Seq[String],
       allowPositional: Boolean = false,
-      allowRepeats: Boolean = false
+      allowRepeats: Boolean = false,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Result[Any] = {
-    runRaw0(args, allowPositional, allowRepeats) match {
+    runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
       case Left(err) => err
       case Right((main, res)) => res
     }
@@ -164,10 +236,21 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 
   def runRaw0(
       args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+  ): Either[Result.Failure.Early, (MainData[_, B], Result[Any])] = runRaw0(
+    args,
+    allowPositional,
+    allowRepeats,
+    Util.kebabCaseNameMapper
+  )
+  def runRaw0(
+      args: Seq[String],
       allowPositional: Boolean = false,
-      allowRepeats: Boolean = false
+      allowRepeats: Boolean = false,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[Result.Failure.Early, (MainData[_, B], Result[Any])] = {
-    for (tuple <- Invoker.runMains(mains, args, allowPositional, allowRepeats)) yield {
+    for (tuple <- Invoker.runMains(mains, args, allowPositional, allowRepeats, nameMapper)) yield {
       val (errMsg, res) = tuple
       (errMsg, res)
     }
@@ -177,12 +260,21 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 object ParserForClass extends ParserForClassCompanionVersionSpecific
 class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
     extends TokensReader.Class[T] {
+  @deprecated("Binary Compatibility Shim")
+  def helpText(
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customName: String,
+      customDoc: String,
+      sorted: Boolean): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted, Util.kebabCaseNameMapper)
+
   def helpText(
       totalWidth: Int = 100,
       docsOnNewLine: Boolean = false,
       customName: String = null,
       customDoc: String = null,
-      sorted: Boolean = true
+      sorted: Boolean = true,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): String = {
     Renderer.formatMainMethodSignature(
       main,
@@ -192,7 +284,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine,
       Option(customName),
       Option(customDoc),
-      sorted
+      sorted,
+      nameMapper
     )
   }
 
@@ -204,6 +297,31 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       customDoc: String
   ): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted = true)
 
+  @deprecated("Binary Compatibility Shim")
+  def constructOrExit(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      stderr: PrintStream,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customName: String,
+      customDoc: String): T = constructOrExit(
+    args,
+    allowPositional,
+    allowRepeats,
+    stderr,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customName,
+    customDoc,
+    Util.kebabCaseNameMapper
+  )
+
   def constructOrExit(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -214,7 +332,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
-      customDoc: String = null
+      customDoc: String = null,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): T = {
     constructEither(
       args,
@@ -225,7 +344,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine,
       autoPrintHelpAndExit,
       customName,
-      customDoc
+      customDoc,
+      nameMapper
     ) match {
       case Left(msg) =>
         stderr.println(msg)
@@ -236,6 +356,29 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
 
   def constructOrThrow(
       args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customName: String,
+      customDoc: String,
+  ): T = constructOrThrow(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customName,
+    customDoc,
+    Util.kebabCaseNameMapper
+  )
+
+  def constructOrThrow(
+      args: Seq[String],
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false,
       totalWidth: Int = 100,
@@ -243,7 +386,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
-      customDoc: String = null
+      customDoc: String = null,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): T = {
     constructEither(
       args,
@@ -254,13 +398,37 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine,
       autoPrintHelpAndExit,
       customName,
-      customDoc
+      customDoc,
+      nameMapper
     ) match {
       case Left(msg) => throw new Exception(msg)
       case Right(v) => v
     }
   }
 
+  def constructEither(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customName: String,
+      customDoc: String,
+      sorted: Boolean,
+  ): Either[String, T] = constructEither(
+    args,
+    allowPositional,
+    allowRepeats,
+    totalWidth,
+    printHelpOnExit,
+    docsOnNewLine,
+    autoPrintHelpAndExit,
+    customName,
+    customDoc,
+    sorted,
+  )
   def constructEither(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -271,13 +439,14 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
       customDoc: String = null,
-      sorted: Boolean = true
+      sorted: Boolean = true,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, T] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
       outputStream.println(helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted))
       Compat.exit(exitCode)
-    } else constructRaw(args, allowPositional, allowRepeats) match {
+    } else constructRaw(args, allowPositional, allowRepeats, nameMapper) match {
       case Result.Success(v) => Right(v)
       case f: Result.Failure =>
         Left(
@@ -305,7 +474,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean,
       autoPrintHelpAndExit: Option[(Int, PrintStream)],
       customName: String,
-      customDoc: String
+      customDoc: String,
+      nameMapper: String => Option[String]
   ): Either[String, T] = constructEither(
     args,
     allowPositional,
@@ -316,14 +486,27 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
     autoPrintHelpAndExit,
     customName,
     customDoc,
-    sorted = true
+    sorted = true,
+    nameMapper = nameMapper
+  )
+
+  def constructRaw(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+  ): Result[T] = constructRaw(
+    args,
+    allowPositional,
+    allowRepeats,
+    nameMapper = Util.kebabCaseNameMapper
   )
 
   def constructRaw(
       args: Seq[String],
       allowPositional: Boolean = false,
-      allowRepeats: Boolean = false
+      allowRepeats: Boolean = false,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Result[T] = {
-    Invoker.construct[T](this, args, allowPositional, allowRepeats)
+    Invoker.construct[T](this, args, allowPositional, allowRepeats, nameMapper)
   }
 }

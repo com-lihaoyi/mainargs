@@ -5,20 +5,32 @@ import scala.annotation.tailrec
 case class TokenGrouping[B](remaining: List[String], grouped: Map[ArgSig, Seq[String]])
 
 object TokenGrouping {
+  @deprecated("Binary Compatibility Shim")
   def groupArgs[B](
       flatArgs0: Seq[String],
       argSigs: Seq[(ArgSig, TokensReader.Terminal[_])],
       allowPositional: Boolean,
       allowRepeats: Boolean,
-      allowLeftover: Boolean
+      allowLeftover: Boolean,
   ): Result[TokenGrouping[B]] = {
-    val positionalArgSigs = argSigs.collect {
+    groupArgs(flatArgs0, argSigs, allowPositional, allowRepeats, allowLeftover, _ => None)
+  }
+
+  def groupArgs[B](
+      flatArgs0: Seq[String],
+      argSigs: Seq[(ArgSig, TokensReader.Terminal[_])],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      allowLeftover: Boolean,
+      nameMapper: String => Option[String]
+  ): Result[TokenGrouping[B]] = {
+    val positionalArgSigs: Seq[ArgSig] = argSigs.collect {
       case (a, r: TokensReader.Simple[_]) if allowPositional | a.positional =>
         a
     }
 
     val flatArgs = flatArgs0.toList
-    def makeKeywordArgMap(getNames: ArgSig => Iterable[String]) = argSigs
+    def makeKeywordArgMap(getNames: ArgSig => Iterable[String]): Map[String, ArgSig] = argSigs
       .collect {
         case (a, r: TokensReader.Simple[_]) if !a.positional => a
         case (a, r: TokensReader.Flag) => a
@@ -27,10 +39,12 @@ object TokenGrouping {
       .toMap[String, ArgSig]
 
     lazy val keywordArgMap = makeKeywordArgMap(
-      x => x.name.map("--" + _) ++ x.shortName.map("-" + _)
+      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.name.map("--" + _) ++ x.shortName.map("-" + _)
     )
 
-    lazy val longKeywordArgMap = makeKeywordArgMap(x => x.name.map("--" + _))
+    lazy val longKeywordArgMap = makeKeywordArgMap(
+      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.name.map("--" + _)
+    )
 
     @tailrec def rec(
         remaining: List[String],

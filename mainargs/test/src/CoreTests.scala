@@ -52,7 +52,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
       parsed ==> expected
     }
     test("basicModelling") {
-      val names = check.mains.value.map(_.name)
+      val names = check.mains.value.map(_.name(Util.nullNameMapper))
 
       assert(
         names ==
