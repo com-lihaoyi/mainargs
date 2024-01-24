@@ -1,4 +1,4 @@
-# mainargs 0.5.4
+# mainargs 0.5.5
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -45,7 +45,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.5.4"
+ivy"com.lihaoyi::mainargs:0.5.5"
 ```
 
 ## Parsing Main Method Parameters
@@ -61,7 +61,7 @@ object Main{
   @main
   def run(@arg(short = 'f', doc = "String to print repeatedly")
           foo: String,
-          @arg(name = "my-num", doc = "How many times to print string")
+          @arg(doc = "How many times to print string")
           myNum: Int = 2,
           @arg(doc = "Example flag, can be passed without any value to become true")
           bool: Flag) = {
@@ -133,7 +133,7 @@ object Main{
   @main
   def foo(@arg(short = 'f', doc = "String to print repeatedly")
           foo: String,
-          @arg(name = "my-num", doc = "How many times to print string")
+          @arg(doc = "How many times to print string")
           myNum: Int = 2,
           @arg(doc = "Example flag")
           bool: Flag) = {
@@ -173,7 +173,7 @@ object Main{
   @main
   case class Config(@arg(short = 'f', doc = "String to print repeatedly")
                     foo: String,
-                    @arg(name = "my-num", doc = "How many times to print string")
+                    @arg(doc = "How many times to print string")
                     myNum: Int = 2,
                     @arg(doc = "Example flag")
                     bool: Flag)
@@ -214,7 +214,7 @@ object Main{
   @main
   case class Config(@arg(short = 'f', doc = "String to print repeatedly")
                     foo: String,
-                    @arg(name = "my-num", doc = "How many times to print string")
+                    @arg(doc = "How many times to print string")
                     myNum: Int = 2,
                     @arg(doc = "Example flag")
                     bool: Flag)
@@ -296,7 +296,9 @@ customize your usage:
 
 - `name: String`: lets you specify the top-level name of `@main` method you are
   defining. If multiple `@main` methods are provided, this name controls the
-  sub-command name in the CLI
+  sub-command name in the CLI. If an explicit `name` not passed, both the
+  (typically) `camelCase` name of the Scala `def` as well as its `kebab-case` 
+  equivalents will be accepted
 
 - `doc: String`: a documentation string used to provide additional information
   about the command. Normally printed below the command name in the help message
@@ -304,7 +306,9 @@ customize your usage:
 ### @arg
 
 - `name: String`: lets you specify the long name of a CLI parameter, e.g.
-  `--foo`. Defaults to the name of the function parameter if not given
+  `--foo`. If an explicit `name` not passed, both the (typically) `camelCase`
+  name of the Scala method parameter as well as its `kebab-case`
+  equivalents will be accepted
 
 - `short: Char`: lets you specify the short name of a CLI parameter, e.g. `-f`.
   If not given, theargument can only be provided via its long name
@@ -524,7 +528,7 @@ command-line friendly tool.
 
 # Changelog
 
-## master
+## 0.5.5
 
 - Automatically map `camelCase` Scala method and argument names to `kebab-case`
   CLI commands and flag names, with configurability by passing in custom

@@ -8,7 +8,7 @@ object EqualsSyntaxTests extends TestSuite {
     def run(
         @arg(short = 'f', doc = "String to print repeatedly")
         foo: String,
-        @arg(name = "my-num", doc = "How many times to print string")
+        @arg(doc = "How many times to print string")
         myNum: Int = 2,
         @arg(doc = "Example flag")
         bool: Flag
