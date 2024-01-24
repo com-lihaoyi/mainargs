@@ -246,7 +246,7 @@ object ArgSig {
     case cls: TokensReader.Class[_] => cls.main.argSigs0.flatMap(flatten(_))
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def apply(unMappedName: Option[String],
             shortName: Option[Char],
             doc: Option[String],
@@ -278,7 +278,7 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
                                 val positional: Boolean,
                                 val hidden: Boolean
 ) extends Product with Serializable with Equals{
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def name = defaultLongName
   override def canEqual(that: Any): Boolean = true
 
@@ -288,7 +288,7 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
     case _ => false
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def this(unmappedName: Option[String],
            shortName: Option[Char],
            doc: Option[String],
@@ -299,7 +299,7 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
     this(unmappedName, unmappedName, shortName, doc, default, reader, positional, hidden)
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def copy(unMappedName: Option[String] = this.unMappedName,
            shortName: Option[Char] = this.shortName,
            doc: Option[String] = this.doc,
@@ -310,9 +310,9 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
     ArgSig(unMappedName, shortName, doc, default, reader, positional, hidden)
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productArity = 9
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productElement(n: Int) = n match{
     case 0 => defaultLongName
     case 1 => argName
@@ -349,11 +349,11 @@ class MainData[T, B] private[mainargs] (
     val doc: Option[String],
     val invokeRaw: (B, Seq[Any]) => T
 ) extends Product with Serializable with Equals{
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def name = mainName.getOrElse(defaultName)
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productArity = 5
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productElement(n: Int) = n match{
     case 0 => mainName
     case 1 => defaultName
@@ -361,30 +361,30 @@ class MainData[T, B] private[mainargs] (
     case 3 => doc
     case 4 => invokeRaw
   }
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def copy(name: String = this.unmappedName,
            argSigs0: Seq[ArgSig] = this.argSigs0,
            doc: Option[String] = this.doc,
            invokeRaw: (B, Seq[Any]) => T = this.invokeRaw) = MainData(
     name, argSigs0, doc, invokeRaw
   )
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def this(name: String,
            argSigs0: Seq[ArgSig],
            doc: Option[String],
            invokeRaw: (B, Seq[Any]) => T) = this(
     Some(name), name, argSigs0, doc, invokeRaw
   )
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   override def hashCode(): Int = MainData.unapply(this).hashCode()
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   override def equals(obj: Any): Boolean = obj match{
     case x: MainData[_, _] => MainData.unapply(x) == MainData.unapply(this)
     case _ => false
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   override def canEqual(that: Any): Boolean = true
 
   def unmappedName: String = mainName.getOrElse(defaultName)
@@ -402,9 +402,9 @@ class MainData[T, B] private[mainargs] (
 }
 
 object MainData {
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def unapply[T, B](x: MainData[T, B]) = Option((x.mainName, x.defaultName, x.argSigs0, x.doc, x.invokeRaw))
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def apply[T, B](name: String,
                   argSigs0: Seq[ArgSig],
                   doc: Option[String],

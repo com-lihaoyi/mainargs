@@ -7,7 +7,7 @@ import java.io.PrintStream
 
 object ParserForMethods extends ParserForMethodsCompanionVersionSpecific
 class ParserForMethods[B](val mains: MethodMains[B]) {
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def helpText(
       totalWidth: Int,
       docsOnNewLine: Boolean,
@@ -191,7 +191,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 
 
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def runEither(
                  args: Seq[String],
                  allowPositional: Boolean,
@@ -215,7 +215,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     customDocs,
     sorted
   )
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def runRaw(
       args: Seq[String],
       allowPositional: Boolean,
@@ -235,7 +235,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     }
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def runRaw0(
       args: Seq[String],
       allowPositional: Boolean,
@@ -263,7 +263,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
 object ParserForClass extends ParserForClassCompanionVersionSpecific
 class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
     extends TokensReader.Class[T] {
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def helpText(
       totalWidth: Int,
       docsOnNewLine: Boolean,
@@ -300,7 +300,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       customDoc: String
   ): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted = true)
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def constructOrExit(
       args: Seq[String],
       allowPositional: Boolean,

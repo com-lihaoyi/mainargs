@@ -54,7 +54,7 @@ object Renderer {
         case (Some(l), Some(r)) => l.compare(r)
       }
   }
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def renderArg(
       arg: ArgSig,
       leftOffset: Int,
@@ -210,7 +210,7 @@ object Renderer {
     sorted = true,
   )
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def formatMainMethodSignature(
       main: MainData[_, _],
       leftIndent: Int,
@@ -270,7 +270,7 @@ object Renderer {
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
 
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def renderResult(
       main: MainData[_, _],
       result: Result.Failure,

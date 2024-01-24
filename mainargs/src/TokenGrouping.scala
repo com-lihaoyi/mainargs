@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 case class TokenGrouping[B](remaining: List[String], grouped: Map[ArgSig, Seq[String]])
 
 object TokenGrouping {
-  @deprecated("Binary Compatibility Shim")
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def groupArgs[B](
       flatArgs0: Seq[String],
       argSigs: Seq[(ArgSig, TokensReader.Terminal[_])],

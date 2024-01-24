@@ -23,12 +23,6 @@ trait MainArgsPublishModule
 
   def publishVersion = VcsVersion.vcsState().format()
 
-  // Skip MIMA checks for Scala 3 since it's impossible to evolve the case classes
-  // in a way that's compatible with both Scala 2 and Scala 3 due to conflicting
-  // signatures for `def unapply
-  def mimaReportBinaryIssues(): Command[Unit] =
-    if (crossScalaVersion == scala3) T.command{/*do nothing*/} else super.mimaReportBinaryIssues()
-
   override def mimaPreviousVersions = Seq("0.5.0")
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
