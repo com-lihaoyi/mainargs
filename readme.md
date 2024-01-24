@@ -350,6 +350,11 @@ of useful configuration values:
 
 - `sorted: Boolean`: whether to sort the arguments alphabetically in the help text. Defaults to `true`
 
+- `nameMapper: String => Option[String]`: how Scala `camelCase` names are mapping
+  to CLI command and flag names. Defaults to translation to `kebab-case`, but
+  you can pass in `mainargs.Util.snakeCaseNameMapper` for `snake_case` CLI names
+  or `mainargs.Util.nullNameMapper` to disable mapping.
+
 ## Custom Argument Parsers
 
 If you want to parse arguments into types that are not provided by the library,
@@ -519,9 +524,11 @@ command-line friendly tool.
 
 # Changelog
 
-## 0.5.5
+## master
 
-- Automatically map a
+- Automatically map `camelCase` Scala method and argument names to `kebab-case`
+  CLI commands and flag names, with configurability by passing in custom
+  `nameMappers` [#101](https://github.com/com-lihaoyi/mainargs/pull/101)
 
 ## 0.5.4
 
