@@ -39,11 +39,11 @@ object TokenGrouping {
       .toMap[String, ArgSig]
 
     lazy val keywordArgMap = makeKeywordArgMap(
-      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.name.map("--" + _) ++ x.shortName.map("-" + _)
+      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.longName(Util.nullNameMapper).map("--" + _) ++ x.shortName.map("-" + _)
     )
 
     lazy val longKeywordArgMap = makeKeywordArgMap(
-      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.name.map("--" + _)
+      x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.longName(Util.nullNameMapper).map("--" + _)
     )
 
     @tailrec def rec(

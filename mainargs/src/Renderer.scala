@@ -5,60 +5,69 @@ import scala.math
 
 object Renderer {
 
-  def getLeftColWidth(items: Seq[ArgSig]) = {
+  def getLeftColWidth(items: Seq[ArgSig]): Int = getLeftColWidth(items, Util.kebabCaseNameMapper)
+  def getLeftColWidth(items: Seq[ArgSig], nameMapper: String => Option[String]): Int = {
     if (items.isEmpty) 0
-    else items.map(renderArgShort(_).length).max
+    else items.map(renderArgShort(_, nameMapper).length).max
   }
 
   val newLine = System.lineSeparator()
 
   def normalizeNewlines(s: String) = s.replace("\r", "").replace("\n", newLine)
 
-  def renderArgShort(arg: ArgSig) = arg.reader match {
+  def renderArgShort(arg: ArgSig): String = renderArgShort(arg, Util.nullNameMapper)
+
+  def renderArgShort(arg: ArgSig, nameMapper: String => Option[String]): String = arg.reader match {
     case r: TokensReader.Flag =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
-      val nameSuffix = arg.name.map(s => s"--$s")
+      val nameSuffix = arg.longName(nameMapper).map(s => s"--$s")
       (shortPrefix ++ nameSuffix).mkString(" ")
 
     case r: TokensReader.Simple[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${r.shortName}>"
-      val nameSuffix = if (arg.positional) arg.name else arg.name.map(s => s"--$s")
+      val nameSuffix = if (arg.positional) arg.longName(nameMapper) else arg.longName(nameMapper).map(s => s"--$s")
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
 
     case r: TokensReader.Leftover[_, _] =>
-      s"${arg.name.get} <${r.shortName}>..."
+      s"${arg.longName(nameMapper).get} <${r.shortName}>..."
   }
 
   /**
    * Returns a `Some[string]` with the sortable string or a `None` if it is an leftover.
    */
-  private def sortableName(arg: ArgSig): Option[String] = arg match {
+  private def sortableName(arg: ArgSig, nameMapper: String => Option[String]): Option[String] = arg match {
     case arg: ArgSig if arg.reader.isLeftover => None
 
     case a: ArgSig =>
-      a.shortName.map(_.toString).orElse(a.name).orElse(Some(""))
+      a.shortName.map(_.toString).orElse(a.longName(nameMapper)).orElse(Some(""))
     case a: ArgSig =>
-      a.name.orElse(Some(""))
+      a.longName(nameMapper)
   }
 
   object ArgOrd extends math.Ordering[ArgSig] {
     override def compare(x: ArgSig, y: ArgSig): Int =
-      (sortableName(x), sortableName(y)) match {
+      (sortableName(x, Util.nullNameMapper), sortableName(y, Util.nullNameMapper)) match {
         case (None, None) => 0 // don't sort leftovers
         case (None, Some(_)) => 1 // keep left overs at the end
         case (Some(_), None) => -1 // keep left overs at the end
         case (Some(l), Some(r)) => l.compare(r)
       }
   }
+  @deprecated("Binary Compatibility Shim")
+  def renderArg(
+      arg: ArgSig,
+      leftOffset: Int,
+      wrappedWidth: Int): (String, String) = renderArg(arg, leftOffset, wrappedWidth, Util.kebabCaseNameMapper)
 
   def renderArg(
       arg: ArgSig,
       leftOffset: Int,
-      wrappedWidth: Int
+      wrappedWidth: Int,
+      nameMapper: String => Option[String]
   ): (String, String) = {
     val wrapped = softWrap(arg.doc.getOrElse(""), leftOffset, wrappedWidth - leftOffset)
-    (renderArgShort(arg), wrapped)
+    (renderArgShort(arg, nameMapper), wrapped)
   }
 
   def formatMainMethods(
@@ -69,6 +78,7 @@ object Renderer {
       customDocs: Map[String, String],
       sorted: Boolean,
   ): String = formatMainMethods(mainMethods, totalWidth, docsOnNewLine, customNames, customDocs, sorted, Util.kebabCaseNameMapper)
+
   def formatMainMethods(
       mainMethods: Seq[MainData[_, _]],
       totalWidth: Int,
@@ -83,7 +93,7 @@ object Renderer {
         .flatten
         .map(_._1)
 
-    val leftColWidth = getLeftColWidth(flattenedAll)
+    val leftColWidth = getLeftColWidth(flattenedAll, nameMapper)
     mainMethods match {
       case Seq() => ""
       case Seq(main) =>
@@ -156,7 +166,7 @@ object Renderer {
       if (sorted) main.renderedArgSigs.sorted(ArgOrd)
       else main.renderedArgSigs
 
-    val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth))
+    val args = sortedArgs.map(renderArg(_, argLeftCol, totalWidth, nameMapper))
 
     val leftIndentStr = " " * leftIndent
 
@@ -260,6 +270,7 @@ object Renderer {
         s"Did you mean `${token.drop(2)}` instead of `$token`?"
   }
 
+  @deprecated("Binary Compatibility Shim")
   def renderResult(
       main: MainData[_, _],
       result: Result.Failure,
@@ -289,12 +300,12 @@ object Renderer {
       customName: Option[String],
       customDoc: Option[String],
       sorted: Boolean,
-      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      nameMapper: String => Option[String]
   ): String = {
 
     def expectedMsg() = {
       if (printHelpOnError) {
-        val leftColWidth = getLeftColWidth(main.renderedArgSigs)
+        val leftColWidth = getLeftColWidth(main.renderedArgSigs, nameMapper)
         "Expected Signature: " +
           Renderer.formatMainMethodSignature(
             main,
@@ -321,7 +332,7 @@ object Renderer {
         val missingStr =
           if (missing.isEmpty) ""
           else {
-            val chunks = missing.map(renderArgShort(_))
+            val chunks = missing.map(renderArgShort(_, nameMapper))
 
             val argumentsStr = pluralize("argument", chunks.length)
             s"Missing $argumentsStr: ${chunks.mkString(" ")}" + Renderer.newLine
@@ -342,7 +353,7 @@ object Renderer {
             val lines =
               for ((sig, options) <- duplicate)
                 yield {
-                  s"Duplicate arguments for ${renderArgShort(sig)}: " +
+                  s"Duplicate arguments for ${renderArgShort(sig, nameMapper)}: " +
                     options.map(Util.literalize(_)).mkString(" ") + Renderer.newLine
                 }
 
@@ -352,7 +363,7 @@ object Renderer {
         val incompleteStr = incomplete match {
           case None => ""
           case Some(sig) =>
-            s"Incomplete argument ${renderArgShort(sig)} is missing a corresponding value" +
+            s"Incomplete argument ${renderArgShort(sig, nameMapper)} is missing a corresponding value" +
               Renderer.newLine
 
         }
@@ -366,12 +377,12 @@ object Renderer {
         val thingies = x.map {
           case Result.ParamError.Failed(p, vs, errMsg) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
-            s"Invalid argument ${renderArgShort(p)} failed to parse $literalV due to $errMsg"
+            s"Invalid argument ${renderArgShort(p, nameMapper)} failed to parse $literalV due to $errMsg"
           case Result.ParamError.Exception(p, vs, ex) =>
             val literalV = vs.map(Util.literalize(_)).mkString(" ")
-            s"Invalid argument ${renderArgShort(p)} failed to parse $literalV due to $ex"
+            s"Invalid argument ${renderArgShort(p, nameMapper)} failed to parse $literalV due to $ex"
           case Result.ParamError.DefaultFailed(p, ex) =>
-            s"Invalid argument ${renderArgShort(p)}'s default value failed to evaluate with $ex"
+            s"Invalid argument ${renderArgShort(p, nameMapper)}'s default value failed to evaluate with $ex"
         }
 
         Renderer.normalizeNewlines(

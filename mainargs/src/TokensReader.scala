@@ -230,7 +230,7 @@ object ArgSig {
 
     val docOpt = scala.Option(arg.doc)
     new ArgSig(
-      if (arg.noDefaultName) None else Some(name0),
+      if (arg.noDefaultName || name0.length == 1) None else Some(name0),
       scala.Option(arg.name),
       shortOpt,
       docOpt,
@@ -247,39 +247,39 @@ object ArgSig {
   }
 
   @deprecated("Binary Compatibility Shim")
-  def apply(
-             name: Option[String],
-             shortName: Option[Char],
-             doc: Option[String],
-             default: Option[Any => Any],
-             reader: TokensReader[_],
-             positional: Boolean,
-             hidden: Boolean
-           ) = {
-    new ArgSig(name, name, shortName, doc, default, reader, positional, hidden)
+  def apply(unMappedName: Option[String],
+            shortName: Option[Char],
+            doc: Option[String],
+            default: Option[Any => Any],
+            reader: TokensReader[_],
+            positional: Boolean,
+            hidden: Boolean) = {
+
+    new ArgSig(unMappedName, unMappedName, shortName, doc, default, reader, positional, hidden)
   }
 
   def unapply(a: ArgSig) = Option(
-    (a.name, a.shortName, a.doc, a.default, a.reader, a.positional, a.hidden)
+    (a.unMappedName, a.shortName, a.doc, a.default, a.reader, a.positional, a.hidden)
   )
 }
 
 /**
  * Models what is known by the router about a single argument: that it has
- * a [[name]], a human-readable [[typeString]] describing what the type is
+ * a [[longName]], a human-readable [[typeString]] describing what the type is
  * (just for logging and reading, not a replacement for a `TypeTag`) and
  * possible a function that can compute its default value
  */
-class ArgSig private[mainargs] (
-    val defaultName: Option[String],
-    val argName: Option[String],
-    val shortName: Option[Char],
-    val doc: Option[String],
-    val default: Option[Any => Any],
-    val reader: TokensReader[_],
-    val positional: Boolean,
-    val hidden: Boolean
+class ArgSig private[mainargs] (val defaultLongName: Option[String],
+                                val argName: Option[String],
+                                val shortName: Option[Char],
+                                val doc: Option[String],
+                                val default: Option[Any => Any],
+                                val reader: TokensReader[_],
+                                val positional: Boolean,
+                                val hidden: Boolean
 ) extends Product with Serializable with Equals{
+  @deprecated("Binary Compatibility Shim")
+  def name = defaultLongName
   override def canEqual(that: Any): Boolean = true
 
   override def hashCode(): Int = ArgSig.unapply(this).hashCode()
@@ -289,34 +289,32 @@ class ArgSig private[mainargs] (
   }
 
   @deprecated("Binary Compatibility Shim")
-  def this(
-             name: Option[String],
-             shortName: Option[Char],
-             doc: Option[String],
-             default: Option[Any => Any],
-             reader: TokensReader[_],
-             positional: Boolean,
-             hidden: Boolean
-           ) = {
-    this(name, name, shortName, doc, default, reader, positional, hidden)
+  def this(unmappedName: Option[String],
+           shortName: Option[Char],
+           doc: Option[String],
+           default: Option[Any => Any],
+           reader: TokensReader[_],
+           positional: Boolean,
+           hidden: Boolean) = {
+    this(unmappedName, unmappedName, shortName, doc, default, reader, positional, hidden)
   }
 
   @deprecated("Binary Compatibility Shim")
-  def copy(name: Option[String] = this.name,
+  def copy(unMappedName: Option[String] = this.unMappedName,
            shortName: Option[Char] = this.shortName,
            doc: Option[String] = this.doc,
            default: Option[Any => Any] = this.default,
            reader: TokensReader[_] = this.reader,
            positional: Boolean = this.positional,
            hidden: Boolean = this.hidden) = {
-    ArgSig(name, shortName, doc, default, reader, positional, hidden)
+    ArgSig(unMappedName, shortName, doc, default, reader, positional, hidden)
   }
 
   @deprecated("Binary Compatibility Shim")
   def productArity = 9
   @deprecated("Binary Compatibility Shim")
   def productElement(n: Int) = n match{
-    case 0 => defaultName
+    case 0 => defaultLongName
     case 1 => argName
     case 2 => shortName
     case 3 => doc
@@ -326,9 +324,10 @@ class ArgSig private[mainargs] (
     case 7 => hidden
   }
 
-  def name: Option[String] = argName.orElse(defaultName.flatMap(d => if (d.length == 1) None else Some(d)))
+  def unMappedName: Option[String] = argName.orElse(defaultLongName)
+  def longName(nameMapper: String => Option[String]): Option[String] = argName.orElse(mappedName(nameMapper)).orElse(defaultLongName)
   def mappedName(nameMapper: String => Option[String]): Option[String] =
-    if (argName.isDefined) None else defaultName.flatMap(nameMapper)
+    if (argName.isDefined) None else defaultLongName.flatMap(nameMapper)
 }
 
 
@@ -351,6 +350,8 @@ class MainData[T, B] private[mainargs] (
     val invokeRaw: (B, Seq[Any]) => T
 ) extends Product with Serializable with Equals{
   @deprecated("Binary Compatibility Shim")
+  def name = mainName.getOrElse(defaultName)
+  @deprecated("Binary Compatibility Shim")
   def productArity = 5
   @deprecated("Binary Compatibility Shim")
   def productElement(n: Int) = n match{
@@ -361,7 +362,7 @@ class MainData[T, B] private[mainargs] (
     case 4 => invokeRaw
   }
   @deprecated("Binary Compatibility Shim")
-  def copy(name: String = this.name,
+  def copy(name: String = this.unmappedName,
            argSigs0: Seq[ArgSig] = this.argSigs0,
            doc: Option[String] = this.doc,
            invokeRaw: (B, Seq[Any]) => T = this.invokeRaw) = MainData(
@@ -386,9 +387,9 @@ class MainData[T, B] private[mainargs] (
   @deprecated("Binary Compatibility Shim")
   override def canEqual(that: Any): Boolean = true
 
-  def name: String = mainName.getOrElse(defaultName)
+  def unmappedName: String = mainName.getOrElse(defaultName)
 
-  def name(nameMapper: String => Option[String]) = mappedName(nameMapper).getOrElse(defaultName)
+  def name(nameMapper: String => Option[String]) = mainName.orElse(mappedName(nameMapper)).getOrElse(defaultName)
   def mappedName(nameMapper: String => Option[String]): Option[String] =
     if (mainName.isDefined) None
     else nameMapper(defaultName)

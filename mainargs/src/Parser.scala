@@ -140,9 +140,9 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
-      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted))
+      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper))
       Compat.exit(exitCode)
-    } else runRaw0(args, allowPositional, allowRepeats) match {
+    } else runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         res match {
@@ -157,7 +157,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
                 docsOnNewLine,
                 customNames.get(main.name(nameMapper)),
                 customDocs.get(main.name(nameMapper)),
-                sorted
+                sorted,
+                nameMapper
               )
             )
         }
@@ -234,6 +235,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     }
   }
 
+  @deprecated("Binary Compatibility Shim")
   def runRaw0(
       args: Seq[String],
       allowPositional: Boolean,
@@ -244,6 +246,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     allowRepeats,
     Util.kebabCaseNameMapper
   )
+
   def runRaw0(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -280,7 +283,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       main,
       0,
       totalWidth,
-      Renderer.getLeftColWidth(main.renderedArgSigs),
+      Renderer.getLeftColWidth(main.renderedArgSigs, nameMapper),
       docsOnNewLine,
       Option(customName),
       Option(customDoc),
@@ -458,7 +461,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
             docsOnNewLine,
             Option(customName),
             Option(customDoc),
-            sorted
+            sorted,
+            nameMapper
           )
         )
     }
