@@ -37,7 +37,7 @@ object Util {
         chars.append(c)
       }
     }
-    println(chars.toString())
+
     Some(chars.toString())
   }
 
