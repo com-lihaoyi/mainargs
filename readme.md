@@ -297,7 +297,10 @@ of an argument can also be given explicitly via the `@arg(short = '...')`:
 ```scala
 object Base {
   @main
-  def flaggy(a: Flag, b: Boolean = false, c: Flag) = println(Seq(a.value, b, c.value))
+  def bools(a: Flag, b: Boolean = false, c: Flag) = println(Seq(a.value, b, c.value))
+  
+  @main
+  def strs(a: Flag, b: String) = println(Seq(a.value, b))
 }
 ```
 
@@ -305,36 +308,55 @@ These can be invoked as normal, for `Flag`s like `-a` or normal arguments that t
 a value like `-b` below:
 
 ```bash
-$ ./mill example.short -a
+$ ./mill example.short bools -a
 Seq(true, false, false)
 
-$ ./mill example.short -b true
+$ ./mill example.short bools -b true
 Seq(false, true, false)
 ```
 
 Multiple short arguments can be combined into one `-ab` call:
 
 ```scala
-$ ./mill example.short -ab true
+$ ./mill example.short bools -ab true
 Seq(true, true, false)
 ```
 
 Short arguments can be combined with their value:
 
 ```scala
-$ ./mill example.short -btrue
+$ ./mill example.short bools -btrue
 Seq(false, true, false)
 ```
 
 And you can combine both multiple short arguments as well as the resulting value:
 
 ```scala
-$ ./mill example.short -abtrue
+$ ./mill example.short bools -abtrue
 Seq(true, true, false)
 ```
 
 Note that when multiple short arguments are combined, whether via `-ab true` or via `-abtrue`,
-only the last short argument (in this case `b`) can take a value. 
+only the last short argument (in this case `b`) can take a value.
+
+If an `=` is present in the short argument group after the first character, the short
+argument group is treated as a key-value pair with the remaining characters after the `=`
+passed as the value to the first short argument:
+
+```scala
+$ ./mill example.short strs -a -b=value 
+Seq(true, value)
+```
+
+
+If an `=` is present in the short argument group after subsequent character, all characters
+except the first are passed to the first short argument. This can be useful for concisely 
+passing key-value pairs to a short argument:
+
+```scala
+$ ./mill example.short strs -a -bkey=value 
+Seq(true, key=value)
+```
 
 ## Annotations
 

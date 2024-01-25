@@ -5,96 +5,99 @@ object FlagTests extends TestSuite {
 
   object Base {
     @main
-    def flaggy(a: Flag, b: Boolean, c: Flag) = Seq(a.value, b, c.value)
+    def bool(a: Flag, b: Boolean, c: Flag) = Seq(a.value, b, c.value)
+    @main
+    def str(a: Flag, b: String) = Seq(a.value, b)
   }
+
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
 
   val tests = Tests {
     test - check(
-      List("-b", "true"),
+      List("bool", "-b", "true"),
       Result.Success(Seq(false, true, false))
     )
     test - check(
-      List("-b", "false"),
+      List("bool", "-b", "false"),
       Result.Success(Seq(false, false, false))
     )
 
     test - check(
-      List("-a", "-b", "false"),
+      List("bool", "-a", "-b", "false"),
       Result.Success(Seq(true, false, false))
     )
 
     test - check(
-      List("-c", "-b", "false"),
+      List("bool", "-c", "-b", "false"),
       Result.Success(Seq(false, false, true))
     )
 
     test - check(
-      List("-a", "-c", "-b", "false"),
+      List("bool", "-a", "-c", "-b", "false"),
       Result.Success(Seq(true, false, true))
     )
 
     test("combined"){
       test - check(
-        List("-bfalse"),
+        List("bool", "-bfalse"),
         Result.Success(List(false, false, false))
       )
       test - check(
-        List("-btrue"),
+        List("bool", "-btrue"),
         Result.Success(List(false, true, false))
       )
 
       test - check(
-        List("-abtrue"),
+        List("bool", "-abtrue"),
         Result.Success(List(true, true, false))
       )
       test - check(
-        List("-abfalse"),
+        List("bool", "-abfalse"),
         Result.Success(List(true, false, false))
       )
 
       test - check(
-        List("-a", "-btrue"),
+        List("bool", "-a", "-btrue"),
         Result.Success(List(true, true, false))
       )
 
       test - check(
-        List("-a", "-bfalse"),
+        List("bool", "-a", "-bfalse"),
         Result.Success(List(true, false, false))
       )
 
       test - check(
-        List("-acbtrue"),
+        List("bool", "-acbtrue"),
         Result.Success(List(true, true, true))
       )
 
       test - check(
-        List("-acbfalse"),
+        List("bool", "-acbfalse"),
         Result.Success(List(true, false, true))
       )
 
       test - check(
-        List("-a", "-c", "-btrue"),
+        List("bool", "-a", "-c", "-btrue"),
         Result.Success(List(true, true, true))
       )
 
       test - check(
-        List("-a", "-c", "-bfalse"),
+        List("bool", "-a", "-c", "-bfalse"),
         Result.Success(List(true, false, true))
       )
 
       test - check(
-        List("-a", "-btrue", "-c"),
+        List("bool", "-a", "-btrue", "-c"),
         Result.Success(List(true, true, true))
       )
 
       test - check(
-        List("-a", "-bfalse", "-c"),
+        List("bool", "-a", "-bfalse", "-c"),
         Result.Success(List(true, false, true))
       )
 
       test - check(
-        List("-ba"),
+        List("bool", "-ba"),
         Result.Failure.InvalidArguments(
           List(
             Result.ParamError.Failed(
@@ -107,7 +110,7 @@ object FlagTests extends TestSuite {
       )
 
       test - check(
-        List("-ab"),
+        List("bool", "-ab"),
         Result.Failure.MismatchedArguments(
           Nil,
           Nil,
@@ -117,14 +120,12 @@ object FlagTests extends TestSuite {
           )
         )
       )
+
+      test - check(List("str", "-b=value", "-a"), Result.Success(List(true, "value")))
+
       test - check(
-        List("-ab=true"),
-        Result.Failure.MismatchedArguments(
-          Seq(new ArgSig(None, Some('b'), None, None, TokensReader.BooleanRead, false, false)),
-          unknown = Seq("-ab=true"),
-          Nil,
-          None
-        )
+        List("str", "-bvalue", "-akey=value"),
+        Result.Failure.MismatchedArguments(Nil, List("-akey"), Nil, None)
       )
     }
 

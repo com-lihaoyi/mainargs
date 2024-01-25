@@ -27,20 +27,16 @@ object TokenGrouping {
       .toMap[String, ArgSig]
 
     lazy val shortArgMap: Map[Char, ArgSig] = argSigs
-      .collect{case (a, _) => a.shortName.map(_ -> a)}
+      .collect{case (a, _) if !a.positional => a.shortName.map(_ -> a)}
       .flatten
       .toMap[Char, ArgSig]
 
     lazy val shortFlagArgMap: Map[Char, ArgSig] = argSigs
-      .collect{case (a, r: TokensReader.Flag) => a.shortName.map(_ -> a)}
+      .collect{case (a, r: TokensReader.Flag) if !a.positional => a.shortName.map(_ -> a)}
       .flatten
       .toMap[Char, ArgSig]
 
-    lazy val keywordArgMap = makeKeywordArgMap(
-      x => x.name.map("--" + _) ++ x.shortName.map("-" + _)
-    )
-
-    lazy val longKeywordArgMap = makeKeywordArgMap(x => x.name.map("--" + _))
+    lazy val longKeywordArgMap = makeKeywordArgMap(_.name.map("--" + _))
 
     def parseCombinedShortTokens(current: Map[ArgSig, Vector[String]],
                                  head: String,
@@ -80,7 +76,7 @@ object TokenGrouping {
               case None =>
                 // If we encounter a character that is neither a short flag or a
                 // short argument, it is an error
-                failure = Result.Failure.MismatchedArguments(unknown = Seq(c.toString))
+                failure = Result.Failure.MismatchedArguments(unknown = Seq("-" + c.toString))
             }
             i = chars.length
         }
@@ -101,16 +97,23 @@ object TokenGrouping {
     ): Result[TokenGrouping[B]] = {
       remaining match {
         case head :: rest =>
-
-
           // special handling for combined short args of the style "-xvf" or "-j10"
-          if (head.startsWith("-") &&
-            head.lift(1).exists(c => c != '-') &&
-            head.lift(2).exists(c => c != '-') &&
-            !head.contains('=')){
-            parseCombinedShortTokens(current, head, rest) match{
-              case Left(failure) => failure
-              case Right((rest2, currentMap)) => rec(rest2, currentMap)
+          if (head.startsWith("-") && head.lift(1).exists(c => c != '-')){
+            head.split("=", 2) match {
+              case Array(first, second) =>
+                shortArgMap.get(first(1)) match{
+                  case Some(a) if a.reader.isSimple =>
+                    if (first.length == 2) rec(rest, Util.appendMap(current, a, second))
+                    else rec(rest, Util.appendMap(current, a, head.drop(2)))
+
+                  case _ => Result.Failure.MismatchedArguments(Nil, Seq(first), Nil)
+                }
+
+              case _ =>
+                parseCombinedShortTokens(current, head, rest) match{
+                  case Left(failure) => failure
+                  case Right((rest2, currentMap)) => rec(rest2, currentMap)
+                }
             }
 
           } else if (head.startsWith("-") && head.exists(_ != '-')) {
@@ -124,7 +127,7 @@ object TokenGrouping {
                 }
 
               case _ =>
-                lookupArgMap(head, keywordArgMap) match {
+                lookupArgMap(head, longKeywordArgMap) match {
                   case Some((cliArg, _: TokensReader.Flag)) =>
                     rec(rest, Util.appendMap(current, cliArg, ""))
                   case Some((cliArg, _: TokensReader.Simple[_])) =>

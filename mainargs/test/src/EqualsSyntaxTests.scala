@@ -28,17 +28,9 @@ object EqualsSyntaxTests extends TestSuite {
         "bar=quxbar=qux false"
     }
     test("shortName") {
-      // -f=bar syntax doesn't work for short names
+      // -f=bar syntax does work for short names
       ParserForMethods(Main).runEither(Array("-f=bar")) ==>
-        Left(
-          """Missing argument: -f --foo <str>
-            |Unknown argument: "-f=bar"
-            |Expected Signature: run
-            |  -f --foo <str>  String to print repeatedly
-            |  --my-num <int>  How many times to print string
-            |  --bool          Example flag
-            |
-            |""".stripMargin)
+        Right("barbar false")
     }
     test("notFlags") {
       // -f=bar syntax doesn't work for flags
