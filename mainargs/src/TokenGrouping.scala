@@ -91,16 +91,16 @@ object TokenGrouping {
       else Right((rest2, currentMap))
     }
 
+    def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
+      m.get(k).map(a => (a, a.reader))
+    }
+
     @tailrec def rec(
         remaining: List[String],
         current: Map[ArgSig, Vector[String]]
     ): Result[TokenGrouping[B]] = {
       remaining match {
         case head :: rest =>
-
-          def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
-            m.get(k).map(a => (a, a.reader))
-          }
 
 
           // special handling for combined short args of the style "-xvf" or "-j10"
