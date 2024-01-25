@@ -117,6 +117,15 @@ object FlagTests extends TestSuite {
           )
         )
       )
+      test - check(
+        List("-ab=true"),
+        Result.Failure.MismatchedArguments(
+          Seq(new ArgSig(None, Some('b'), None, None, TokensReader.BooleanRead, false, false)),
+          unknown = Seq("-ab=true"),
+          Nil,
+          None
+        )
+      )
     }
 
   }

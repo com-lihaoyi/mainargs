@@ -42,6 +42,55 @@ object TokenGrouping {
 
     lazy val longKeywordArgMap = makeKeywordArgMap(x => x.name.map("--" + _))
 
+    def parseCombinedShortTokens(current: Map[ArgSig, Vector[String]],
+                                 head: String,
+                                 rest: List[String]) = {
+      val chars = head.drop(1)
+      var rest2 = rest
+      var i = 0
+      var currentMap = current
+      var failure: Result.Failure = null
+
+      while (i < chars.length) {
+        val c = chars(i)
+        shortFlagArgMap.get(c) match {
+          case Some(a) =>
+            // For `Flag`s in chars, we consume the char, set it to `true`, and continue
+            currentMap = Util.appendMap(currentMap, a, "")
+            i += 1
+          case None =>
+            // For other kinds of short arguments, we consume the char, set the value to
+            // the remaining characters, and exit
+            shortArgMap.get(c) match {
+              case Some(a) =>
+                if (i < chars.length - 1) {
+                  currentMap = Util.appendMap(currentMap, a, chars.drop(i + 1))
+                } else {
+                  // If the non-flag argument is the last in the combined token, we look
+                  // ahead to grab the next token and assign it as this argument's value
+                  rest2 match {
+                    case Nil =>
+                      // If there is no next token, it is an error
+                      failure = Result.Failure.MismatchedArguments(incomplete = Some(a))
+                    case next :: remaining =>
+                      currentMap = Util.appendMap(currentMap, a, next)
+                      rest2 = remaining
+                  }
+                }
+              case None =>
+                // If we encounter a character that is neither a short flag or a
+                // short argument, it is an error
+                failure = Result.Failure.MismatchedArguments(unknown = Seq(c.toString))
+            }
+            i = chars.length
+        }
+
+      }
+
+      if (failure != null) Left(failure)
+      else Right((rest2, currentMap))
+    }
+
     @tailrec def rec(
         remaining: List[String],
         current: Map[ArgSig, Vector[String]]
@@ -56,50 +105,13 @@ object TokenGrouping {
 
           // special handling for combined short args of the style "-xvf" or "-j10"
           if (head.startsWith("-") &&
-            head.lift(1).exists(c => c != '-' && c != '=') &&
-            head.lift(2).exists(c => c != '-' && c != '=')){
-            val chars = head.drop(1)
-            var rest2 = rest
-            var i = 0
-            var currentMap = current
-            var failure: Result.Failure = null
-
-            while (i < chars.length){
-              val c = chars(i)
-              shortFlagArgMap.get(c) match{
-                case Some(a) =>
-                  // For `Flag`s in chars, we consume the char, set it to `true`, and continue
-                  currentMap = Util.appendMap(currentMap, a, "")
-                  i += 1
-                case None =>
-                  // For other kinds of short arguments, we consume the char, set the value to
-                  // the remaining characters, and exit
-                  shortArgMap.get(c) match{
-                    case Some(a) =>
-                      if (i == chars.length - 1) {
-                        rest2 match{
-                          case Nil =>
-                            failure = Result.Failure.MismatchedArguments(incomplete = Some(a))
-                          case next :: remaining =>
-                            currentMap = Util.appendMap(currentMap, a, next)
-                            rest2 = remaining
-                        }
-                      }else {
-                        currentMap = Util.appendMap(currentMap, a, chars.drop(i + 1))
-                      }
-                    case None =>
-                      println("C")
-                      // If we encounter a character that is neither a short flag or a
-                      // short argument, it is an error
-                      failure = Result.Failure.MismatchedArguments(unknown = Seq(c.toString))
-                  }
-                  i = chars.length
-              }
-
+            head.lift(1).exists(c => c != '-') &&
+            head.lift(2).exists(c => c != '-') &&
+            !head.contains('=')){
+            parseCombinedShortTokens(current, head, rest) match{
+              case Left(failure) => failure
+              case Right((rest2, currentMap)) => rec(rest2, currentMap)
             }
-
-            if (failure != null) failure
-            else rec(rest2, currentMap)
 
           } else if (head.startsWith("-") && head.exists(_ != '-')) {
             head.split("=", 2) match{
