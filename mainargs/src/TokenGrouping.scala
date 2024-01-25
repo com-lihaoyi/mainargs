@@ -60,7 +60,7 @@ object TokenGrouping {
             shortArgMap.get(c) match {
               case Some(a) =>
                 if (i < chars.length - 1) {
-                  currentMap = Util.appendMap(currentMap, a, chars.drop(i + 1))
+                  currentMap = Util.appendMap(currentMap, a, chars.drop(i + 1).stripPrefix("="))
                 } else {
                   // If the non-flag argument is the last in the combined token, we look
                   // ahead to grab the next token and assign it as this argument's value
@@ -99,21 +99,9 @@ object TokenGrouping {
         case head :: rest =>
           // special handling for combined short args of the style "-xvf" or "-j10"
           if (head.startsWith("-") && head.lift(1).exists(c => c != '-')){
-            head.split("=", 2) match {
-              case Array(first, second) =>
-                shortArgMap.get(first(1)) match{
-                  case Some(a) if a.reader.isSimple =>
-                    if (first.length == 2) rec(rest, Util.appendMap(current, a, second))
-                    else rec(rest, Util.appendMap(current, a, head.drop(2)))
-
-                  case _ => Result.Failure.MismatchedArguments(Nil, Seq(first), Nil)
-                }
-
-              case _ =>
-                parseCombinedShortTokens(current, head, rest) match{
-                  case Left(failure) => failure
-                  case Right((rest2, currentMap)) => rec(rest2, currentMap)
-                }
+              parseCombinedShortTokens(current, head, rest) match{
+                case Left(failure) => failure
+                case Right((rest2, currentMap)) => rec(rest2, currentMap)
             }
 
           } else if (head.startsWith("-") && head.exists(_ != '-')) {

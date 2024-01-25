@@ -123,9 +123,11 @@ object FlagTests extends TestSuite {
 
       test - check(List("str", "-b=value", "-a"), Result.Success(List(true, "value")))
 
+      test - check(List("str", "-ab=value"), Result.Success(List(true, "value")))
+
       test - check(
         List("str", "-bvalue", "-akey=value"),
-        Result.Failure.MismatchedArguments(Nil, List("-akey"), Nil, None)
+        Result.Failure.MismatchedArguments(Nil, List("-k"), Nil, None)
       )
     }
 

@@ -344,6 +344,9 @@ argument group is treated as a key-value pair with the remaining characters afte
 passed as the value to the first short argument:
 
 ```scala
+$ ./mill example.short strs -b=value 
+Seq(false, value)
+
 $ ./mill example.short strs -a -b=value 
 Seq(true, value)
 ```
@@ -355,6 +358,18 @@ passing key-value pairs to a short argument:
 
 ```scala
 $ ./mill example.short strs -a -bkey=value 
+Seq(true, key=value)
+```
+
+These can also be combined into a single token, with the first non-`Flag` short argument in the
+token consuming the subsequent characters as a string (unless the subsequent characters start with
+an `=`, which is skipped):
+
+```scala
+$ ./mill example.short strs -ab=value
+Seq(true, value)
+
+$ ./mill example.short strs -abkey=value 
 Seq(true, key=value)
 ```
 
