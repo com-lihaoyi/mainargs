@@ -26,6 +26,16 @@ object TokenGrouping {
       .flatMap { x => getNames(x).map(_ -> x) }
       .toMap[String, ArgSig]
 
+    lazy val shortArgMap: Map[Char, ArgSig] = argSigs
+      .collect{case (a, _) => a.shortName.map(_ -> a)}
+      .flatten
+      .toMap[Char, ArgSig]
+
+    lazy val shortFlagArgMap: Map[Char, ArgSig] = argSigs
+      .collect{case (a, r: TokensReader.Flag) => a.shortName.map(_ -> a)}
+      .flatten
+      .toMap[Char, ArgSig]
+
     lazy val keywordArgMap = makeKeywordArgMap(
       x => x.name.map("--" + _) ++ x.shortName.map("-" + _)
     )
@@ -43,7 +53,55 @@ object TokenGrouping {
             m.get(k).map(a => (a, a.reader))
           }
 
-          if (head.startsWith("-") && head.exists(_ != '-')) {
+
+          // special handling for combined short args of the style "-xvf" or "-j10"
+          if (head.startsWith("-") &&
+            head.lift(1).exists(c => c != '-' && c != '=') &&
+            head.lift(2).exists(c => c != '-' && c != '=')){
+            val chars = head.drop(1)
+            var rest2 = rest
+            var i = 0
+            var currentMap = current
+            var failure: Result.Failure = null
+
+            while (i < chars.length){
+              val c = chars(i)
+              shortFlagArgMap.get(c) match{
+                case Some(a) =>
+                  // For `Flag`s in chars, we consume the char, set it to `true`, and continue
+                  currentMap = Util.appendMap(currentMap, a, "")
+                  i += 1
+                case None =>
+                  // For other kinds of short arguments, we consume the char, set the value to
+                  // the remaining characters, and exit
+                  shortArgMap.get(c) match{
+                    case Some(a) =>
+                      if (i == chars.length - 1) {
+                        rest2 match{
+                          case Nil =>
+                            failure = Result.Failure.MismatchedArguments(incomplete = Some(a))
+                          case next :: remaining =>
+                            currentMap = Util.appendMap(currentMap, a, next)
+                            rest2 = remaining
+                        }
+                      }else {
+                        currentMap = Util.appendMap(currentMap, a, chars.drop(i + 1))
+                      }
+                    case None =>
+                      println("C")
+                      // If we encounter a character that is neither a short flag or a
+                      // short argument, it is an error
+                      failure = Result.Failure.MismatchedArguments(unknown = Seq(c.toString))
+                  }
+                  i = chars.length
+              }
+
+            }
+
+            if (failure != null) failure
+            else rec(rest2, currentMap)
+
+          } else if (head.startsWith("-") && head.exists(_ != '-')) {
             head.split("=", 2) match{
               case Array(first, second) =>
                 lookupArgMap(first, longKeywordArgMap) match {
