@@ -287,6 +287,55 @@ $ ./mill example.optseq runSeq --seq 123 --seq 456 --seq 789
 List(123, 456, 789)
 ```
 
+
+## Short Arguments
+
+`@main` method arguments that have single-character names are automatically converted
+to short arguments, invoked with a single `-` instead of double `--`. The short version
+of an argument can also be given explicitly via the `@arg(short = '...')`: 
+
+```scala
+object Base {
+  @main
+  def flaggy(a: Flag, b: Boolean = false, c: Flag) = println(Seq(a.value, b, c.value))
+}
+```
+
+These can be invoked as normal, for `Flag`s like `-a` or normal arguments that take 
+a value like `-b` below:
+
+```bash
+$ ./mill example.short -a
+Seq(true, false, false)
+
+$ ./mill example.short -b true
+Seq(false, true, false)
+```
+
+Multiple short arguments can be combined into one `-ab` call:
+
+```scala
+$ ./mill example.short -ab true
+Seq(true, true, false)
+```
+
+Short arguments can be combined with their value:
+
+```scala
+$ ./mill example.short -btrue
+Seq(false, true, false)
+```
+
+And you can combine both multiple short arguments as well as the resulting value:
+
+```scala
+$ ./mill example.short -abtrue
+Seq(true, true, false)
+```
+
+Note that when multiple short arguments are combined, whether via `-ab true` or via `-abtrue`,
+only the last short argument (in this case `b`) can take a value. 
+
 ## Annotations
 
 The library's annotations and methods support the following parameters to
@@ -307,7 +356,7 @@ customize your usage:
   `--foo`. Defaults to the name of the function parameter if not given
 
 - `short: Char`: lets you specify the short name of a CLI parameter, e.g. `-f`.
-  If not given, theargument can only be provided via its long name
+  If not given, the argument can only be provided via its long name
 
 - `doc: String`: a documentation string used to provide additional information
   about the command

@@ -90,7 +90,7 @@ trait ExampleModule extends ScalaModule {
   def moduleDeps = Seq(mainargs.jvm(scala213))
 }
 
-object example {
+object example extends Module {
   object hello extends ExampleModule
   object hello2 extends ExampleModule
   object caseclass extends ExampleModule
@@ -102,4 +102,5 @@ object example {
   }
   object vararg extends ExampleModule
   object vararg2 extends ExampleModule
+  object short extends ExampleModule
 }
