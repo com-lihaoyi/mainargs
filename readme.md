@@ -78,6 +78,9 @@ hellohello false
 $ ./mill example.hello -f hello --my-num 3
 hellohellohello false
 
+$ ./mill example.hello -f hello --my-num=3
+hellohellohello false
+
 $ ./mill example.hello -f hello --my-num 3 --bool
 hellohellohello true
 
