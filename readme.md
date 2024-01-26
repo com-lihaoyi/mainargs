@@ -20,6 +20,7 @@ in its scripts, as well as for command-line parsing for the
   - [Parsing Case Class Parameters](#parsing-case-class-parameters)
   - [Re-using Argument Sets](#re-using-argument-sets)
   - [Option or Sequence parameters](#option-or-sequence-parameters)
+  - [Short Arguments](#short-arguments)
   - [Annotations](#annotations)
     - [@main](#main)
     - [@arg](#arg)
@@ -32,14 +33,6 @@ in its scripts, as well as for command-line parsing for the
   - [Case App](#case-app)
   - [Scopt](#scopt)
 - [Changelog](#changelog)
-  - [0.5.0](#050) 
-  - [0.4.0](#040) 
-  - [0.3.0](#030)
-  - [0.2.3](#023)
-  - [0.2.2](#022)
-  - [0.2.1](#021)
-  - [0.1.7](#017)
-  - [0.1.4](#014)
 - [Scaladoc](https://javadoc.io/doc/com.lihaoyi/mainargs_2.13/latest/mainargs/index.html)
 
 # Usage
