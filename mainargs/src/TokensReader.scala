@@ -223,15 +223,15 @@ object TokensReader {
 object ArgSig {
   def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])
                   (implicit tokensReader: TokensReader[T]): ArgSig = {
-    val nameOpt = scala.Option(arg.name).orElse(if (name0.length == 1 || arg.noDefaultName) None
-    else Some(name0))
     val shortOpt = arg.short match {
       case '\u0000' => if (name0.length != 1 || arg.noDefaultName) None else Some(name0(0));
       case c => Some(c)
     }
+
     val docOpt = scala.Option(arg.doc)
-    ArgSig(
-      nameOpt,
+    new ArgSig(
+      if (arg.noDefaultName || name0.length == 1) None else Some(name0),
+      scala.Option(arg.name),
       shortOpt,
       docOpt,
       defaultOpt.asInstanceOf[Option[Any => Any]],
@@ -245,23 +245,91 @@ object ArgSig {
     case r: TokensReader.Terminal[T] => Seq((x, r))
     case cls: TokensReader.Class[_] => cls.main.argSigs0.flatMap(flatten(_))
   }
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def apply(unMappedName: Option[String],
+            shortName: Option[Char],
+            doc: Option[String],
+            default: Option[Any => Any],
+            reader: TokensReader[_],
+            positional: Boolean,
+            hidden: Boolean) = {
+
+    new ArgSig(unMappedName, unMappedName, shortName, doc, default, reader, positional, hidden)
+  }
+
+  def unapply(a: ArgSig) = Option(
+    (a.unMappedName, a.shortName, a.doc, a.default, a.reader, a.positional, a.hidden)
+  )
 }
 
 /**
  * Models what is known by the router about a single argument: that it has
- * a [[name]], a human-readable [[typeString]] describing what the type is
+ * a [[longName]], a human-readable [[typeString]] describing what the type is
  * (just for logging and reading, not a replacement for a `TypeTag`) and
  * possible a function that can compute its default value
  */
-case class ArgSig(
-    name: Option[String],
-    shortName: Option[Char],
-    doc: Option[String],
-    default: Option[Any => Any],
-    reader: TokensReader[_],
-    positional: Boolean,
-    hidden: Boolean
-)
+class ArgSig private[mainargs] (val defaultLongName: Option[String],
+                                val argName: Option[String],
+                                val shortName: Option[Char],
+                                val doc: Option[String],
+                                val default: Option[Any => Any],
+                                val reader: TokensReader[_],
+                                val positional: Boolean,
+                                val hidden: Boolean
+) extends Product with Serializable with Equals{
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def name = defaultLongName
+  override def canEqual(that: Any): Boolean = true
+
+  override def hashCode(): Int = ArgSig.unapply(this).hashCode()
+  override def equals(o: Any): Boolean = o match {
+    case other: ArgSig => ArgSig.unapply(this) == ArgSig.unapply(other)
+    case _ => false
+  }
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def this(unmappedName: Option[String],
+           shortName: Option[Char],
+           doc: Option[String],
+           default: Option[Any => Any],
+           reader: TokensReader[_],
+           positional: Boolean,
+           hidden: Boolean) = {
+    this(unmappedName, unmappedName, shortName, doc, default, reader, positional, hidden)
+  }
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def copy(unMappedName: Option[String] = this.unMappedName,
+           shortName: Option[Char] = this.shortName,
+           doc: Option[String] = this.doc,
+           default: Option[Any => Any] = this.default,
+           reader: TokensReader[_] = this.reader,
+           positional: Boolean = this.positional,
+           hidden: Boolean = this.hidden) = {
+    ArgSig(unMappedName, shortName, doc, default, reader, positional, hidden)
+  }
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def productArity = 9
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def productElement(n: Int) = n match{
+    case 0 => defaultLongName
+    case 1 => argName
+    case 2 => shortName
+    case 3 => doc
+    case 4 => default
+    case 5 => reader
+    case 6 => positional
+    case 7 => hidden
+  }
+
+  def unMappedName: Option[String] = argName.orElse(defaultLongName)
+  def longName(nameMapper: String => Option[String]): Option[String] = argName.orElse(mappedName(nameMapper)).orElse(defaultLongName)
+  def mappedName(nameMapper: String => Option[String]): Option[String] =
+    if (argName.isDefined) None else defaultLongName.flatMap(nameMapper)
+}
+
 
 case class MethodMains[B](value: Seq[MainData[Any, B]], base: () => B)
 
@@ -274,12 +342,57 @@ case class MethodMains[B](value: Seq[MainData[Any, B]], base: () => B)
  * instead, which provides a nicer API to call it that mimmicks the API of
  * calling a Scala method.
  */
-case class MainData[T, B](
-    name: String,
-    argSigs0: Seq[ArgSig],
-    doc: Option[String],
-    invokeRaw: (B, Seq[Any]) => T
-) {
+class MainData[T, B] private[mainargs] (
+    val mainName: Option[String],
+    val defaultName: String,
+    val argSigs0: Seq[ArgSig],
+    val doc: Option[String],
+    val invokeRaw: (B, Seq[Any]) => T
+) extends Product with Serializable with Equals{
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def name = mainName.getOrElse(defaultName)
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def productArity = 5
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def productElement(n: Int) = n match{
+    case 0 => mainName
+    case 1 => defaultName
+    case 2 => argSigs0
+    case 3 => doc
+    case 4 => invokeRaw
+  }
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def copy(name: String = this.unmappedName,
+           argSigs0: Seq[ArgSig] = this.argSigs0,
+           doc: Option[String] = this.doc,
+           invokeRaw: (B, Seq[Any]) => T = this.invokeRaw) = MainData(
+    name, argSigs0, doc, invokeRaw
+  )
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def this(name: String,
+           argSigs0: Seq[ArgSig],
+           doc: Option[String],
+           invokeRaw: (B, Seq[Any]) => T) = this(
+    Some(name), name, argSigs0, doc, invokeRaw
+  )
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  override def hashCode(): Int = MainData.unapply(this).hashCode()
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  override def equals(obj: Any): Boolean = obj match{
+    case x: MainData[_, _] => MainData.unapply(x) == MainData.unapply(this)
+    case _ => false
+  }
+
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  override def canEqual(that: Any): Boolean = true
+
+  def unmappedName: String = mainName.getOrElse(defaultName)
+
+  def name(nameMapper: String => Option[String]) = mainName.orElse(mappedName(nameMapper)).getOrElse(defaultName)
+  def mappedName(nameMapper: String => Option[String]): Option[String] =
+    if (mainName.isDefined) None
+    else nameMapper(defaultName)
 
   val flattenedArgSigs: Seq[(ArgSig, TokensReader.Terminal[_])] =
     argSigs0.iterator.flatMap[(ArgSig, TokensReader.Terminal[_])](ArgSig.flatten(_)).toVector
@@ -289,14 +402,24 @@ case class MainData[T, B](
 }
 
 object MainData {
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def unapply[T, B](x: MainData[T, B]) = Option((x.mainName, x.defaultName, x.argSigs0, x.doc, x.invokeRaw))
+  @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
+  def apply[T, B](name: String,
+                  argSigs0: Seq[ArgSig],
+                  doc: Option[String],
+                  invokeRaw: (B, Seq[Any]) => T) = {
+    new MainData(Some(name), name, argSigs0, doc, invokeRaw)
+  }
   def create[T, B](
       methodName: String,
       main: mainargs.main,
       argSigs: Seq[ArgSig],
       invokeRaw: (B, Seq[Any]) => T
   ) = {
-    MainData(
-      Option(main.name).getOrElse(methodName),
+    new MainData(
+      Option(main.name),
+      methodName,
       argSigs,
       Option(main.doc),
       invokeRaw

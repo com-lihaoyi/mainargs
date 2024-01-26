@@ -5,7 +5,15 @@ object Invoker {
       cep: TokensReader.Class[T],
       args: Seq[String],
       allowPositional: Boolean,
-      allowRepeats: Boolean
+      allowRepeats: Boolean,
+  ): Result[T] = construct(cep, args, allowPositional, allowRepeats, Util.nullNameMapper)
+
+  def construct[T](
+      cep: TokensReader.Class[T],
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      nameMapper: String => Option[String]
   ): Result[T] = {
     TokenGrouping
       .groupArgs(
@@ -13,7 +21,8 @@ object Invoker {
         cep.main.flattenedArgSigs,
         allowPositional,
         allowRepeats,
-        cep.main.argSigs0.exists(_.reader.isLeftover)
+        cep.main.argSigs0.exists(_.reader.isLeftover),
+        nameMapper
       )
       .flatMap((group: TokenGrouping[Any]) => invoke(cep.companion(), cep.main, group))
   }
@@ -82,7 +91,15 @@ object Invoker {
       mains: MethodMains[B],
       args: Seq[String],
       allowPositional: Boolean,
-      allowRepeats: Boolean
+      allowRepeats: Boolean): Either[Result.Failure.Early, (MainData[Any, B], Result[Any])] = {
+    runMains(mains, args, allowPositional, allowRepeats, Util.nullNameMapper)
+  }
+  def runMains[B](
+      mains: MethodMains[B],
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      nameMapper: String => Option[String]
   ): Either[Result.Failure.Early, (MainData[Any, B], Result[Any])] = {
     def groupArgs(main: MainData[Any, B], argsList: Seq[String]) = {
       def invokeLocal(group: TokenGrouping[Any]) =
@@ -98,7 +115,8 @@ object Invoker {
             main.argSigs0.exists {
               case x: ArgSig => x.reader.isLeftover
               case _ => false
-            }
+            },
+            nameMapper
           )
           .flatMap(invokeLocal)
       )
@@ -108,14 +126,16 @@ object Invoker {
       case Seq(main) => groupArgs(main, args)
       case multiple =>
         args.toList match {
-          case List() => Left(Result.Failure.Early.SubcommandNotSpecified(multiple.map(_.name)))
+          case List() => Left(Result.Failure.Early.SubcommandNotSpecified(multiple.map(_.name(nameMapper))))
           case head :: tail =>
             if (head.startsWith("-")) {
               Left(Result.Failure.Early.SubcommandSelectionDashes(head))
             } else {
-              multiple.find(_.name == head) match {
-                case None =>
-                  Left(Result.Failure.Early.UnableToFindSubcommand(multiple.map(_.name), head))
+              multiple.find{ m =>
+                val name = m.name(nameMapper)
+                name == head || (m.mainName.isEmpty && m.defaultName == head)
+              } match {
+                case None => Left(Result.Failure.Early.UnableToFindSubcommand(multiple.map(_.name(nameMapper)), head))
                 case Some(main) => groupArgs(main, tail)
               }
             }
