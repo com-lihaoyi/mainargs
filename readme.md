@@ -72,13 +72,25 @@ object Main{
 ```
 
 ```bash
-$ ./mill example.hello -f hello
+$ ./mill example.hello -f hello # short name
 hellohello false
 
-$ ./mill example.hello -f hello --my-num 3
+$ ./mill example.hello --foo hello # long name
+hellohello false
+
+$ ./mill example.hello --foo=hello # gflags-style
+hellohello false
+
+$ ./mill example.hello --foo "" # set to empty value
+ false
+
+$ ./mill example.hello --foo= # gflags-style empty value
+ false
+
+$ ./mill example.hello -f hello --my-num 3 # numeric arguments
 hellohellohello false
 
-$ ./mill example.hello -f hello --my-num 3 --bool
+$ ./mill example.hello -f hello --my-num 3 --bool # flags
 hellohellohello true
 
 $ ./mill example.hello --wrong-flag
@@ -287,6 +299,98 @@ $ ./mill example.optseq runSeq --seq 123 --seq 456 --seq 789
 List(123, 456, 789)
 ```
 
+
+## Short Arguments
+
+`@main` method arguments that have single-character names are automatically converted
+to short arguments, invoked with a single `-` instead of double `--`. The short version
+of an argument can also be given explicitly via the `@arg(short = '...')`: 
+
+```scala
+object Base {
+  @main
+  def bools(a: Flag, b: Boolean = false) = println(Seq(a.value, b, c.value))
+  
+  @main
+  def strs(a: Flag, b: String) = println(Seq(a.value, b))
+}
+```
+
+These can be invoked as normal, for `Flag`s like `-a` or normal arguments that take 
+a value like `-b` below:
+
+```bash
+$ ./mill example.short bools -a
+Seq(true, false)
+
+$ ./mill example.short bools -b true
+Seq(false, true)
+```
+
+Multiple short arguments can be combined into one `-ab` call:
+
+```scala
+$ ./mill example.short bools -ab true
+Seq(true, true)
+```
+
+Short arguments can be combined with their value:
+
+```scala
+$ ./mill example.short bools -btrue
+Seq(false, true)
+```
+
+And you can combine both multiple short arguments as well as the resulting value:
+
+```scala
+$ ./mill example.short bools -abtrue
+Seq(true, true)
+```
+
+Note that when multiple short arguments are combined, whether via `-ab true` or via `-abtrue`,
+only the last short argument (in this case `b`) can take a value.
+
+If an `=` is present in the short argument group after the first character, the short
+argument group is treated as a key-value pair with the remaining characters after the `=`
+passed as the value to the first short argument:
+
+```scala
+$ ./mill example.short strs -b=value 
+Seq(false, value)
+
+$ ./mill example.short strs -a -b=value 
+Seq(true, value)
+```
+
+You can use `-b=` as a shorthand to set the value of `b` to an empty string:
+
+```scala
+$ ./mill example.short strs -a -b= 
+Seq(true, )
+```
+
+If an `=` is present in the short argument group after subsequent character, all characters
+except the first are passed to the first short argument. This can be useful for concisely 
+passing key-value pairs to a short argument:
+
+```scala
+$ ./mill example.short strs -a -bkey=value 
+Seq(true, key=value)
+```
+
+These can also be combined into a single token, with the first non-`Flag` short argument in the
+token consuming the subsequent characters as a string (unless the subsequent characters start with
+an `=`, which is skipped):
+
+```scala
+$ ./mill example.short strs -ab=value
+Seq(true, value)
+
+$ ./mill example.short strs -abkey=value 
+Seq(true, key=value)
+```
+
 ## Annotations
 
 The library's annotations and methods support the following parameters to
@@ -307,7 +411,7 @@ customize your usage:
   `--foo`. Defaults to the name of the function parameter if not given
 
 - `short: Char`: lets you specify the short name of a CLI parameter, e.g. `-f`.
-  If not given, theargument can only be provided via its long name
+  If not given, the argument can only be provided via its long name
 
 - `doc: String`: a documentation string used to provide additional information
   about the command
