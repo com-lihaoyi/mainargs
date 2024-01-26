@@ -213,7 +213,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     autoPrintHelpAndExit,
     customNames,
     customDocs,
-    sorted
+    sorted,
+    Util.kebabCaseNameMapper
   )
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def runRaw(

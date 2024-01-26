@@ -54,5 +54,8 @@ object ParserTests extends TestSuite {
       classParser.constructEither(Array("--code", "println(1)")) ==>
         Right(ClassBase(code = Some("println(1)"), other = "hello"))
     }
+    test("simplerunOrExit") {
+      singleMethodParser.runOrExit(Array("-i", "2")) ==> "lolslols"
+    }
   }
 }
