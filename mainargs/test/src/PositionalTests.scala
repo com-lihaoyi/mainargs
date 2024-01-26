@@ -44,31 +44,7 @@ object PositionalTests extends TestSuite {
     )
     test - check(
       List("-x", "true", "-y", "false", "-z", "false"),
-      Result.Failure.MismatchedArguments(
-        Vector(
-          ArgSig(
-            None,
-            Some('y'),
-            None,
-            None,
-            TokensReader.BooleanRead,
-            positional = true,
-            hidden = false
-          ),
-          ArgSig(
-            None,
-            Some('z'),
-            None,
-            None,
-            TokensReader.BooleanRead,
-            positional = false,
-            hidden = false
-          )
-        ),
-        List("-y", "false", "-z", "false"),
-        List(),
-        None
-      )
+      Result.Failure.MismatchedArguments(List(), List("-y"), List(), None)
     )
   }
 }
