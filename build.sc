@@ -23,7 +23,7 @@ trait MainArgsPublishModule
 
   def publishVersion = VcsVersion.vcsState().format()
 
-  override def mimaPreviousVersions = Seq("0.5.0")
+  override def mimaPreviousVersions = Seq("0.6.0")
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
