@@ -122,6 +122,7 @@ object FlagTests extends TestSuite {
       )
 
       test - check(List("str", "-b=value", "-a"), Result.Success(List(true, "value")))
+      test - check(List("str", "-b=", "-a"), Result.Success(List(true, "")))
 
       test - check(List("str", "-ab=value"), Result.Success(List(true, "value")))
 

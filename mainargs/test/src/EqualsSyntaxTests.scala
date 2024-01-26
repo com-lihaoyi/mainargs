@@ -27,6 +27,11 @@ object EqualsSyntaxTests extends TestSuite {
       ParserForMethods(Main).runOrThrow(Array("--foo=bar=qux")) ==>
         "bar=quxbar=qux false"
     }
+    test("empty") {
+      // --foo= syntax sets `foo` to an empty string
+      ParserForMethods(Main).runOrThrow(Array("--foo=")) ==>
+        " false"
+    }
     test("shortName") {
       // -f=bar syntax does work for short names
       ParserForMethods(Main).runEither(Array("-f=bar")) ==>

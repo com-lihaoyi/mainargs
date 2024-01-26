@@ -72,16 +72,25 @@ object Main{
 ```
 
 ```bash
-$ ./mill example.hello -f hello
+$ ./mill example.hello -f hello # short name
 hellohello false
 
-$ ./mill example.hello -f hello --my-num 3
+$ ./mill example.hello --foo hello # long name
+hellohello false
+
+$ ./mill example.hello --foo=hello # gflags-style
+hellohello false
+
+$ ./mill example.hello --foo "" # set to empty value
+ false
+
+$ ./mill example.hello --foo= # gflags-style empty value
+ false
+
+$ ./mill example.hello -f hello --my-num 3 # numeric arguments
 hellohellohello false
 
-$ ./mill example.hello -f hello --my-num=3
-hellohellohello false
-
-$ ./mill example.hello -f hello --my-num 3 --bool
+$ ./mill example.hello -f hello --my-num 3 --bool # flags
 hellohellohello true
 
 $ ./mill example.hello --wrong-flag
@@ -300,7 +309,7 @@ of an argument can also be given explicitly via the `@arg(short = '...')`:
 ```scala
 object Base {
   @main
-  def bools(a: Flag, b: Boolean = false, c: Flag) = println(Seq(a.value, b, c.value))
+  def bools(a: Flag, b: Boolean = false) = println(Seq(a.value, b, c.value))
   
   @main
   def strs(a: Flag, b: String) = println(Seq(a.value, b))
@@ -312,31 +321,31 @@ a value like `-b` below:
 
 ```bash
 $ ./mill example.short bools -a
-Seq(true, false, false)
+Seq(true, false)
 
 $ ./mill example.short bools -b true
-Seq(false, true, false)
+Seq(false, true)
 ```
 
 Multiple short arguments can be combined into one `-ab` call:
 
 ```scala
 $ ./mill example.short bools -ab true
-Seq(true, true, false)
+Seq(true, true)
 ```
 
 Short arguments can be combined with their value:
 
 ```scala
 $ ./mill example.short bools -btrue
-Seq(false, true, false)
+Seq(false, true)
 ```
 
 And you can combine both multiple short arguments as well as the resulting value:
 
 ```scala
 $ ./mill example.short bools -abtrue
-Seq(true, true, false)
+Seq(true, true)
 ```
 
 Note that when multiple short arguments are combined, whether via `-ab true` or via `-abtrue`,
@@ -354,6 +363,12 @@ $ ./mill example.short strs -a -b=value
 Seq(true, value)
 ```
 
+You can use `-b=` as a shorthand to set the value of `b` to an empty string:
+
+```scala
+$ ./mill example.short strs -a -b= 
+Seq(true, )
+```
 
 If an `=` is present in the short argument group after subsequent character, all characters
 except the first are passed to the first short argument. This can be useful for concisely 
