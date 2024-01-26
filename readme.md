@@ -80,8 +80,8 @@ $ ./mill example.hello --foo "" # set to empty value
 $ ./mill example.hello --foo= # gflags-style empty value
  false
 
-$ ./mill example.hello -f hello --my-num 3 # numeric arguments
-hellohellohello false
+$ ./mill example.hello -f x --my-num 3 # camelCase automatically converted to kebab-case
+xxx false
 
 $ ./mill example.hello -f hello --my-num 3 --bool # flags
 hellohellohello true
