@@ -638,6 +638,9 @@ command-line friendly tool.
   CLI commands and flag names, with configurability by passing in custom
   `nameMappers` [#101](https://github.com/com-lihaoyi/mainargs/pull/101)
 
+- Allow short arguments and their values to be combined into a single token 
+  [#102](https://github.com/com-lihaoyi/mainargs/pull/102)
+
 ## 0.5.4
 
 - Remove unnecessary PPrint dependency
