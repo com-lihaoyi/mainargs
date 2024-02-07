@@ -112,12 +112,10 @@ object FlagTests extends TestSuite {
       test - check(
         List("bool", "-ab"),
         Result.Failure.MismatchedArguments(
+          Vector(new ArgSig(None, Some('b'), None, None, TokensReader.BooleanRead, false, false)),
+          List("-ab"),
           Nil,
-          Nil,
-          Nil,
-          Some(
-            new ArgSig(None, Some('b'), None, None, TokensReader.BooleanRead, false, false)
-          )
+          None
         )
       )
 
@@ -128,7 +126,7 @@ object FlagTests extends TestSuite {
 
       test - check(
         List("str", "-bvalue", "-akey=value"),
-        Result.Failure.MismatchedArguments(Nil, List("-k"), Nil, None)
+        Result.Failure.MismatchedArguments(Nil, List("-akey=value"), Nil, None)
       )
     }
 
