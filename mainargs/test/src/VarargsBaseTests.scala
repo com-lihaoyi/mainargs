@@ -113,5 +113,20 @@ trait VarargsBaseTests extends TestSuite {
             ) =>
       }
     }
+
+    test("failedCombinedShortArgsGoToLeftover"){
+      test - check(
+        List("mixedVariadic", "-f", "123", "abc", "xyz"),
+        Result.Success("123abcxyz")
+      )
+      test - check(
+        List("mixedVariadic", "-f123", "456", "abc", "xyz"),
+        Result.Success("123456abcxyz")
+      )
+      test - check(
+        List("mixedVariadic", "-f123", "-unknown", "456", "abc", "xyz"),
+        Result.Success("123-unknown456abcxyz")
+      )
+    }
   }
 }

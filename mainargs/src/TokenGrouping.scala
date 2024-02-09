@@ -57,7 +57,7 @@ object TokenGrouping {
       var rest2 = rest
       var i = 0
       var currentMap = current
-      var failure: Result.Failure = null
+      var failure = false
 
       while (i < chars.length) {
         val c = chars(i)
@@ -79,7 +79,7 @@ object TokenGrouping {
                   rest2 match {
                     case Nil =>
                       // If there is no next token, it is an error
-                      failure = Result.Failure.MismatchedArguments(incomplete = Some(a))
+                      failure = true
                     case next :: remaining =>
                       currentMap = Util.appendMap(currentMap, a, next)
                       rest2 = remaining
@@ -88,15 +88,14 @@ object TokenGrouping {
               case None =>
                 // If we encounter a character that is neither a short flag or a
                 // short argument, it is an error
-                failure = Result.Failure.MismatchedArguments(unknown = Seq("-" + c.toString))
+                failure = true
             }
             i = chars.length
         }
 
       }
 
-      if (failure != null) Left(failure)
-      else Right((rest2, currentMap))
+      if (failure) None else Some((rest2, currentMap))
     }
 
     def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
@@ -112,8 +111,8 @@ object TokenGrouping {
           // special handling for combined short args of the style "-xvf" or "-j10"
           if (head.startsWith("-") && head.lift(1).exists(c => c != '-')){
               parseCombinedShortTokens(current, head, rest) match{
-                case Left(failure) => failure
-                case Right((rest2, currentMap)) => rec(rest2, currentMap)
+                case None => complete(remaining, current)
+                case Some((rest2, currentMap)) => rec(rest2, currentMap)
             }
 
           } else if (head.startsWith("-") && head.exists(_ != '-')) {
