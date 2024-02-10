@@ -78,7 +78,7 @@ object mainargs extends Module {
 
   object js extends Cross[JSMainArgsModule](scalaVersions)
   trait JSMainArgsModule extends MainArgsPublishModule with ScalaJSModule {
-    def scalaJSVersion = "1.10.1"
+    def scalaJSVersion = "1.13.1"
     object test extends ScalaJSTests with CommonTestModule
   }
 
