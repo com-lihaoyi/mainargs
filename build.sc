@@ -8,7 +8,7 @@ import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
 val scala213 = "2.13.10"
-val scala3 = "3.1.3"
+val scala3 = "3.3.1"
 
 val osLib = "0.9.1"
 val acyclic = "0.3.9"
@@ -42,18 +42,22 @@ trait MainArgsPublishModule
     super.scalacOptions() ++
       Option.when(!isScala3(scalaVersion()))("-P:acyclic:force")
 
-  def scalacPluginIvyDeps =
+  def scalacPluginIvyDeps = T{
     super.scalacPluginIvyDeps() ++
-      Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
+    Agg(ivy"com.lihaoyi::unroll-plugin:0.1.3") ++
+    Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
+  }
 
   def compileIvyDeps =
     super.compileIvyDeps() ++
-      Agg.when(!isScala3(crossScalaVersion))(
-        ivy"com.lihaoyi:::acyclic:${acyclic}",
-        ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
-      )
+    Agg.when(!isScala3(crossScalaVersion))(
+      ivy"com.lihaoyi:::acyclic:${acyclic}",
+      ivy"org.scala-lang:scala-reflect:$crossScalaVersion",
+
+    )
 
   def ivyDeps = Agg(
+    ivy"com.lihaoyi::unroll-annotation:0.1.3",
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1",
   )
 }
@@ -80,7 +84,7 @@ object mainargs extends Module {
 
   object native extends Cross[NativeMainArgsModule](scalaVersions)
   trait NativeMainArgsModule extends MainArgsPublishModule with ScalaNativeModule {
-    def scalaNativeVersion = "0.4.7"
+    def scalaNativeVersion = "0.4.14"
     object test extends ScalaNativeTests with CommonTestModule
   }
 }
