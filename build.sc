@@ -44,7 +44,7 @@ trait MainArgsPublishModule
 
   def scalacPluginIvyDeps = T{
     super.scalacPluginIvyDeps() ++
-    Agg(ivy"com.lihaoyi::unroll-plugin:0.1.7") ++
+    Agg(ivy"com.lihaoyi::unroll-plugin:0.1.9") ++
     Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
   }
 
@@ -57,7 +57,7 @@ trait MainArgsPublishModule
     )
 
   def ivyDeps = Agg(
-    ivy"com.lihaoyi::unroll-annotation:0.1.7",
+    ivy"com.lihaoyi::unroll-annotation:0.1.9",
     ivy"org.scala-lang.modules::scala-collection-compat::2.8.1",
   )
 }
