@@ -11,7 +11,7 @@ object TokenGrouping {
       argSigs: Seq[(ArgSig, TokensReader.Terminal[_])],
       allowPositional: Boolean,
       allowRepeats: Boolean,
-      allowLeftover: Boolean,
+      allowLeftover: Boolean
   ): Result[TokenGrouping[B]] = {
     groupArgs(flatArgs0, argSigs, allowPositional, allowRepeats, allowLeftover, _ => None)
   }
@@ -39,20 +39,24 @@ object TokenGrouping {
       .toMap[String, ArgSig]
 
     lazy val shortArgMap: Map[Char, ArgSig] = argSigs
-      .collect{case (a, _) if !a.positional => a.shortName.map(_ -> a)}
+      .collect { case (a, _) if !a.positional => a.shortName.map(_ -> a) }
       .flatten
       .toMap[Char, ArgSig]
 
     lazy val shortFlagArgMap: Map[Char, ArgSig] = argSigs
-      .collect{case (a, r: TokensReader.Flag) if !a.positional => a.shortName.map(_ -> a)}
+      .collect { case (a, r: TokensReader.Flag) if !a.positional => a.shortName.map(_ -> a) }
       .flatten
       .toMap[Char, ArgSig]
 
-    lazy val longKeywordArgMap = makeKeywordArgMap(x => x.mappedName(nameMapper).map("--"+ _ ) ++ x.longName(Util.nullNameMapper).map("--" + _))
+    lazy val longKeywordArgMap = makeKeywordArgMap(x =>
+      x.mappedName(nameMapper).map("--" + _) ++ x.longName(Util.nullNameMapper).map("--" + _)
+    )
 
-    def parseCombinedShortTokens(current: Map[ArgSig, Vector[String]],
-                                 head: String,
-                                 rest: List[String]) = {
+    def parseCombinedShortTokens(
+        current: Map[ArgSig, Vector[String]],
+        head: String,
+        rest: List[String]
+    ) = {
       val chars = head.drop(1)
       var rest2 = rest
       var i = 0
@@ -98,7 +102,10 @@ object TokenGrouping {
       if (failure) None else Some((rest2, currentMap))
     }
 
-    def lookupArgMap(k: String, m: Map[String, ArgSig]): Option[(ArgSig, mainargs.TokensReader[_])] = {
+    def lookupArgMap(
+        k: String,
+        m: Map[String, ArgSig]
+    ): Option[(ArgSig, mainargs.TokensReader[_])] = {
       m.get(k).map(a => (a, a.reader))
     }
 
@@ -109,14 +116,14 @@ object TokenGrouping {
       remaining match {
         case head :: rest =>
           // special handling for combined short args of the style "-xvf" or "-j10"
-          if (head.startsWith("-") && head.lift(1).exists(c => c != '-')){
-              parseCombinedShortTokens(current, head, rest) match{
-                case None => complete(remaining, current)
-                case Some((rest2, currentMap)) => rec(rest2, currentMap)
+          if (head.startsWith("-") && head.lift(1).exists(c => c != '-')) {
+            parseCombinedShortTokens(current, head, rest) match {
+              case None => complete(remaining, current)
+              case Some((rest2, currentMap)) => rec(rest2, currentMap)
             }
 
           } else if (head.startsWith("-") && head.exists(_ != '-')) {
-            head.split("=", 2) match{
+            head.split("=", 2) match {
               case Array(first, second) =>
                 lookupArgMap(first, longKeywordArgMap) match {
                   case Some((cliArg, _: TokensReader.Simple[_])) =>
@@ -169,10 +176,10 @@ object TokenGrouping {
 
       val missing = argSigs.collect {
         case (a, r: TokensReader.Simple[_])
-          if !r.allowEmpty
-          && a.default.isEmpty
-          && !current.contains(a) =>
-            a
+            if !r.allowEmpty
+              && a.default.isEmpty
+              && !current.contains(a) =>
+          a
       }
 
       val unknown = if (allowLeftover) Nil else remaining
