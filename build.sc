@@ -10,7 +10,7 @@ val scala212 = "2.12.17"
 val scala213 = "2.13.10"
 val scala3 = "3.1.3"
 
-val osLib = "0.9.1"
+val osLib = "0.9.3"
 val acyclic = "0.3.10"
 
 val scalaVersions = List(scala212, scala213, scala3)
