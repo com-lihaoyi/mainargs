@@ -13,6 +13,11 @@ val scala3 = "3.1.3"
 val osLib = "0.9.3"
 val acyclic = "0.3.11"
 
+val githubOrg = "com-lihaoyi"
+val githubRepo = "mainargs"
+val projectUrl = s"https://github.com/${githubOrg}/${githubRepo}"
+val changelogUrl = s"${projectUrl}#changelog"
+
 val scalaVersions = List(scala212, scala213, scala3)
 
 trait MainArgsPublishModule
@@ -27,12 +32,16 @@ trait MainArgsPublishModule
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
+  def publishProperties = super.publishProperties() ++ Map(
+    "info.releaseNotesURL" -> changelogUrl
+  )
+
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
     organization = "com.lihaoyi",
-    url = "https://github.com/com-lihaoyi/mainargs",
+    url = projectUrl,
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("com-lihaoyi", "mainargs"),
+    versionControl = VersionControl.github(githubOrg, githubRepo),
     developers = Seq(
       Developer("lihaoyi", "Li Haoyi", "https://github.com/lihaoyi")
     )
