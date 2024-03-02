@@ -38,7 +38,7 @@ trait MainArgsPublishModule
 
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
-    organization = githubOrg,
+    organization = "com.lihaoyi",
     url = projectUrl,
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github(githubOrg, githubRepo),
