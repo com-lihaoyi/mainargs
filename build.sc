@@ -1,7 +1,7 @@
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
-import $ivy.`com.github.lolgab::mill-mima::0.0.23`
+import $ivy.`com.github.lolgab::mill-mima::0.1.0`
 import de.tobiasroeser.mill.vcs.version.VcsVersion
 
 import com.github.lolgab.mill.mima._
@@ -10,8 +10,13 @@ val scala212 = "2.12.17"
 val scala213 = "2.13.10"
 val scala3 = "3.3.1"
 
-val osLib = "0.9.1"
-val acyclic = "0.3.9"
+val osLib = "0.9.3"
+val acyclic = "0.3.11"
+
+val githubOrg = "com-lihaoyi"
+val githubRepo = "mainargs"
+val projectUrl = s"https://github.com/${githubOrg}/${githubRepo}"
+val changelogUrl = s"${projectUrl}#changelog"
 
 val scalaVersions = List(scala212, scala213, scala3)
 
@@ -27,12 +32,16 @@ trait MainArgsPublishModule
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
+  def publishProperties = super.publishProperties() ++ Map(
+    "info.releaseNotesURL" -> changelogUrl
+  )
+
   def pomSettings = PomSettings(
     description = "Main method argument parser for Scala",
     organization = "com.lihaoyi",
-    url = "https://github.com/com-lihaoyi/mainargs",
+    url = projectUrl,
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("com-lihaoyi", "mainargs"),
+    versionControl = VersionControl.github(githubOrg, githubRepo),
     developers = Seq(
       Developer("lihaoyi", "Li Haoyi", "https://github.com/lihaoyi")
     )
