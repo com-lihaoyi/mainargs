@@ -4,7 +4,7 @@ import acyclic.skipped
 
 import scala.language.experimental.macros
 import java.io.PrintStream
-import unroll.Unroll
+import scala.annotation.unroll
 object ParserForMethods extends ParserForMethodsCompanionVersionSpecific
 class ParserForMethods[B](val mains: MethodMains[B]) {
   def helpText(
@@ -12,8 +12,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean = false,
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      @Unroll sorted: Boolean = true,
-      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll sorted: Boolean = true,
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): String = {
     Renderer.formatMainMethods(
       mains.value,
@@ -66,7 +66,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Any = {
     runEither(
       args,
@@ -95,8 +95,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      @Unroll sorted: Boolean = false,
-      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll sorted: Boolean = false,
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
@@ -129,7 +129,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       args: Seq[String],
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false,
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Result[Any] = {
     runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
       case Left(err) => err
@@ -141,7 +141,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       args: Seq[String],
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false,
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[Result.Failure.Early, (MainData[_, B], Result[Any])] = {
     for (tuple <- Invoker.runMains(mains, args, allowPositional, allowRepeats, nameMapper)) yield {
       val (errMsg, res) = tuple
@@ -159,7 +159,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean = false,
       customName: String = null,
       customDoc: String = null,
-      @Unroll sorted: Boolean = true,
+      @unroll sorted: Boolean = true,
       nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): String = {
     Renderer.formatMainMethodSignature(
@@ -186,7 +186,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
       customDoc: String = null,
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): T = {
     constructEither(
       args,
@@ -218,7 +218,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
       customDoc: String = null,
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): T = {
     constructEither(
       args,
@@ -248,8 +248,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customName: String = null,
       customDoc: String = null,
-      @Unroll sorted: Boolean = true,
-      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll sorted: Boolean = true,
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, T] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
@@ -278,7 +278,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       args: Seq[String],
       allowPositional: Boolean = false,
       allowRepeats: Boolean = false,
-      @Unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      @unroll nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Result[T] = {
     Invoker.construct[T](this, args, allowPositional, allowRepeats, nameMapper)
   }
