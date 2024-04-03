@@ -625,6 +625,10 @@ command-line friendly tool.
 
 # Changelog
 
+## master
+
+- Fix usage of `ParserForClass` for `case class`es with more than 22 parameters in Scala 2.x
+
 ## 0.6.2
 
 - Make combine short args that fail to parse go through normal leftover-token code paths
