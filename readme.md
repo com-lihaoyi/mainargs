@@ -683,7 +683,7 @@ command-line friendly tool.
 - Update all dependencies to latest
 - Support for Scala Native on Scala 3
 
-## 0.2.4
+## 0.2.5
 
 - Backport of *Fix usage of `ParserForClass` for `case class`es with more than
   22 parameters with some default values in Scala 2.x (#123)* on top of 0.2.3
