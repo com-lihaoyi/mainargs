@@ -14,7 +14,7 @@ val scala31 = "3.1.1"
 val scala2Versions = List(scala212, scala213)
 
 val scalaJSVersions = for {
-  scalaV <- scala30 :: scala2Versions
+  scalaV <- scala2Versions
   scalaJSV <- Seq("1.5.1")
 } yield (scalaV, scalaJSV)
 
@@ -84,7 +84,7 @@ trait CommonTestModule extends ScalaModule with TestModule.Utest {
 
 
 object mainargs extends Module {
-  object jvm extends Cross[JvmMainArgsModule](scala30 :: scala2Versions: _*)
+  object jvm extends Cross[JvmMainArgsModule](scala2Versions: _*)
   class JvmMainArgsModule(val crossScalaVersion: String)
     extends Common with ScalaModule with MainArgsPublishModule {
     def platform = "jvm"
