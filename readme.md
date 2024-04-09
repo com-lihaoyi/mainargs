@@ -38,7 +38,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.6.32"
+ivy"com.lihaoyi::mainargs:0.6.3"
 ```
 
 ## Parsing Main Method Parameters
