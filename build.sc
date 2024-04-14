@@ -8,7 +8,7 @@ import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
 val scala213 = "2.13.10"
-val scala3 = "3.1.3"
+val scala3 = "3.3.1"
 
 val osLib = "0.9.3"
 val acyclic = "0.3.11"
@@ -83,13 +83,13 @@ object mainargs extends Module {
 
   object js extends Cross[JSMainArgsModule](scalaVersions)
   trait JSMainArgsModule extends MainArgsPublishModule with ScalaJSModule {
-    def scalaJSVersion = "1.10.1"
+    def scalaJSVersion = "1.12.0"
     object test extends ScalaJSTests with CommonTestModule
   }
 
   object native extends Cross[NativeMainArgsModule](scalaVersions)
   trait NativeMainArgsModule extends MainArgsPublishModule with ScalaNativeModule {
-    def scalaNativeVersion = "0.4.7"
+    def scalaNativeVersion = "0.4.0"
     object test extends ScalaNativeTests with CommonTestModule
   }
 }
