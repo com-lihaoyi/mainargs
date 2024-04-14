@@ -30,6 +30,10 @@ trait MainArgsPublishModule
 
   override def mimaPreviousVersions = Seq("0.6.0")
 
+  def mimaReportBinaryIssues() =
+    if (this.isInstanceOf[ScalaNativeModule] || this.isInstanceOf[ScalaJSModule]) T.command()
+    else super.mimaReportBinaryIssues()
+
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
   def publishProperties = super.publishProperties() ++ Map(
@@ -63,14 +67,14 @@ trait MainArgsPublishModule
       )
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
+    ivy"org.scala-lang.modules::scala-collection-compat::2.11.0"
   )
 }
 
 def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.1")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.3")
 }
 
 object mainargs extends Module {
