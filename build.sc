@@ -89,7 +89,7 @@ object mainargs extends Module {
 
   object native extends Cross[NativeMainArgsModule](scalaVersions)
   trait NativeMainArgsModule extends MainArgsPublishModule with ScalaNativeModule {
-    def scalaNativeVersion = "0.4.0"
+    def scalaNativeVersion = "0.5.0"
     object test extends ScalaNativeTests with CommonTestModule
   }
 }
