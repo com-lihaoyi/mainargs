@@ -625,6 +625,10 @@ command-line friendly tool.
 
 # Changelog
 
+## master
+
+- Support for Scala-Native 0.5.0
+
 ## 0.6.3
 
 - Fix usage of `ParserForClass` for `case class`es with more than 22 parameters in Scala 2.x

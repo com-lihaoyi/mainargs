@@ -8,7 +8,7 @@ import com.github.lolgab.mill.mima._
 
 val scala212 = "2.12.17"
 val scala213 = "2.13.10"
-val scala3 = "3.1.3"
+val scala3 = "3.3.1"
 
 val osLib = "0.9.3"
 val acyclic = "0.3.11"
@@ -29,6 +29,10 @@ trait MainArgsPublishModule
   def publishVersion = VcsVersion.vcsState().format()
 
   override def mimaPreviousVersions = Seq("0.6.0")
+
+  def mimaReportBinaryIssues() =
+    if (this.isInstanceOf[ScalaNativeModule] || this.isInstanceOf[ScalaJSModule]) T.command()
+    else super.mimaReportBinaryIssues()
 
   override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
 
@@ -63,14 +67,14 @@ trait MainArgsPublishModule
       )
 
   def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.8.1"
+    ivy"org.scala-lang.modules::scala-collection-compat::2.12.0"
   )
 }
 
 def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.1")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.3")
 }
 
 object mainargs extends Module {
@@ -83,13 +87,13 @@ object mainargs extends Module {
 
   object js extends Cross[JSMainArgsModule](scalaVersions)
   trait JSMainArgsModule extends MainArgsPublishModule with ScalaJSModule {
-    def scalaJSVersion = "1.10.1"
+    def scalaJSVersion = "1.12.0"
     object test extends ScalaJSTests with CommonTestModule
   }
 
   object native extends Cross[NativeMainArgsModule](scalaVersions)
   trait NativeMainArgsModule extends MainArgsPublishModule with ScalaNativeModule {
-    def scalaNativeVersion = "0.4.7"
+    def scalaNativeVersion = "0.5.0"
     object test extends ScalaNativeTests with CommonTestModule
   }
 }
