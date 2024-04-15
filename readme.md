@@ -1,4 +1,4 @@
-# mainargs 0.6.3
+# mainargs 0.7.0
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -38,7 +38,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.6.3"
+ivy"com.lihaoyi::mainargs:0.7.0"
 ```
 
 ## Parsing Main Method Parameters
@@ -625,9 +625,10 @@ command-line friendly tool.
 
 # Changelog
 
-## master
+## 0.7.0
 
 - Support for Scala-Native 0.5.0
+- Minimum version of Scala 3.x raised to 3.3.1
 
 ## 0.6.3
 
