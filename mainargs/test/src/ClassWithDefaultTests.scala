@@ -46,13 +46,13 @@ object ClassWithDefaultTests extends TestSuite {
     }
 
     test("nested") {
-      test("success"){
+      test("success") {
         mainParser.runOrThrow(Seq("-x", "1", "-y", "2", "--bool", "true")) ==> "1 2 true"
       }
-      test("default"){
+      test("default") {
         mainParser.runOrThrow(Seq("-x", "1", "-y", "2")) ==> "1 2 false"
       }
-      test("default2"){
+      test("default2") {
         mainParser.runOrThrow(Seq("-x", "0")) ==> "0 1 false"
       }
     }

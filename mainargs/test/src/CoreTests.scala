@@ -219,7 +219,15 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
     test("redundantParams") - check(
       List("qux", "1", "-i", "2"),
       MismatchedArguments(
-        missing = List(ArgSig(None, Some('i'), None, None, TokensReader.IntRead, positional = false, hidden = false)),
+        missing = List(ArgSig(
+          None,
+          Some('i'),
+          None,
+          None,
+          TokensReader.IntRead,
+          positional = false,
+          hidden = false
+        )),
         unknown = List("1", "-i", "2")
       )
     )
