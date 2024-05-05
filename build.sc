@@ -11,7 +11,7 @@ val scala213 = "2.13.10"
 val scala3 = "3.3.1"
 
 val osLib = "0.9.3"
-val acyclic = "0.3.11"
+val acyclic = "0.3.12"
 
 val githubOrg = "com-lihaoyi"
 val githubRepo = "mainargs"
