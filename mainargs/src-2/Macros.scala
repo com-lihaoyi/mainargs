@@ -98,7 +98,7 @@ class Macros(val c: Context) {
 
     val defaults = for ((arg0, i) <- flattenedArgLists.zipWithIndex) yield {
       val arg = TermName(c.freshName())
-      hasDefault(i) match{
+      hasDefault(i) match {
         case None => q"_root_.scala.None"
         case Some(defaultName) =>
           q"_root_.scala.Some[$curCls => ${arg0.info}](($arg: $curCls) => $arg.${newTermName(defaultName)}: ${arg0.info})"

@@ -5,7 +5,7 @@ object ConstantTests extends TestSuite {
 
   case class Injected()
   implicit def InjectedTokensReader: TokensReader.Constant[Injected] =
-    new TokensReader.Constant[Injected]{
+    new TokensReader.Constant[Injected] {
       def read() = Right(new Injected())
     }
   object Base {
