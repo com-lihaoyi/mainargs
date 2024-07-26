@@ -89,8 +89,11 @@ object Macros {
     val argSigs = Expr.ofList(argSigsExprs)
 
     val invokeRaw: Expr[(B, Seq[Any]) => T] = {
-      def callOf(args: Expr[Seq[Any]]) = call(method, '{ Seq( ${ args }) }).asExprOf[T]
-      '{ ((b: B, params: Seq[Any]) => ${ callOf('{ params }) }) }
+
+      def callOf(methodOwner: Expr[Any], args: Expr[Seq[Any]]) =
+        call(methodOwner, method, '{ Seq($args) }).asExprOf[T]
+
+      '{ (b: B, params: Seq[Any]) => ${ callOf('b, 'params) } }
     }
     '{ MainData.create[T, B](${ Expr(method.name) }, ${ mainAnnotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
   }
@@ -115,8 +118,9 @@ object Macros {
     *
     */
   private def call(using Quotes)(
-    method: quotes.reflect.Symbol,
-    argss: Expr[Seq[Seq[Any]]]
+      methodOwner: Expr[Any],
+      method: quotes.reflect.Symbol,
+      argss: Expr[Seq[Seq[Any]]]
   ): Expr[_] = {
     // Copy pasted from Cask.
     // https://github.com/com-lihaoyi/cask/blob/65b9c8e4fd528feb71575f6e5ef7b5e2e16abbd9/cask/src-3/cask/router/Macros.scala#L106
@@ -127,8 +131,6 @@ object Macros {
       report.throwError("At least one parameter list must be declared.", method.pos.get)
     }
 
-    val fct = Ref(method)
-
     val accesses: List[List[Term]] = for (i <- paramss.indices.toList) yield {
       for (j <- paramss(i).indices.toList) yield {
         val tpe = paramss(i)(j).tree.asInstanceOf[ValDef].tpt.tpe
@@ -137,12 +139,9 @@ object Macros {
       }
     }
 
-    val base = Apply(fct, accesses.head)
-    val application: Apply = accesses.tail.foldLeft(base)((lhs, args) => Apply(lhs, args))
-    val expr = application.asExpr
-    expr
+    methodOwner.asTerm.select(method).appliedToArgss(accesses).asExpr
   }
-
+    
 
   /** Lookup default values for a method's parameters. */
   private def getDefaultParams(using Quotes)(method: quotes.reflect.Symbol): Map[quotes.reflect.Symbol, Expr[Any]] = {
