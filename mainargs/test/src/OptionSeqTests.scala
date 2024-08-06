@@ -17,6 +17,9 @@ object OptionSeqTests extends TestSuite {
 
     @main
     def runInt(int: Int) = int
+
+    @main
+    def runOptionSeq(os: Option[Seq[Int]]) = os
   }
 
   val tests = Tests {
@@ -41,6 +44,24 @@ object OptionSeqTests extends TestSuite {
           Seq(123)
       }
     }
+
+    test("option seq") {
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runOptionSeq", "--os", "123")) ==>
+          Some(Seq(123))
+      }
+
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runOptionSeq", "--os", "123", "--os", "456")) ==>
+          Some(Seq(123, 456))
+      }
+
+      test {
+        ParserForMethods(Main).runOrThrow(Array("runOptionSeq")) ==>
+          None
+      }
+    }
+
     test("vec") {
       ParserForMethods(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
         Vector(123, 456)
