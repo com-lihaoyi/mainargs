@@ -49,6 +49,20 @@ object ClassTests extends TestSuite {
   implicit val cliParser: ParserForClass[Cli] = ParserForClass[Cli]
   implicit val compatParser: ParserForClass[Compat] = ParserForClass[Compat]
 
+  class PathWrap {
+    @main
+    case class Foo(x: Int = 23, y: Int = 47)
+
+    object Main {
+      @main
+      def run(bar: Bar, bool: Boolean = false) = {
+        s"${bar.w.value} ${bar.f.x} ${bar.f.y} ${bar.zzzz} $bool"
+      }
+    }
+
+    implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
+  }
+
   object Main {
     @main
     def run(bar: Bar, bool: Boolean = false) = {
@@ -204,6 +218,16 @@ object ClassTests extends TestSuite {
       }
       test("no-main-on-class") {
         cliParser.constructOrThrow(Seq("-d")) ==> Cli(Flag(true))
+      }
+      test("path-dependent-default") {
+        val p = new PathWrap
+        p.fooParser.constructOrThrow(Seq()) ==> p.Foo(23, 47)
+      }
+      test("path-dependent-default-method") {
+        val p = new PathWrap
+        ParserForMethods(p.Main).runOrThrow(
+          Seq("-x", "1", "-y", "2", "-z", "hello")
+        ) ==> "false 1 2 hello false"
       }
     }
   }
