@@ -67,6 +67,23 @@ object Macros {
     createMainData[T, B](method, mainAnnotation, method.paramSymss)
   }
 
+  private object VarargTypeRepr {
+    def unapply(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[quotes.reflect.TypeRepr] = {
+      import quotes.reflect.*
+      tpe match {
+        case AnnotatedType(AppliedType(_, Seq(arg)), x)
+          if x.tpe =:= defn.RepeatedAnnot.typeRef => Some(arg)
+        case _ => None
+      }
+    }
+  }
+
+  private object AsType {
+    def unapply(using Quotes)(tpe: quotes.reflect.TypeRepr): Some[Type[?]] = {
+      Some(tpe.asType)
+    }
+  }
+
   def createMainData[T: Type, B: Type](using Quotes)
                                       (method: quotes.reflect.Symbol,
                                        mainAnnotation: quotes.reflect.Term,
@@ -80,9 +97,12 @@ object Macros {
       val annotParam = paramAndAnnotParam._2
       val paramTree = param.tree.asInstanceOf[ValDef]
       val paramTpe = paramTree.tpt.tpe
+      val readerTpe = paramTpe match {
+        case VarargTypeRepr(AsType('[t])) => TypeRepr.of[Leftover[t]]
+        case _ => paramTpe
+      }
       val arg = annotParam.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{ new mainargs.arg() })
-      val paramType = paramTpe.asType
-      paramType match
+      readerTpe.asType match {
         case '[t] =>
           val defaultParam: Expr[Option[B => t]] = defaultParams.get(param) match {
             case Some('{ $v: `t`}) => '{ Some(((_: B) => $v)) }
@@ -108,12 +128,13 @@ object Macros {
             case None => '{ None }
           }
           val tokensReader = Expr.summon[mainargs.TokensReader[t]].getOrElse {
-            report.throwError(
-              s"No mainargs.ArgReader found for parameter ${param.name}",
-              param.pos.get
+            report.errorAndAbort(
+              s"No mainargs.TokensReader[${Type.show[t]}] found for parameter ${param.name} of method ${method.name} in ${method.owner.fullName}",
+              method.pos.getOrElse(Position.ofMacroExpansion)
             )
           }
           '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ tokensReader })) }
+      }
     }
     val argSigs = Expr.ofList(argSigsExprs)
 
@@ -160,15 +181,30 @@ object Macros {
       report.throwError("At least one parameter list must be declared.", method.pos.get)
     }
 
-    val accesses: List[List[Term]] = for (i <- paramss.indices.toList) yield {
-      for (j <- paramss(i).indices.toList) yield {
-        val tpe = paramss(i)(j).tree.asInstanceOf[ValDef].tpt.tpe
-        tpe.asType match
-          case '[t] => '{ $argss(${Expr(i)})(${Expr(j)}).asInstanceOf[t] }.asTerm
-      }
-    }
+    val methodType = methodOwner.asTerm.tpe.memberType(method)
 
-    methodOwner.asTerm.select(method).appliedToArgss(accesses).asExpr
+    def accesses(ref: Expr[Seq[Seq[Any]]]): List[List[Term]] =
+      for (i <- paramss.indices.toList) yield {
+        for (j <- paramss(i).indices.toList) yield {
+          val param = paramss(i)(j)
+          val tpe = methodType.memberType(param)
+          val untypedRef = '{ $ref(${Expr(i)})(${Expr(j)}) }
+          tpe match {
+            case VarargTypeRepr(AsType('[t])) =>
+              Typed(
+                '{ $untypedRef.asInstanceOf[Leftover[t]].value }.asTerm,
+                Inferred(AppliedType(defn.RepeatedParamClass.typeRef, List(TypeRepr.of[t])))
+              )
+            case _ => tpe.asType match
+              case '[t] => '{ $untypedRef.asInstanceOf[t] }.asTerm
+          }
+        }
+      }
+
+    '{
+      val argss1 = $argss
+      ${methodOwner.asTerm.select(method).appliedToArgss(accesses('argss1)).asExpr}
+    }
   }
 
   /** Lookup default values for a method's parameters. */

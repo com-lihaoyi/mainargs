@@ -9,7 +9,7 @@ object VarargsOldTests extends VarargsBaseTests {
 
     @main
     def mixedVariadic(@arg(short = 'f') first: Int, args: String*) =
-      first + args.mkString
+      first.toString + args.mkString
   }
 
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
