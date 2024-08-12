@@ -74,7 +74,7 @@ trait MainArgsPublishModule
 def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.3")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.4")
 }
 
 object mainargs extends Module {
