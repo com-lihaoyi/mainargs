@@ -12,9 +12,56 @@ object ClassTests extends TestSuite {
   @main
   case class Qux(moo: String, b: Bar)
 
+  case class Cli(@arg(short = 'd') debug: Flag)
+
+  @main
+  class Compat(
+      @arg(short = 'h') val home: String,
+      @arg(short = 's') val silent: Flag,
+      val leftoverArgs: Leftover[String]
+  ) {
+    override def equals(obj: Any): Boolean =
+      obj match {
+        case c: Compat =>
+          home == c.home && silent == c.silent && leftoverArgs == c.leftoverArgs
+        case _ => false
+      }
+  }
+  object Compat {
+    def apply(
+        home: String = "/home",
+        silent: Flag = Flag(),
+        leftoverArgs: Leftover[String] = Leftover()
+    ) = new Compat(home, silent, leftoverArgs)
+
+    @deprecated("bin-compat shim", "0.1.0")
+    private[mainargs] def apply(
+        home: String,
+        silent: Flag,
+        noDefaultPredef: Flag,
+        leftoverArgs: Leftover[String]
+    ) = new Compat(home, silent, leftoverArgs)
+  }
+
   implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
   implicit val barParser: ParserForClass[Bar] = ParserForClass[Bar]
   implicit val quxParser: ParserForClass[Qux] = ParserForClass[Qux]
+  implicit val cliParser: ParserForClass[Cli] = ParserForClass[Cli]
+  implicit val compatParser: ParserForClass[Compat] = ParserForClass[Compat]
+
+  class PathWrap {
+    @main
+    case class Foo(x: Int = 23, y: Int = 47)
+
+    object Main {
+      @main
+      def run(bar: Bar, bool: Boolean = false) = {
+        s"${bar.w.value} ${bar.f.x} ${bar.f.y} ${bar.zzzz} $bool"
+      }
+    }
+
+    implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
+  }
 
   object Main {
     @main
@@ -160,6 +207,28 @@ object ClassTests extends TestSuite {
       ParserForMethods(Main).runOrThrow(
         Seq("-x", "1", "-y", "2", "-z", "hello")
       ) ==> "false 1 2 hello false"
+    }
+    test("mill-compat") {
+      test("apply-overload-class") {
+        compatParser.constructOrThrow(Seq("foo")) ==> Compat(
+          home = "/home",
+          silent = Flag(false),
+          leftoverArgs = Leftover("foo")
+        )
+      }
+      test("no-main-on-class") {
+        cliParser.constructOrThrow(Seq("-d")) ==> Cli(Flag(true))
+      }
+      test("path-dependent-default") {
+        val p = new PathWrap
+        p.fooParser.constructOrThrow(Seq()) ==> p.Foo(23, 47)
+      }
+      test("path-dependent-default-method") {
+        val p = new PathWrap
+        ParserForMethods(p.Main).runOrThrow(
+          Seq("-x", "1", "-y", "2", "-z", "hello")
+        ) ==> "false 1 2 hello false"
+      }
     }
   }
 }

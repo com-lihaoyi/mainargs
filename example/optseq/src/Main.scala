@@ -1,5 +1,5 @@
 package example.optseq
-import mainargs.{main, arg, ParserForMethods, ArgReader}
+import mainargs.{main, arg, ParserForMethods, TokensReader}
 
 object Main {
   @main
