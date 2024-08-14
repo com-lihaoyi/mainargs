@@ -32,10 +32,7 @@ object Macros {
     val companionModuleType = typeSymbolOfB.companionModule.tree.asInstanceOf[ValDef].tpt.tpe.asType
     val companionModuleExpr = Ident(companionModule).asExpr
     val mainAnnotationInstance = typeSymbolOfB.getAnnotation(mainAnnotation).getOrElse {
-      report.throwError(
-        s"cannot find @main annotation on ${companionModule.name}",
-        typeSymbolOfB.pos.get
-      )
+      '{new mainargs.main()}.asTerm // construct a default if not found.
     }
     val ctor = typeSymbolOfB.primaryConstructor
     val ctorParams = ctor.paramSymss.flatten

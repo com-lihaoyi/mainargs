@@ -12,6 +12,8 @@ object ClassTests extends TestSuite {
   @main
   case class Qux(moo: String, b: Bar)
 
+  case class Cli(@arg(short = 'd') debug: Flag)
+
   @main
   class Compat(
       @arg(short = 'h') val home: String,
@@ -44,6 +46,7 @@ object ClassTests extends TestSuite {
   implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
   implicit val barParser: ParserForClass[Bar] = ParserForClass[Bar]
   implicit val quxParser: ParserForClass[Qux] = ParserForClass[Qux]
+  implicit val cliParser: ParserForClass[Cli] = ParserForClass[Cli]
   implicit val compatParser: ParserForClass[Compat] = ParserForClass[Compat]
 
   object Main {
@@ -198,6 +201,9 @@ object ClassTests extends TestSuite {
           silent = Flag(false),
           leftoverArgs = Leftover("foo")
         )
+      }
+      test("no-main-on-class") {
+        cliParser.constructOrThrow(Seq("-d")) ==> Cli(Flag(true))
       }
     }
   }
