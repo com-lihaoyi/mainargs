@@ -12,9 +12,39 @@ object ClassTests extends TestSuite {
   @main
   case class Qux(moo: String, b: Bar)
 
+  @main
+  class Compat(
+      @arg(short = 'h') val home: String,
+      @arg(short = 's') val silent: Flag,
+      val leftoverArgs: Leftover[String]
+  ) {
+    override def equals(obj: Any): Boolean =
+      obj match {
+        case c: Compat =>
+          home == c.home && silent == c.silent && leftoverArgs == c.leftoverArgs
+        case _ => false
+      }
+  }
+  object Compat {
+    def apply(
+        home: String = "/home",
+        silent: Flag = Flag(),
+        leftoverArgs: Leftover[String] = Leftover()
+    ) = new Compat(home, silent, leftoverArgs)
+
+    @deprecated("bin-compat shim", "0.1.0")
+    private[mainargs] def apply(
+        home: String,
+        silent: Flag,
+        noDefaultPredef: Flag,
+        leftoverArgs: Leftover[String]
+    ) = new Compat(home, silent, leftoverArgs)
+  }
+
   implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
   implicit val barParser: ParserForClass[Bar] = ParserForClass[Bar]
   implicit val quxParser: ParserForClass[Qux] = ParserForClass[Qux]
+  implicit val compatParser: ParserForClass[Compat] = ParserForClass[Compat]
 
   object Main {
     @main
@@ -160,6 +190,15 @@ object ClassTests extends TestSuite {
       ParserForMethods(Main).runOrThrow(
         Seq("-x", "1", "-y", "2", "-z", "hello")
       ) ==> "false 1 2 hello false"
+    }
+    test("mill-compat") {
+      test("apply-overload-class") {
+        compatParser.constructOrThrow(Seq("foo")) ==> Compat(
+          home = "/home",
+          silent = Flag(false),
+          leftoverArgs = Leftover("foo")
+        )
+      }
     }
   }
 }

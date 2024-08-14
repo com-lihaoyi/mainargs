@@ -37,7 +37,20 @@ object Macros {
         typeSymbolOfB.pos.get
       )
     }
-    val annotatedMethod = TypeRepr.of[B].typeSymbol.companionModule.memberMethod("apply").head
+    val ctor = typeSymbolOfB.primaryConstructor
+    val ctorParams = ctor.paramSymss.flatten
+    // try to match the apply method with the constructor parameters, this is a good heuristic
+    // for if the apply method is overloaded.
+    val annotatedMethod = typeSymbolOfB.companionModule.memberMethod("apply").filter(p =>
+      p.paramSymss.flatten.corresponds(ctorParams) { (p1, p2) =>
+        p1.name == p2.name
+      }
+    ).headOption.getOrElse {
+      report.errorAndAbort(
+        s"Cannot find apply method in companion object of ${typeReprOfB.show}",
+        typeSymbolOfB.companionModule.pos.getOrElse(Position.ofMacroExpansion)
+      )
+    }
     companionModuleType match
       case '[bCompanion] =>
         val mainData = createMainData[B, Any](
@@ -64,7 +77,7 @@ object Macros {
 
     import quotes.reflect.*
     val params = method.paramSymss.headOption.getOrElse(report.throwError("Multiple parameter lists not supported"))
-    val defaultParams = getDefaultParams(method)
+    val defaultParams = if (params.exists(_.flags.is(Flags.HasDefault))) getDefaultParams(method) else Map.empty
     val argSigsExprs = params.zip(annotatedParamsLists.flatten).map { paramAndAnnotParam =>
       val param = paramAndAnnotParam._1
       val annotParam = paramAndAnnotParam._2
@@ -76,6 +89,25 @@ object Macros {
         case '[t] =>
           val defaultParam: Expr[Option[B => t]] = defaultParams.get(param) match {
             case Some('{ $v: `t`}) => '{ Some(((_: B) => $v)) }
+            case Some(expr) =>
+              // this case will be activated when the found default parameter is not of type `t`
+              // In testing, this usually means that the wrong combination of method and default value was chosen.
+              val recoveredType = {
+                try
+                  expr.asExprOf[t]
+                catch {
+                  case err: Exception =>
+                    report.errorAndAbort(
+                      s"""Failed to convert default value for parameter ${param.name},
+                      |expected type: ${paramTpe.show},
+                      |but default value ${expr.show} is of type: ${expr.asTerm.tpe.widen.show}
+                      |while converting type caught an exception with message: ${err.getMessage}
+                      |There might be a bug in mainargs.""".stripMargin,
+                      param.pos.getOrElse(Position.ofMacroExpansion)
+                    )
+                }
+              }
+              '{ Some(((_: B) => $recoveredType)) }
             case None => '{ None }
           }
           val tokensReader = Expr.summon[mainargs.TokensReader[t]].getOrElse {
@@ -141,7 +173,6 @@ object Macros {
 
     methodOwner.asTerm.select(method).appliedToArgss(accesses).asExpr
   }
-    
 
   /** Lookup default values for a method's parameters. */
   private def getDefaultParams(using Quotes)(method: quotes.reflect.Symbol): Map[quotes.reflect.Symbol, Expr[Any]] = {
