@@ -131,6 +131,10 @@ object TokensReader {
     def shortName = "double"
     def read(strs: Seq[String]) = tryEither(strs.last.toDouble)
   }
+  implicit object BigDecimalRead extends Simple[BigDecimal] {
+    def shortName = "bigdecimal"
+    def read(strs: Seq[String]) = tryEither(BigDecimal(strs.last))
+  }
 
   implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.Leftover[mainargs.Leftover[T], T] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
