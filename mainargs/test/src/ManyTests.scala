@@ -17,7 +17,7 @@ object ManyTests extends TestSuite {
       k: Int,
       l: Boolean,
       m: Double,
-      n: BigDecimal,
+      n: BigDecimal
   )
 
   val parser = ParserForClass[Config]
