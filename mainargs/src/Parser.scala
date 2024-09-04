@@ -54,7 +54,9 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean = false,
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
-      customDocs: Map[String, String] = Map()
+      customDocs: Map[String, String] = Map(),
+      sorted: Boolean = true,
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Any = {
     runEither(
       args,
@@ -65,13 +67,41 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine,
       autoPrintHelpAndExit,
       customNames,
-      customDocs
+      customDocs,
+      sorted,
+      nameMapper
     ) match {
       case Left(msg) =>
         stderr.println(msg)
         Compat.exit(1)
       case Right(v) => v
     }
+  }
+
+  def runOrExit(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      stderr: PrintStream,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customNames: Map[String, String],
+      customDocs: Map[String, String]
+  ): Any = {
+    runOrExit(
+      args,
+      allowPositional,
+      allowRepeats,
+      stderr,
+      totalWidth,
+      printHelpOnExit,
+      docsOnNewLine,
+      autoPrintHelpAndExit,
+      customNames,
+      customDocs,
+    )
   }
 
   def runOrThrow(
@@ -135,7 +165,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit: Option[(Int, PrintStream)] = Some((0, System.out)),
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
-      sorted: Boolean = false,
+      sorted: Boolean = true,
       nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
