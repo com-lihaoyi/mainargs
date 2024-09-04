@@ -462,6 +462,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
     customName,
     customDoc,
     sorted,
+    Util.kebabCaseNameMapper
   )
   def constructEither(
       args: Seq[String],
