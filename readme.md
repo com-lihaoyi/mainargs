@@ -1,4 +1,4 @@
-# mainargs 0.7.2
+# mainargs 0.7.3
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -38,7 +38,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.7.2"
+ivy"com.lihaoyi::mainargs:0.7.3"
 ```
 
 ## Parsing Main Method Parameters
@@ -322,7 +322,6 @@ Seq(false, true)
 
 Multiple short arguments can be combined into one `-ab` call:
 
-```scala
 $ ./mill example.short bools -ab true
 Seq(true, true)
 ```
@@ -349,29 +348,30 @@ argument group is treated as a key-value pair with the remaining characters afte
 passed as the value to the first short argument:
 
 ```scala
-$ ./mill example.short strs -b=value 
+$ ./mill example.short strs -b=value
 Seq(false, value)
 
-$ ./mill example.short strs -a -b=value 
+$ ./mill example.short strs -a -b=value
 Seq(true, value)
 ```
 
 You can use `-b=` as a shorthand to set the value of `b` to an empty string:
 
 ```scala
-$ ./mill example.short strs -a -b= 
-Seq(true, )
+$ ./mill example.short strs -a -b=
+  Seq(true, )
 ```
 
 If an `=` is present in the short argument group after subsequent character, all characters
-except the first are passed to the first short argument. This can be useful for concisely 
+except the first are passed to the first short argument. This can be useful for concisely
 passing key-value pairs to a short argument:
 
 ```scala
-$ ./mill example.short strs -a -bkey=value 
+$ ./mill example.short strs -a -bkey=value
 Seq(true, key=value)
 ```
 
+```scala
 These can also be combined into a single token, with the first non-`Flag` short argument in the
 token consuming the subsequent characters as a string (unless the subsequent characters start with
 an `=`, which is skipped):
@@ -624,6 +624,11 @@ method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.7.3
+
+- Add missing `nameMapper` argument to `.runOrExit`, make `sort` param on `runEither` return
+  `true` for consistency with the docs [#155](https://github.com/com-lihaoyi/mainargs/pull/155)
 
 ## 0.7.2
 
