@@ -101,6 +101,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit,
       customNames,
       customDocs,
+      sorted = true,
+      Util.kebabCaseNameMapper
     )
   }
 
@@ -124,6 +126,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     autoPrintHelpAndExit,
     customNames,
     customDocs,
+    Util.kebabCaseNameMapper
   )
 
   def runOrThrow(
