@@ -101,6 +101,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       autoPrintHelpAndExit,
       customNames,
       customDocs,
+      sorted = true,
+      Util.kebabCaseNameMapper
     )
   }
 
@@ -124,6 +126,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     autoPrintHelpAndExit,
     customNames,
     customDocs,
+    Util.kebabCaseNameMapper
   )
 
   def runOrThrow(
@@ -462,6 +465,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
     customName,
     customDoc,
     sorted,
+    Util.kebabCaseNameMapper
   )
   def constructEither(
       args: Seq[String],
