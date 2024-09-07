@@ -15,7 +15,9 @@ object ManyTests extends TestSuite {
       i: Boolean,
       j: String,
       k: Int,
-      l: Boolean
+      l: Boolean,
+      m: Double,
+      n: BigDecimal
   )
 
   val parser = ParserForClass[Config]
@@ -46,7 +48,11 @@ object ManyTests extends TestSuite {
           "--k",
           "4",
           "--l",
-          "false"
+          "false",
+          "--m",
+          "5.50",
+          "--n",
+          "12345678901234567890.12345678901234567890"
         ),
         allowPositional = true
       )
@@ -73,7 +79,11 @@ object ManyTests extends TestSuite {
           "--k",
           "4",
           "--l",
-          "false"
+          "false",
+          "--m",
+          "5.50",
+          "--n",
+          "12345678901234567890.12345678901234567890"
         ),
         allowPositional = true
       )
@@ -115,7 +125,9 @@ object ManyTests extends TestSuite {
           "true",
           "J",
           "4",
-          "false"
+          "false",
+          "5.50",
+          "12345678901234567890.12345678901234567890"
         ),
         allowPositional = true
       )
