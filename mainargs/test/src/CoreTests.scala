@@ -15,7 +15,13 @@ object CoreBase {
       i: Int,
       @arg(doc = "Pass in a custom `s` to override it")
       s: String = "lols"
-  ) = s * i
+  )
+  = s * i
+  @main
+  def baz(
+      arg: Int,
+  ) = arg
+
   @main
   def ex() = throw MyException
 
@@ -45,6 +51,9 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
           |  Qux is a function that does stuff
           |    -i <int>
           |    -s <str>  Pass in a custom `s` to override it
+          |
+          |  baz
+          |    --arg <int>
           |
           |  ex
           |""".stripMargin
@@ -126,6 +135,25 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
                 Nil,
                 None
               ) =>
+        }
+        test("incomplete") {
+
+          test - assertMatch(check.parseInvoke(List("qux", "-s"))) {
+            case Result.Failure.MismatchedArguments(
+            Nil,
+            Nil,
+            Nil,
+            Some(_)
+            ) =>
+          }
+          test - assertMatch(check.parseInvoke(List("baz", "--arg"))) {
+            case Result.Failure.MismatchedArguments(
+            Nil,
+            Nil,
+            Nil,
+            Some(_)
+            ) =>
+          }
         }
       }
 
