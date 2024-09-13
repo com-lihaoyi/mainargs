@@ -1,4 +1,4 @@
-# mainargs 0.7.4
+# mainargs 0.7.5
 
 MainArgs is a small, dependency-free library for command line argument parsing
 in Scala.
@@ -38,7 +38,7 @@ in its scripts, as well as for command-line parsing for the
 # Usage
 
 ```scala
-ivy"com.lihaoyi::mainargs:0.7.4"
+ivy"com.lihaoyi::mainargs:0.7.5"
 ```
 
 ## Parsing Main Method Parameters
@@ -625,9 +625,14 @@ command-line friendly tool.
 
 # Changelog
 
+## 0.7.5
+
+- Fix reporting of incomplete short args [#162](https://github.com/com-lihaoyi/mainargs/pull/162)
+- Add BigDecimal TokensReader [#152](https://github.com/com-lihaoyi/mainargs/pull/152)
+
 ## 0.7.4
 
-- Fix issue with binary infinite recursion in binary compatibility forwarders [156](https://github.com/com-lihaoyi/mainargs/pull/156)
+- Fix issue with binary infinite recursion in binary compatibility forwarders [#156](https://github.com/com-lihaoyi/mainargs/pull/156)
 
 ## 0.7.3
 
