@@ -18,9 +18,7 @@ object CoreBase {
   )
   = s * i
   @main
-  def baz(
-      arg: Int,
-  ) = arg
+  def baz(arg: Int) = arg
 
   @main
   def ex() = throw MyException
