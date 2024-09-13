@@ -137,7 +137,8 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
               ) =>
         }
         test("incomplete") {
-
+          // Make sure both long args and short args properly report
+          // incomplete arguments as distinct from other mismatches
           test - assertMatch(check.parseInvoke(List("qux", "-s"))) {
             case Result.Failure.MismatchedArguments(
             Nil,
