@@ -48,7 +48,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
           |  qux
           |  Qux is a function that does stuff
           |    -i <int>
-          |    -s <str>  Pass in a custom `s` to override it
+          |    -s <str>     Pass in a custom `s` to override it
           |
           |  baz
           |    --arg <int>
@@ -63,26 +63,30 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
 
       assert(
         names ==
-          List("foo", "bar", "qux", "ex")
+          List("foo", "bar", "qux", "baz", "ex")
       )
       val evaledArgs = check.mains.value.map(_.flattenedArgSigs.map {
-        case (ArgSig(name, s, docs, None, parser, _, _), _) => (s, docs, None, parser)
+        case (ArgSig(name, s, docs, None, parser, _, _), _) => (name, s, docs, None, parser)
         case (ArgSig(name, s, docs, Some(default), parser, _, _), _) =>
-          (s, docs, Some(default(CoreBase)), parser)
+          (name, s, docs, Some(default(CoreBase)), parser)
       })
 
       assert(
         evaledArgs == List(
           List(),
-          List((Some('i'), None, None, TokensReader.IntRead)),
+          List((None, Some('i'), None, None, TokensReader.IntRead)),
           List(
-            (Some('i'), None, None, TokensReader.IntRead),
+            (None, Some('i'), None, None, TokensReader.IntRead),
             (
+              None,
               Some('s'),
               Some("Pass in a custom `s` to override it"),
               Some("lols"),
               TokensReader.StringRead
             )
+          ),
+          List(
+            (Some("arg"), None, None, None, TokensReader.IntRead),
           ),
           List()
         )
