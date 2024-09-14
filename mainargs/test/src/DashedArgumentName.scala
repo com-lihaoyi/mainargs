@@ -14,10 +14,16 @@ object DashedArgumentName extends TestSuite {
     def camelOptFor29Name(camelOptFor29Arg: Boolean) = camelOptFor29Arg
 
     @main(name = "camelOptFor29NameForce")
-    def camelOptFor29NameForce(@arg(name = "camelOptFor29ArgForce") camelOptFor29ArgForce: Boolean) = camelOptFor29ArgForce
+    def camelOptFor29NameForce(@arg(name =
+      "camelOptFor29ArgForce"
+    ) camelOptFor29ArgForce: Boolean) = camelOptFor29ArgForce
   }
   val check = new Checker(ParserForMethods(Base), allowPositional = true)
-  val snakeCaseCheck = new Checker(ParserForMethods(Base), allowPositional = true, nameMapper = Util.snakeCaseNameMapper)
+  val snakeCaseCheck = new Checker(
+    ParserForMethods(Base),
+    allowPositional = true,
+    nameMapper = Util.snakeCaseNameMapper
+  )
 
   val tests = Tests {
     test("backticked") {
@@ -61,7 +67,12 @@ object DashedArgumentName extends TestSuite {
       test("explicitMainNameMappedFails") - check(
         List("camel-opt-for-29-name-force", "--camel-opt-for-29-arg-force", "false"),
         Result.Failure.Early.UnableToFindSubcommand(
-          List("opt-for-18+name", "opt-for-29+name", "camel-opt-for-29-name", "camelOptFor29NameForce"),
+          List(
+            "opt-for-18+name",
+            "opt-for-29+name",
+            "camel-opt-for-29-name",
+            "camelOptFor29NameForce"
+          ),
           "camel-opt-for-29-name-force"
         )
       )
@@ -84,7 +95,6 @@ object DashedArgumentName extends TestSuite {
           List(),
           None
         )
-
       )
     }
     test("camelSnakeNameMapped") {

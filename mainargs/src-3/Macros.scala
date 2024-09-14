@@ -11,8 +11,9 @@ object Macros {
     val annotatedMethodsWithMainAnnotations = allMethods.flatMap { methodSymbol =>
       methodSymbol.getAnnotation(mainAnnotation).map(methodSymbol -> _)
     }.sortBy(_._1.pos.map(_.start))
-    val mainDatas = Expr.ofList(annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotationInstance) =>
-      createMainData[Any, B](annotatedMethod, mainAnnotationInstance)
+    val mainDatas = Expr.ofList(annotatedMethodsWithMainAnnotations.map {
+      (annotatedMethod, mainAnnotationInstance) =>
+        createMainData[Any, B](annotatedMethod, mainAnnotationInstance)
     })
 
     '{
@@ -26,13 +27,13 @@ object Macros {
     import quotes.reflect._
     val typeReprOfB = TypeRepr.of[B]
     val companionModule = typeReprOfB match {
-      case TypeRef(a,b) => TermRef(a,b)
+      case TypeRef(a, b) => TermRef(a, b)
     }
     val typeSymbolOfB = typeReprOfB.typeSymbol
     val companionModuleType = typeSymbolOfB.companionModule.tree.asInstanceOf[ValDef].tpt.tpe.asType
     val companionModuleExpr = Ident(companionModule).asExpr
     val mainAnnotationInstance = typeSymbolOfB.getAnnotation(mainAnnotation).getOrElse {
-      '{new mainargs.main()}.asTerm // construct a default if not found.
+      '{ new mainargs.main() }.asTerm // construct a default if not found.
     }
     val ctor = typeSymbolOfB.primaryConstructor
     val ctorParams = ctor.paramSymss.flatten
@@ -58,13 +59,13 @@ object Macros {
           // parameters, so use those for getting the annotations instead
           TypeRepr.of[B].typeSymbol.primaryConstructor.paramSymss
         )
-        val erasedMainData = '{$mainData.asInstanceOf[MainData[B, Any]]}
+        val erasedMainData = '{ $mainData.asInstanceOf[MainData[B, Any]] }
         '{ new ParserForClass[B]($erasedMainData, () => ${ Ident(companionModule).asExpr }) }
   }
 
-  def createMainData[T: Type, B: Type](using Quotes)
-                                      (method: quotes.reflect.Symbol,
-                                       mainAnnotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
+  def createMainData[T: Type, B: Type](using
+      Quotes
+  )(method: quotes.reflect.Symbol, mainAnnotation: quotes.reflect.Term): Expr[MainData[T, B]] = {
     createMainData[T, B](method, mainAnnotation, method.paramSymss)
   }
 
@@ -73,7 +74,7 @@ object Macros {
       import quotes.reflect.*
       tpe match {
         case AnnotatedType(AppliedType(_, Seq(arg)), x)
-          if x.tpe =:= defn.RepeatedAnnot.typeRef => Some(arg)
+            if x.tpe =:= defn.RepeatedAnnot.typeRef => Some(arg)
         case _ => None
       }
     }
@@ -85,14 +86,18 @@ object Macros {
     }
   }
 
-  def createMainData[T: Type, B: Type](using Quotes)
-                                      (method: quotes.reflect.Symbol,
-                                       mainAnnotation: quotes.reflect.Term,
-                                       annotatedParamsLists: List[List[quotes.reflect.Symbol]]): Expr[MainData[T, B]] = {
+  def createMainData[T: Type, B: Type](using Quotes)(
+      method: quotes.reflect.Symbol,
+      mainAnnotation: quotes.reflect.Term,
+      annotatedParamsLists: List[List[quotes.reflect.Symbol]]
+  ): Expr[MainData[T, B]] = {
 
     import quotes.reflect.*
-    val params = method.paramSymss.headOption.getOrElse(report.throwError("Multiple parameter lists not supported"))
-    val defaultParams = if (params.exists(_.flags.is(Flags.HasDefault))) getDefaultParams(method) else Map.empty
+    val params = method.paramSymss.headOption.getOrElse(
+      report.throwError("Multiple parameter lists not supported")
+    )
+    val defaultParams =
+      if (params.exists(_.flags.is(Flags.HasDefault))) getDefaultParams(method) else Map.empty
     val argSigsExprs = params.zip(annotatedParamsLists.flatten).map { paramAndAnnotParam =>
       val param = paramAndAnnotParam._1
       val annotParam = paramAndAnnotParam._2
@@ -102,7 +107,9 @@ object Macros {
         case VarargTypeRepr(AsType('[t])) => TypeRepr.of[Leftover[t]]
         case _ => paramTpe
       }
-      val arg = annotParam.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{ new mainargs.arg() })
+      val arg = annotParam.getAnnotation(argAnnotation).map(_.asExprOf[mainargs.arg]).getOrElse('{
+        new mainargs.arg()
+      })
       readerTpe.asType match {
         case '[t] =>
           def applyAndCast(f: Expr[Any] => Expr[Any], arg: Expr[B]): Expr[t] = {
@@ -117,10 +124,10 @@ object Macros {
                     case err: Exception =>
                       report.errorAndAbort(
                         s"""Failed to convert default value for parameter ${param.name},
-                        |expected type: ${paramTpe.show},
-                        |but default value ${expr.show} is of type: ${expr.asTerm.tpe.widen.show}
-                        |while converting type caught an exception with message: ${err.getMessage}
-                        |There might be a bug in mainargs.""".stripMargin,
+                           |expected type: ${paramTpe.show},
+                           |but default value ${expr.show} is of type: ${expr.asTerm.tpe.widen.show}
+                           |while converting type caught an exception with message: ${err.getMessage}
+                           |There might be a bug in mainargs.""".stripMargin,
                         param.pos.getOrElse(Position.ofMacroExpansion)
                       )
                 recoveredType
@@ -137,7 +144,10 @@ object Macros {
               method.pos.getOrElse(Position.ofMacroExpansion)
             )
           }
-          '{ (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using ${ tokensReader })) }
+          '{
+            (ArgSig.create[t, B](${ Expr(param.name) }, ${ arg }, ${ defaultParam })(using
+            ${ tokensReader }))
+          }
       }
     }
     val argSigs = Expr.ofList(argSigsExprs)
@@ -149,28 +159,35 @@ object Macros {
 
       '{ (b: B, params: Seq[Any]) => ${ callOf('b, 'params) } }
     }
-    '{ MainData.create[T, B](${ Expr(method.name) }, ${ mainAnnotation.asExprOf[mainargs.main] }, ${ argSigs }, ${ invokeRaw }) }
+    '{
+      MainData.create[T, B](
+        ${ Expr(method.name) },
+        ${ mainAnnotation.asExprOf[mainargs.main] },
+        ${ argSigs },
+        ${ invokeRaw }
+      )
+    }
   }
 
-  /** Call a method given by its symbol.
-    *
-    * E.g.
-    *
-    * assuming:
-    *
-    *   def foo(x: Int, y: String)(z: Int)
-    *
-    *   val argss: List[List[Any]] = ???
-    *
-    * then:
-    *
-    *   call(<symbol of foo>, '{argss})
-    *
-    * will expand to:
-    *
-    *   foo(argss(0)(0), argss(0)(1))(argss(1)(0))
-    *
-    */
+  /**
+   * Call a method given by its symbol.
+   *
+   * E.g.
+   *
+   * assuming:
+   *
+   *   def foo(x: Int, y: String)(z: Int)
+   *
+   *   val argss: List[List[Any]] = ???
+   *
+   * then:
+   *
+   *   call(<symbol of foo>, '{argss})
+   *
+   * will expand to:
+   *
+   *   foo(argss(0)(0), argss(0)(1))(argss(1)(0))
+   */
   private def call(using Quotes)(
       methodOwner: Expr[Any],
       method: quotes.reflect.Symbol,
@@ -195,7 +212,7 @@ object Macros {
       for (i <- params.indices.toList) yield {
         val param = params(i)
         val tpe = methodType.memberType(param)
-        val untypedRef = '{ $ref(${Expr(i)}) }
+        val untypedRef = '{ $ref(${ Expr(i) }) }
         tpe match {
           case VarargTypeRepr(AsType('[t])) =>
             Typed(
@@ -203,7 +220,7 @@ object Macros {
               Inferred(AppliedType(defn.RepeatedParamClass.typeRef, List(TypeRepr.of[t])))
             )
           case _ => tpe.asType match
-            case '[t] => '{ $untypedRef.asInstanceOf[t] }.asTerm
+              case '[t] => '{ $untypedRef.asInstanceOf[t] }.asTerm
         }
       }
 
@@ -211,7 +228,9 @@ object Macros {
   }
 
   /** Lookup default values for a method's parameters. */
-  private def getDefaultParams(using Quotes)(method: quotes.reflect.Symbol): Map[quotes.reflect.Symbol, Expr[Any] => Expr[Any]] = {
+  private def getDefaultParams(using
+      Quotes
+  )(method: quotes.reflect.Symbol): Map[quotes.reflect.Symbol, Expr[Any] => Expr[Any]] = {
     // Copy pasted from Cask.
     // https://github.com/com-lihaoyi/cask/blob/65b9c8e4fd528feb71575f6e5ef7b5e2e16abbd9/cask/src-3/cask/router/Macros.scala#L38
     import quotes.reflect._
@@ -224,7 +243,7 @@ object Macros {
 
     val idents = method.owner.tree.asInstanceOf[ClassDef].body
 
-    idents.foreach{
+    idents.foreach {
       case deff @ DefDef(Name(idx), _, _, _) =>
         val expr = (owner: Expr[Any]) => Select(owner.asTerm, deff.symbol).asExpr
         defaults += (params(idx.toInt - 1) -> expr)
