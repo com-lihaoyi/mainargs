@@ -114,7 +114,7 @@ trait VarargsBaseTests extends TestSuite {
       }
     }
 
-    test("failedCombinedShortArgsGoToLeftover"){
+    test("failedCombinedShortArgsGoToLeftover") {
       test - check(
         List("mixedVariadic", "-f", "123", "abc", "xyz"),
         Result.Success("123abcxyz")
