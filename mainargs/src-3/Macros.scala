@@ -72,8 +72,10 @@ object Macros {
     def unapply(using Quotes)(tpe: quotes.reflect.TypeRepr): Option[quotes.reflect.TypeRepr] = {
       import quotes.reflect.*
       tpe match {
-        case AnnotatedType(AppliedType(_, Seq(arg)), x)
+        case AnnotatedType(AppliedType(_, Seq(arg)), x) // Scala 3 repeated parameter
           if x.tpe =:= defn.RepeatedAnnot.typeRef => Some(arg)
+        case AppliedType(TypeRef(pre, "<repeated>"), Seq(arg)) // Scala 2 repeated parameter, can be read from Scala 3
+          if pre =:= defn.ScalaPackage.termRef => Some(arg)
         case _ => None
       }
     }
