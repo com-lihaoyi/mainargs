@@ -13,7 +13,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
       customDocs: Map[String, String],
-      sorted: Boolean): String = {
+      sorted: Boolean
+  ): String = {
     helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, Util.kebabCaseNameMapper)
   }
 
@@ -115,7 +116,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       docsOnNewLine: Boolean,
       autoPrintHelpAndExit: Option[(Int, PrintStream)],
       customNames: Map[String, String],
-      customDocs: Map[String, String],
+      customDocs: Map[String, String]
   ): Any = runOrThrow(
     args,
     allowPositional,
@@ -173,7 +174,14 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
   ): Either[String, Any] = {
     if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
       val (exitCode, outputStream) = autoPrintHelpAndExit.get
-      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper))
+      outputStream.println(helpText(
+        totalWidth,
+        docsOnNewLine,
+        customNames,
+        customDocs,
+        sorted,
+        nameMapper
+      ))
       Compat.exit(exitCode)
     } else runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
@@ -222,21 +230,19 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
     sorted = false
   )
 
-
-
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def runEither(
-                 args: Seq[String],
-                 allowPositional: Boolean,
-                 allowRepeats: Boolean,
-                 totalWidth: Int,
-                 printHelpOnExit: Boolean,
-                 docsOnNewLine: Boolean,
-                 autoPrintHelpAndExit: Option[(Int, PrintStream)],
-                 customNames: Map[String, String],
-                 customDocs: Map[String, String],
-                 sorted: Boolean
-               ): Either[String, Any] = runEither(
+      args: Seq[String],
+      allowPositional: Boolean,
+      allowRepeats: Boolean,
+      totalWidth: Int,
+      printHelpOnExit: Boolean,
+      docsOnNewLine: Boolean,
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+      sorted: Boolean
+  ): Either[String, Any] = runEither(
     args,
     allowPositional,
     allowRepeats,
@@ -253,9 +259,12 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
   def runRaw(
       args: Seq[String],
       allowPositional: Boolean,
-      allowRepeats: Boolean,
+      allowRepeats: Boolean
   ): Result[Any] = runRaw(
-    args, allowPositional, allowRepeats, Util.kebabCaseNameMapper
+    args,
+    allowPositional,
+    allowRepeats,
+    Util.kebabCaseNameMapper
   )
   def runRaw(
       args: Seq[String],
@@ -273,7 +282,7 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
   def runRaw0(
       args: Seq[String],
       allowPositional: Boolean,
-      allowRepeats: Boolean,
+      allowRepeats: Boolean
   ): Either[Result.Failure.Early, (MainData[_, B], Result[Any])] = runRaw0(
     args,
     allowPositional,
@@ -303,7 +312,9 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean,
       customName: String,
       customDoc: String,
-      sorted: Boolean): String = helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted, Util.kebabCaseNameMapper)
+      sorted: Boolean
+  ): String =
+    helpText(totalWidth, docsOnNewLine, customName, customDoc, sorted, Util.kebabCaseNameMapper)
 
   def helpText(
       totalWidth: Int = 100,
@@ -345,7 +356,8 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean,
       autoPrintHelpAndExit: Option[(Int, PrintStream)],
       customName: String,
-      customDoc: String): T = constructOrExit(
+      customDoc: String
+  ): T = constructOrExit(
     args,
     allowPositional,
     allowRepeats,
@@ -400,7 +412,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       docsOnNewLine: Boolean,
       autoPrintHelpAndExit: Option[(Int, PrintStream)],
       customName: String,
-      customDoc: String,
+      customDoc: String
   ): T = constructOrThrow(
     args,
     allowPositional,
@@ -453,7 +465,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
       autoPrintHelpAndExit: Option[(Int, PrintStream)],
       customName: String,
       customDoc: String,
-      sorted: Boolean,
+      sorted: Boolean
   ): Either[String, T] = constructEither(
     args,
     allowPositional,
@@ -532,7 +544,7 @@ class ParserForClass[T](val main: MainData[T, Any], val companion: () => Any)
   def constructRaw(
       args: Seq[String],
       allowPositional: Boolean,
-      allowRepeats: Boolean,
+      allowRepeats: Boolean
   ): Result[T] = constructRaw(
     args,
     allowPositional,

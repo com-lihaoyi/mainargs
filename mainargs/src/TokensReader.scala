@@ -22,6 +22,7 @@ object TokensReader {
   sealed trait Terminal[T] extends TokensReader[T]
 
   sealed trait ShortNamed[T] extends Terminal[T] {
+
     /**
      * The label that shows up in the CLI help message, e.g. the `bar` in
      * `--foo <bar>`
@@ -34,6 +35,7 @@ object TokensReader {
    * e.g. `--foo bar`
    */
   trait Simple[T] extends ShortNamed[T] {
+
     /**
      * Converts the given input tokens to a [[T]] or an error `String`.
      * The input is a `Seq` because input tokens can be passed more than once,
@@ -136,7 +138,8 @@ object TokensReader {
     def read(strs: Seq[String]) = tryEither(BigDecimal(strs.last))
   }
 
-  implicit def LeftoverRead[T: TokensReader.Simple]: TokensReader.Leftover[mainargs.Leftover[T], T] =
+  implicit def LeftoverRead[T: TokensReader.Simple]
+      : TokensReader.Leftover[mainargs.Leftover[T], T] =
     new LeftoverRead[T]()(implicitly[TokensReader.Simple[T]])
 
   class LeftoverRead[T](implicit wrapped: TokensReader.Simple[T])
@@ -144,7 +147,7 @@ object TokensReader {
     def read(strs: Seq[String]) = {
       val (failures, successes) = strs
         .map(s =>
-          implicitly[TokensReader[T]] match{
+          implicitly[TokensReader[T]] match {
             case r: TokensReader.Simple[T] => r.read(Seq(s))
             case r: TokensReader.Leftover[T, _] => r.read(Seq(s))
           }
@@ -225,8 +228,9 @@ object TokensReader {
 }
 
 object ArgSig {
-  def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])
-                  (implicit tokensReader: TokensReader[T]): ArgSig = {
+  def create[T, B](name0: String, arg: mainargs.arg, defaultOpt: Option[B => T])(implicit
+      tokensReader: TokensReader[T]
+  ): ArgSig = {
     val shortOpt = arg.short match {
       case '\u0000' => if (name0.length != 1 || arg.noDefaultName) None else Some(name0(0));
       case c => Some(c)
@@ -251,13 +255,15 @@ object ArgSig {
   }
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def apply(unMappedName: Option[String],
-            shortName: Option[Char],
-            doc: Option[String],
-            default: Option[Any => Any],
-            reader: TokensReader[_],
-            positional: Boolean,
-            hidden: Boolean) = {
+  def apply(
+      unMappedName: Option[String],
+      shortName: Option[Char],
+      doc: Option[String],
+      default: Option[Any => Any],
+      reader: TokensReader[_],
+      positional: Boolean,
+      hidden: Boolean
+  ) = {
 
     new ArgSig(unMappedName, unMappedName, shortName, doc, default, reader, positional, hidden)
   }
@@ -273,15 +279,16 @@ object ArgSig {
  * (just for logging and reading, not a replacement for a `TypeTag`) and
  * possible a function that can compute its default value
  */
-class ArgSig private[mainargs] (val defaultLongName: Option[String],
-                                val argName: Option[String],
-                                val shortName: Option[Char],
-                                val doc: Option[String],
-                                val default: Option[Any => Any],
-                                val reader: TokensReader[_],
-                                val positional: Boolean,
-                                val hidden: Boolean
-) extends Product with Serializable with Equals{
+class ArgSig private[mainargs] (
+    val defaultLongName: Option[String],
+    val argName: Option[String],
+    val shortName: Option[Char],
+    val doc: Option[String],
+    val default: Option[Any => Any],
+    val reader: TokensReader[_],
+    val positional: Boolean,
+    val hidden: Boolean
+) extends Product with Serializable with Equals {
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def name = defaultLongName
   override def canEqual(that: Any): Boolean = true
@@ -293,31 +300,35 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
   }
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def this(unmappedName: Option[String],
-           shortName: Option[Char],
-           doc: Option[String],
-           default: Option[Any => Any],
-           reader: TokensReader[_],
-           positional: Boolean,
-           hidden: Boolean) = {
+  def this(
+      unmappedName: Option[String],
+      shortName: Option[Char],
+      doc: Option[String],
+      default: Option[Any => Any],
+      reader: TokensReader[_],
+      positional: Boolean,
+      hidden: Boolean
+  ) = {
     this(unmappedName, unmappedName, shortName, doc, default, reader, positional, hidden)
   }
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def copy(unMappedName: Option[String] = this.unMappedName,
-           shortName: Option[Char] = this.shortName,
-           doc: Option[String] = this.doc,
-           default: Option[Any => Any] = this.default,
-           reader: TokensReader[_] = this.reader,
-           positional: Boolean = this.positional,
-           hidden: Boolean = this.hidden) = {
+  def copy(
+      unMappedName: Option[String] = this.unMappedName,
+      shortName: Option[Char] = this.shortName,
+      doc: Option[String] = this.doc,
+      default: Option[Any => Any] = this.default,
+      reader: TokensReader[_] = this.reader,
+      positional: Boolean = this.positional,
+      hidden: Boolean = this.hidden
+  ) = {
     ArgSig(unMappedName, shortName, doc, default, reader, positional, hidden)
   }
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productArity = 9
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def productElement(n: Int) = n match{
+  def productElement(n: Int) = n match {
     case 0 => defaultLongName
     case 1 => argName
     case 2 => shortName
@@ -329,11 +340,11 @@ class ArgSig private[mainargs] (val defaultLongName: Option[String],
   }
 
   def unMappedName: Option[String] = argName.orElse(defaultLongName)
-  def longName(nameMapper: String => Option[String]): Option[String] = argName.orElse(mappedName(nameMapper)).orElse(defaultLongName)
+  def longName(nameMapper: String => Option[String]): Option[String] =
+    argName.orElse(mappedName(nameMapper)).orElse(defaultLongName)
   def mappedName(nameMapper: String => Option[String]): Option[String] =
     if (argName.isDefined) None else defaultLongName.flatMap(nameMapper)
 }
-
 
 case class MethodMains[B](value: Seq[MainData[Any, B]], base: () => B)
 
@@ -352,13 +363,13 @@ class MainData[T, B] private[mainargs] (
     val argSigs0: Seq[ArgSig],
     val doc: Option[String],
     val invokeRaw: (B, Seq[Any]) => T
-) extends Product with Serializable with Equals{
+) extends Product with Serializable with Equals {
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def name = mainName.getOrElse(defaultName)
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   def productArity = 5
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def productElement(n: Int) = n match{
+  def productElement(n: Int) = n match {
     case 0 => mainName
     case 1 => defaultName
     case 2 => argSigs0
@@ -366,24 +377,35 @@ class MainData[T, B] private[mainargs] (
     case 4 => invokeRaw
   }
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def copy(name: String = this.unmappedName,
-           argSigs0: Seq[ArgSig] = this.argSigs0,
-           doc: Option[String] = this.doc,
-           invokeRaw: (B, Seq[Any]) => T = this.invokeRaw) = MainData(
-    name, argSigs0, doc, invokeRaw
+  def copy(
+      name: String = this.unmappedName,
+      argSigs0: Seq[ArgSig] = this.argSigs0,
+      doc: Option[String] = this.doc,
+      invokeRaw: (B, Seq[Any]) => T = this.invokeRaw
+  ) = MainData(
+    name,
+    argSigs0,
+    doc,
+    invokeRaw
   )
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def this(name: String,
-           argSigs0: Seq[ArgSig],
-           doc: Option[String],
-           invokeRaw: (B, Seq[Any]) => T) = this(
-    Some(name), name, argSigs0, doc, invokeRaw
+  def this(
+      name: String,
+      argSigs0: Seq[ArgSig],
+      doc: Option[String],
+      invokeRaw: (B, Seq[Any]) => T
+  ) = this(
+    Some(name),
+    name,
+    argSigs0,
+    doc,
+    invokeRaw
   )
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
   override def hashCode(): Int = MainData.unapply(this).hashCode()
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  override def equals(obj: Any): Boolean = obj match{
+  override def equals(obj: Any): Boolean = obj match {
     case x: MainData[_, _] => MainData.unapply(x) == MainData.unapply(this)
     case _ => false
   }
@@ -393,7 +415,8 @@ class MainData[T, B] private[mainargs] (
 
   def unmappedName: String = mainName.getOrElse(defaultName)
 
-  def name(nameMapper: String => Option[String]) = mainName.orElse(mappedName(nameMapper)).getOrElse(defaultName)
+  def name(nameMapper: String => Option[String]) =
+    mainName.orElse(mappedName(nameMapper)).getOrElse(defaultName)
   def mappedName(nameMapper: String => Option[String]): Option[String] =
     if (mainName.isDefined) None
     else nameMapper(defaultName)
@@ -402,17 +425,20 @@ class MainData[T, B] private[mainargs] (
     argSigs0.iterator.flatMap[(ArgSig, TokensReader.Terminal[_])](ArgSig.flatten(_)).toVector
 
   val renderedArgSigs: Seq[ArgSig] =
-    flattenedArgSigs.collect{case (a, r) if !a.hidden && !r.isConstant => a}
+    flattenedArgSigs.collect { case (a, r) if !a.hidden && !r.isConstant => a }
 }
 
 object MainData {
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def unapply[T, B](x: MainData[T, B]) = Option((x.mainName, x.defaultName, x.argSigs0, x.doc, x.invokeRaw))
+  def unapply[T, B](x: MainData[T, B]) =
+    Option((x.mainName, x.defaultName, x.argSigs0, x.doc, x.invokeRaw))
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
-  def apply[T, B](name: String,
-                  argSigs0: Seq[ArgSig],
-                  doc: Option[String],
-                  invokeRaw: (B, Seq[Any]) => T) = {
+  def apply[T, B](
+      name: String,
+      argSigs0: Seq[ArgSig],
+      doc: Option[String],
+      invokeRaw: (B, Seq[Any]) => T
+  ) = {
     new MainData(Some(name), name, argSigs0, doc, invokeRaw)
   }
   def create[T, B](

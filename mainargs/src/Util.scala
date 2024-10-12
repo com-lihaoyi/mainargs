@@ -21,7 +21,7 @@ object Util {
     var state = ' '
 
     for (c <- s) {
-      if (c.isDigit){
+      if (c.isDigit) {
         if (state == 'L' || state == 'U') chars.append(sep)
         chars.append(c)
         state = 'D'
@@ -29,7 +29,7 @@ object Util {
         if (state == 'L' || state == 'D') chars.append(sep)
         chars.append(c.toLower)
         state = 'U'
-      } else if (c.isLower){
+      } else if (c.isLower) {
         chars.append(c)
         state = 'L'
       } else {
