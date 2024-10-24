@@ -1,3 +1,4 @@
+package build
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
 import mill.scalalib.api.ZincWorkerUtil.isScala3
 import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
