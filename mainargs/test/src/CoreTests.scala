@@ -15,8 +15,7 @@ object CoreBase {
       i: Int,
       @arg(doc = "Pass in a custom `s` to override it")
       s: String = "lols"
-  )
-  = s * i
+  ) = s * i
   @main
   def baz(arg: Int) = arg
 
@@ -86,7 +85,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
             )
           ),
           List(
-            (Some("arg"), None, None, None, TokensReader.IntRead),
+            (Some("arg"), None, None, None, TokensReader.IntRead)
           ),
           List()
         )
@@ -143,19 +142,19 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
           // incomplete arguments as distinct from other mismatches
           test - assertMatch(check.parseInvoke(List("qux", "-s"))) {
             case Result.Failure.MismatchedArguments(
-            Nil,
-            Nil,
-            Nil,
-            Some(_)
-            ) =>
+                  Nil,
+                  Nil,
+                  Nil,
+                  Some(_)
+                ) =>
           }
           test - assertMatch(check.parseInvoke(List("baz", "--arg"))) {
             case Result.Failure.MismatchedArguments(
-            Nil,
-            Nil,
-            Nil,
-            Some(_)
-            ) =>
+                  Nil,
+                  Nil,
+                  Nil,
+                  Some(_)
+                ) =>
           }
         }
       }
@@ -250,7 +249,15 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
     test("redundantParams") - check(
       List("qux", "1", "-i", "2"),
       MismatchedArguments(
-        missing = List(ArgSig(None, Some('i'), None, None, TokensReader.IntRead, positional = false, hidden = false)),
+        missing = List(ArgSig(
+          None,
+          Some('i'),
+          None,
+          None,
+          TokensReader.IntRead,
+          positional = false,
+          hidden = false
+        )),
         unknown = List("1", "-i", "2")
       )
     )

@@ -37,7 +37,7 @@ object FlagTests extends TestSuite {
       Result.Success(Seq(true, false, true))
     )
 
-    test("combined"){
+    test("combined") {
       test - check(
         List("bool", "-bfalse"),
         Result.Success(List(false, false, false))
@@ -101,7 +101,15 @@ object FlagTests extends TestSuite {
         Result.Failure.InvalidArguments(
           List(
             Result.ParamError.Failed(
-              new ArgSig(None, Some('b'), None, None, mainargs.TokensReader.BooleanRead, false, false),
+              new ArgSig(
+                None,
+                Some('b'),
+                None,
+                None,
+                mainargs.TokensReader.BooleanRead,
+                false,
+                false
+              ),
               Vector("a"),
               "java.lang.IllegalArgumentException: For input string: \"a\""
             )
