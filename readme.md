@@ -106,7 +106,7 @@ dispatch:
 ### runOrExit
 
 Runs the given main method if argument parsing succeeds, otherwise prints out
-the help text to standard error and calls `System.exit(1)` to exit the proess
+the help text to standard error and calls `System.exit(1)` to exit the process
 
 ### runOrThrow
 
@@ -393,7 +393,7 @@ customize your usage:
 
 - `name: String`: lets you specify the top-level name of `@main` method you are
   defining. If multiple `@main` methods are provided, this name controls the
-  sub-command name in the CLI. If an explicit `name` not passed, both the
+  sub-command name in the CLI. If an explicit `name` is not passed, both the
   (typically) `camelCase` name of the Scala `def` as well as its `kebab-case` 
   equivalents will be accepted
 
@@ -403,7 +403,7 @@ customize your usage:
 ### @arg
 
 - `name: String`: lets you specify the long name of a CLI parameter, e.g.
-  `--foo`. If an explicit `name` not passed, both the (typically) `camelCase`
+  `--foo`. If an explicit `name` is not passed, both the (typically) `camelCase`
   name of the Scala method parameter as well as its `kebab-case`
   equivalents will be accepted
 
