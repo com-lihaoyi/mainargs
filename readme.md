@@ -413,6 +413,9 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
+- `positional: Boolean`: if `true` this arg can be passed "positionally" without
+  the `--name` of the parameter being provided, e.g. `./mill example.hello hello 3 --bool`. Defaults to `false`
+
 - `hidden: Boolean`: if `true` this arg will not be included in the rendered help text.
 
 ## Customization
