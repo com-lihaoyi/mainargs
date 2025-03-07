@@ -413,6 +413,8 @@ customize your usage:
 - `doc: String`: a documentation string used to provide additional information
   about the command
 
+- `noDefaultName: Boolean`: if `true` this arg (e.g `fooBar`) can only be called by its mangled name `--foo-bar` and not by the original name `--fooBar`. Defaults to `false`
+
 - `positional: Boolean`: if `true` this arg can be passed "positionally" without
   the `--name` of the parameter being provided, e.g. `./mill example.hello hello 3 --bool`. Defaults to `false`
 
