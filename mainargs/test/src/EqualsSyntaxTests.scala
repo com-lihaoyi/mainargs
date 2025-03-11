@@ -40,13 +40,13 @@ object EqualsSyntaxTests extends TestSuite {
     test("notFlags") {
       // -f=bar syntax doesn't work for flags
       ParserForMethods(Main).runEither(Array("--foo=bar", "--bool=true")) ==>
-         Left("""Unknown argument: "--bool=true"
-                |Expected Signature: run
-                |  --bool          Example flag
-                |  -f --foo <str>  String to print repeatedly
-                |  --my-num <int>  How many times to print string
-                |
-                |""".stripMargin)
+        Left("""Unknown argument: "--bool=true"
+               |Expected Signature: run
+               |  --bool          Example flag
+               |  -f --foo <str>  String to print repeatedly
+               |  --my-num <int>  How many times to print string
+               |
+               |""".stripMargin)
     }
   }
 }
