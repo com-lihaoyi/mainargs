@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['8', '17']
+        java: ['11', '17']
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,6 +33,6 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: 8
+          java-version: 11
       - name: Check Binary Compatibility
         run: ./mill -i -k __.mimaReportBinaryIssues
