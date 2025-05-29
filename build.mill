@@ -1,9 +1,10 @@
+//| mill-version: 1.0.0-RC1
+//| mvnDeps:
+//| - com.github.lolgab::mill-mima_mill1.0.0-RC1:0.2.0-M1
+
 package build
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
-import mill.scalalib.api.ZincWorkerUtil.isScala3
-import $ivy.`de.tototec::de.tobiasroeser.mill.vcs.version::0.4.0`
-import $ivy.`com.github.lolgab::mill-mima::0.1.1`
-import de.tobiasroeser.mill.vcs.version.VcsVersion
+import mill.main.VcsVersion
 
 import com.github.lolgab.mill.mima._
 
@@ -32,10 +33,10 @@ trait MainArgsPublishModule
   override def mimaPreviousVersions = Seq("0.6.0")
 
   def mimaReportBinaryIssues() =
-    if (this.isInstanceOf[ScalaNativeModule] || this.isInstanceOf[ScalaJSModule]) T.command()
+    if (this.isInstanceOf[ScalaNativeModule] || this.isInstanceOf[ScalaJSModule]) Task.Command{}
     else super.mimaReportBinaryIssues()
 
-  override def versionScheme: T[Option[VersionScheme]] = T(Some(VersionScheme.EarlySemVer))
+  override def versionScheme: T[Option[VersionScheme]] = Task{ Some(VersionScheme.EarlySemVer) }
 
   def publishProperties = super.publishProperties() ++ Map(
     "info.releaseNotesURL" -> changelogUrl
@@ -54,35 +55,35 @@ trait MainArgsPublishModule
 
   def scalacOptions =
     super.scalacOptions() ++
-      Option.when(!isScala3(scalaVersion()))("-P:acyclic:force")
+      Option.when(!scalaVersion().startsWith("3."))("-P:acyclic:force")
 
-  def scalacPluginIvyDeps =
-    super.scalacPluginIvyDeps() ++
-      Option.when(!isScala3(scalaVersion()))(ivy"com.lihaoyi:::acyclic:${acyclic}")
+  def scalacPluginMvnDeps =
+    super.scalacPluginMvnDeps() ++
+      Option.when(!scalaVersion().startsWith("3."))(mvn"com.lihaoyi:::acyclic:${acyclic}")
 
-  def compileIvyDeps =
-    super.compileIvyDeps() ++
-      Agg.when(!isScala3(crossScalaVersion))(
-        ivy"com.lihaoyi:::acyclic:${acyclic}",
-        ivy"org.scala-lang:scala-reflect:$crossScalaVersion"
-      )
+  def compileMvnDeps =
+    super.compileMvnDeps() ++
+      Seq(
+        mvn"com.lihaoyi:::acyclic:${acyclic}",
+        mvn"org.scala-lang:scala-reflect:$crossScalaVersion"
+      ).filter(_ => !scalaVersion().startsWith("3."))
 
-  def ivyDeps = Agg(
-    ivy"org.scala-lang.modules::scala-collection-compat::2.12.0"
+  def mvnDeps = Agg(
+    mvn"org.scala-lang.modules::scala-collection-compat::2.12.0"
   )
 }
 
-def scalaMajor(scalaVersion: String) = if (isScala3(scalaVersion)) "3" else "2"
+def scalaMajor(scalaVersion: String) = if (scalaVersion.startsWith("3.")) "3" else "2"
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.8.3")
+  def mvnDeps = Agg(mvn"com.lihaoyi::utest::0.8.3")
 }
 
 object mainargs extends Module {
   object jvm extends Cross[JvmMainArgsModule](scalaVersions)
   trait JvmMainArgsModule extends MainArgsPublishModule {
     object test extends ScalaTests with CommonTestModule {
-      def ivyDeps = super.ivyDeps() ++ Agg(ivy"com.lihaoyi::os-lib:${osLib}")
+      def mvnDeps = super.mvnDeps() ++ Agg(mvn"com.lihaoyi::os-lib:${osLib}")
     }
   }
 
@@ -112,7 +113,7 @@ object example extends Module {
   object optseq extends ExampleModule
 
   object custom extends ExampleModule {
-    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib:${osLib}")
+    def mvnDeps = Agg(mvn"com.lihaoyi::os-lib:${osLib}")
   }
   object vararg extends ExampleModule
   object vararg2 extends ExampleModule
