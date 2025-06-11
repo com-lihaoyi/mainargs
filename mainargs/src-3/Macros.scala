@@ -93,7 +93,9 @@ object Macros {
                                        annotatedParamsLists: List[List[quotes.reflect.Symbol]]): Expr[MainData[T, B]] = {
 
     import quotes.reflect.*
-    val params = method.paramSymss.headOption.getOrElse(report.throwError("Multiple parameter lists not supported"))
+    val params = method.paramSymss.headOption.getOrElse(
+      report.throwError("At least one parameter list must be declared.")
+    )
     val defaultParams = if (params.exists(_.flags.is(Flags.HasDefault))) getDefaultParams(method) else Map.empty
     val argSigsExprs = params.zip(annotatedParamsLists.flatten).map { paramAndAnnotParam =>
       val param = paramAndAnnotParam._1
