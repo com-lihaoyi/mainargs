@@ -1,10 +1,10 @@
-//| mill-version: 1.0.0-RC1-24-d74b52
+//| mill-version: 1.0.0
 //| mvnDeps:
-//| - com.github.lolgab::mill-mima_mill1.0.0-RC1:0.2.0-M1
+//| - com.github.lolgab::mill-mima_mill1:0.2.0
 
 package build
 import mill._, scalalib._, scalajslib._, scalanativelib._, publish._
-import mill.main.VcsVersion
+import mill.util.VcsVersion
 
 import com.github.lolgab.mill.mima._
 
@@ -68,7 +68,7 @@ trait MainArgsPublishModule
         mvn"org.scala-lang:scala-reflect:$crossScalaVersion"
       ).filter(_ => !scalaVersion().startsWith("3."))
 
-  def mvnDeps = Agg(
+  def mvnDeps = Seq(
     mvn"org.scala-lang.modules::scala-collection-compat::2.12.0"
   )
 }
@@ -76,14 +76,14 @@ trait MainArgsPublishModule
 def scalaMajor(scalaVersion: String) = if (scalaVersion.startsWith("3.")) "3" else "2"
 
 trait CommonTestModule extends ScalaModule with TestModule.Utest {
-  def mvnDeps = Agg(mvn"com.lihaoyi::utest::0.8.3")
+  def mvnDeps = Seq(mvn"com.lihaoyi::utest::0.8.3")
 }
 
 object mainargs extends Module {
   object jvm extends Cross[JvmMainArgsModule](scalaVersions)
   trait JvmMainArgsModule extends MainArgsPublishModule {
     object test extends ScalaTests with CommonTestModule {
-      def mvnDeps = super.mvnDeps() ++ Agg(mvn"com.lihaoyi::os-lib:${osLib}")
+      def mvnDeps = super.mvnDeps() ++ Seq(mvn"com.lihaoyi::os-lib:${osLib}")
     }
   }
 
@@ -113,7 +113,7 @@ object example extends Module {
   object optseq extends ExampleModule
 
   object custom extends ExampleModule {
-    def mvnDeps = Agg(mvn"com.lihaoyi::os-lib:${osLib}")
+    def mvnDeps = Seq(mvn"com.lihaoyi::os-lib:${osLib}")
   }
   object vararg extends ExampleModule
   object vararg2 extends ExampleModule
