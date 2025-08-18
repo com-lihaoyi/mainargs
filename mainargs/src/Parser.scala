@@ -23,10 +23,11 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       customNames: Map[String, String] = Map(),
       customDocs: Map[String, String] = Map(),
       sorted: Boolean = true,
-      nameMapper: String => Option[String] = Util.kebabCaseNameMapper
+      nameMapper: String => Option[String] = Util.kebabCaseNameMapper,
+      mainMethods: Seq[MainData[Any, B]] = mains.value
   ): String = {
     Renderer.formatMainMethods(
-      mains.value,
+      mainMethods,
       totalWidth,
       docsOnNewLine,
       customNames,
@@ -34,6 +35,33 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       sorted,
       nameMapper
     )
+  }
+
+  def handlePrintAndExit(
+      autoPrintHelpAndExit: Option[(Int, PrintStream)],
+      args: Seq[String],
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+      sorted: Boolean,
+      nameMapper: String => Option[String]
+  ): Unit = {
+    autoPrintHelpAndExit.foreach { case (exitCode, outputStream) =>
+      val mainHelp = args.headOption.contains("--help")
+      val subcommand = mains.value.find(main => args.headOption.contains(main.name(nameMapper)))
+      val subcommandHelp = subcommand.isDefined && args.lift(1).contains("--help")
+
+      if (mainHelp || subcommandHelp) {
+        val text = if (mainHelp) {
+          helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper)
+        } else {
+          helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper, subcommand.toSeq)
+        }
+        outputStream.println(text)
+        Compat.exit(exitCode)
+      }
+    }
   }
 
   @deprecated("Binary compatibility shim, use other overload instead", "mainargs after 0.3.0")
@@ -171,11 +199,8 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       sorted: Boolean = true,
       nameMapper: String => Option[String] = Util.kebabCaseNameMapper
   ): Either[String, Any] = {
-    if (autoPrintHelpAndExit.nonEmpty && args.take(1) == Seq("--help")) {
-      val (exitCode, outputStream) = autoPrintHelpAndExit.get
-      outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper))
-      Compat.exit(exitCode)
-    } else runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
+    handlePrintAndExit(autoPrintHelpAndExit, args, totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper)
+    runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
       case Left(err) => Left(Renderer.renderEarlyError(err))
       case Right((main, res)) =>
         res match {
