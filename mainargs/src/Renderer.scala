@@ -26,7 +26,8 @@ object Renderer {
     case r: TokensReader.Simple[_] =>
       val shortPrefix = arg.shortName.map(c => s"-$c")
       val typeSuffix = s"<${r.shortName}>"
-      val nameSuffix = if (arg.positional) arg.longName(nameMapper) else arg.longName(nameMapper).map(s => s"--$s")
+      val nameSuffix =
+        if (arg.positional) arg.longName(nameMapper) else arg.longName(nameMapper).map(s => s"--$s")
       (shortPrefix ++ nameSuffix ++ Seq(typeSuffix)).mkString(" ")
 
     case r: TokensReader.Leftover[_, _] =>
@@ -36,14 +37,15 @@ object Renderer {
   /**
    * Returns a `Some[string]` with the sortable string or a `None` if it is an leftover.
    */
-  private def sortableName(arg: ArgSig, nameMapper: String => Option[String]): Option[String] = arg match {
-    case arg: ArgSig if arg.reader.isLeftover => None
+  private def sortableName(arg: ArgSig, nameMapper: String => Option[String]): Option[String] =
+    arg match {
+      case arg: ArgSig if arg.reader.isLeftover => None
 
-    case a: ArgSig =>
-      a.shortName.map(_.toString).orElse(a.longName(nameMapper)).orElse(Some(""))
-    case a: ArgSig =>
-      a.longName(nameMapper)
-  }
+      case a: ArgSig =>
+        a.shortName.map(_.toString).orElse(a.longName(nameMapper)).orElse(Some(""))
+      case a: ArgSig =>
+        a.longName(nameMapper)
+    }
 
   object ArgOrd extends math.Ordering[ArgSig] {
     override def compare(x: ArgSig, y: ArgSig): Int =
@@ -58,7 +60,8 @@ object Renderer {
   def renderArg(
       arg: ArgSig,
       leftOffset: Int,
-      wrappedWidth: Int): (String, String) = renderArg(arg, leftOffset, wrappedWidth, Util.kebabCaseNameMapper)
+      wrappedWidth: Int
+  ): (String, String) = renderArg(arg, leftOffset, wrappedWidth, Util.kebabCaseNameMapper)
 
   def renderArg(
       arg: ArgSig,
@@ -76,8 +79,16 @@ object Renderer {
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
       customDocs: Map[String, String],
-      sorted: Boolean,
-  ): String = formatMainMethods(mainMethods, totalWidth, docsOnNewLine, customNames, customDocs, sorted, Util.kebabCaseNameMapper)
+      sorted: Boolean
+  ): String = formatMainMethods(
+    mainMethods,
+    totalWidth,
+    docsOnNewLine,
+    customNames,
+    customDocs,
+    sorted,
+    Util.kebabCaseNameMapper
+  )
 
   def formatMainMethods(
       mainMethods: Seq[MainData[_, _]],
@@ -137,7 +148,7 @@ object Renderer {
       totalWidth: Int,
       docsOnNewLine: Boolean,
       customNames: Map[String, String],
-      customDocs: Map[String, String],
+      customDocs: Map[String, String]
   ): String = formatMainMethods(
     mainMethods,
     totalWidth,
@@ -207,7 +218,7 @@ object Renderer {
     docsOnNewLine,
     customName,
     customDoc,
-    sorted = true,
+    sorted = true
   )
 
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")
@@ -279,7 +290,7 @@ object Renderer {
       docsOnNewLine: Boolean,
       customName: Option[String],
       customDoc: Option[String],
-      sorted: Boolean,
+      sorted: Boolean
   ): String = renderResult(
     main,
     result,
