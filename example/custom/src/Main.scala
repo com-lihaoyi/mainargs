@@ -1,5 +1,5 @@
 package example.custom
-import mainargs.{main, arg, ParserForMethods, TokensReader}
+import mainargs.{main, arg, Parser, TokensReader}
 
 object Main {
   implicit object PathRead extends TokensReader[os.Path](
@@ -12,5 +12,5 @@ object Main {
     println("to:   " + to)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }

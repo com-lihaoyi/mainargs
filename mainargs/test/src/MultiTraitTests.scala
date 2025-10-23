@@ -17,7 +17,7 @@ object Joined extends CommandCopy with CommandList {
 }
 
 object MultiTraitTests extends TestSuite {
-  val check = new Checker(ParserForMethods(Joined), allowPositional = true)
+  val check = new Checker(Parser(Joined), allowPositional = true)
   val tests = Tests {
     test - check(List("copy", "fromArg", "toArg"), Result.Success(("fromArg", "toArg")))
     test - check(List("test", "fromArg", "toArg"), Result.Success(("fromArg", "toArg")))

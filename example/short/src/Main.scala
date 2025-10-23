@@ -1,5 +1,5 @@
 package example.hello
-import mainargs.{main, arg, ParserForMethods, Flag}
+import mainargs.{main, arg, Parser, Flag}
 
 object Main {
   @main
@@ -8,5 +8,5 @@ object Main {
   @main
   def strs(a: Flag, b: String) = println(Seq(a.value, b))
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }

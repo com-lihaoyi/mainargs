@@ -7,7 +7,7 @@ object PositionalTests extends TestSuite {
     @main
     def positional(x: Boolean, @arg(positional = true) y: Boolean, z: Boolean) = (x, y, z)
   }
-  val check = new Checker(ParserForMethods(Base), allowPositional = false)
+  val check = new Checker(Parser(Base), allowPositional = false)
 
   val tests = Tests {
     test - check(

@@ -10,7 +10,7 @@ object FlagTests extends TestSuite {
     def str(a: Flag, b: String) = Seq(a.value, b)
   }
 
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
+  val check = new Checker(Parser(Base), allowPositional = true)
 
   val tests = Tests {
     test - check(

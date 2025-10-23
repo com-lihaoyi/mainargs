@@ -88,7 +88,7 @@ object MillTests extends TestSuite {
 
   val tests = Tests {
 
-    val parser = ParserForClass[Config]
+    val parser = Parser[Config]
 
     test("formatMainMethods") {
       val rendered = parser.helpText(sorted = false)

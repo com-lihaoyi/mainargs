@@ -1,5 +1,5 @@
 package example.vararg
-import mainargs.{main, arg, ParserForMethods, Leftover}
+import mainargs.{main, arg, Parser, Leftover}
 
 object Main {
   @main
@@ -7,5 +7,5 @@ object Main {
     println(foo * myNum + " " + rest.value)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }

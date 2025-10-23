@@ -90,7 +90,7 @@ object AmmoniteConfig {
       @arg(doc = "Print this message")
       help: Flag
   )
-  implicit val coreParser = ParserForClass[Core]
+  implicit val coreParser = Parser[Core]
 
   @main
   case class Predef(
@@ -108,7 +108,7 @@ object AmmoniteConfig {
       )
       noHomePredef: Flag
   )
-  implicit val predefParser = ParserForClass[Predef]
+  implicit val predefParser = Parser[Predef]
 
   @main
   case class Repl(
@@ -130,11 +130,11 @@ object AmmoniteConfig {
       )
       classBased: Flag
   )
-  implicit val replParser = ParserForClass[Repl]
+  implicit val replParser = Parser[Repl]
 }
 
 object AmmoniteTests extends TestSuite {
-  val parser = ParserForClass[AmmoniteConfig]
+  val parser = Parser[AmmoniteConfig]
   val tests = Tests {
 
     test("formatMainMethods.unsorted") {

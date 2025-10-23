@@ -38,6 +38,6 @@ object VarargsCustomTests extends VarargsBaseTests {
     }
   }
 
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
+  val check = new Checker(Parser(Base), allowPositional = true)
   val isNewVarargsTests = true
 }

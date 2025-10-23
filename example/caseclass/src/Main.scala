@@ -12,7 +12,7 @@ object Main {
       bool: Flag = Flag()
   )
   def main(args: Array[String]): Unit = {
-    val config = ParserForClass[Config].constructOrExit(args)
+    val config = Parser[Config].constructOrExit(args)
     println(config)
   }
 }

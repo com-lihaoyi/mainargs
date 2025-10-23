@@ -22,42 +22,42 @@ object OptionSeqTests extends TestSuite {
   val tests = Tests {
     test("opt") {
       test {
-        ParserForMethods(Main).runOrThrow(Array("runOpt")) ==>
+        Parser(Main).runOrThrow(Array("runOpt")) ==>
           None
       }
       test {
-        ParserForMethods(Main).runOrThrow(Array("runOpt", "--opt", "123")) ==>
+        Parser(Main).runOrThrow(Array("runOpt", "--opt", "123")) ==>
           Some(123)
       }
     }
     test("seq") {
 
       test {
-        ParserForMethods(Main).runOrThrow(Array("runSeq")) ==>
+        Parser(Main).runOrThrow(Array("runSeq")) ==>
           Seq()
       }
       test {
-        ParserForMethods(Main).runOrThrow(Array("runSeq", "--seq", "123")) ==>
+        Parser(Main).runOrThrow(Array("runSeq", "--seq", "123")) ==>
           Seq(123)
       }
     }
     test("vec") {
-      ParserForMethods(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
+      Parser(Main).runOrThrow(Array("runVec", "--seq", "123", "--seq", "456")) ==>
         Vector(123, 456)
     }
 
     test("map") {
 
       test {
-        ParserForMethods(Main).runOrThrow(Array("runMap")) ==>
+        Parser(Main).runOrThrow(Array("runMap")) ==>
           Map()
       }
       test {
-        ParserForMethods(Main).runOrThrow(Array("runMap", "--map", "abc=123")) ==>
+        Parser(Main).runOrThrow(Array("runMap", "--map", "abc=123")) ==>
           Map("abc" -> "123")
       }
       test {
-        ParserForMethods(Main).runOrThrow(
+        Parser(Main).runOrThrow(
           Array("runMap", "--map", "abc=123", "--map", "def=456")
         ) ==>
           Map("abc" -> "123", "def" -> "456")
@@ -65,13 +65,13 @@ object OptionSeqTests extends TestSuite {
     }
     test("allowRepeats") {
       test("true") {
-        ParserForMethods(Main)
+        Parser(Main)
           .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = true) ==>
           456
       }
       test("false") {
-        intercept[Exception] {
-          ParserForMethods(Main)
+        assertThrows[Exception] {
+          Parser(Main)
             .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = false)
         }
       }

@@ -32,7 +32,7 @@ object CorePositionalEnabledTests extends CoreTests(true)
 object CorePositionalDisabledTests extends CoreTests(false)
 
 class CoreTests(allowPositional: Boolean) extends TestSuite {
-  val check = new Checker(ParserForMethods(CoreBase), allowPositional = allowPositional)
+  val check = new Checker(Parser(CoreBase), allowPositional = allowPositional)
 
   val tests = Tests {
     test("formatMainMethods") {
@@ -174,7 +174,7 @@ class CoreTests(allowPositional: Boolean) extends TestSuite {
 }
 
 object CorePositionalDisabledOnlyTests extends TestSuite {
-  val check = new Checker(ParserForMethods(CoreBase), allowPositional = false)
+  val check = new Checker(Parser(CoreBase), allowPositional = false)
 
   val tests = Tests {
     test("invoke") {
@@ -258,7 +258,7 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
 }
 
 object CorePositionalEnabledOnlyTests extends TestSuite {
-  val check = new Checker(ParserForMethods(CoreBase), allowPositional = true)
+  val check = new Checker(Parser(CoreBase), allowPositional = true)
 
   val tests = Tests {
     test("invoke") {

@@ -20,7 +20,7 @@ object ManyTests extends TestSuite {
       n: BigDecimal
   )
 
-  val parser = ParserForClass[Config]
+  val parser = Parser[Config]
   val tests = Tests {
     test {
       parser.constructEither(

@@ -23,9 +23,9 @@ object ParserTests extends TestSuite {
   @main
   case class ClassBase(code: Option[String] = None, other: String = "hello")
 
-  val multiMethodParser = ParserForMethods(MultiBase)
-  val singleMethodParser = ParserForMethods(SingleBase)
-  val classParser = ParserForClass[ClassBase]
+  val multiMethodParser = Parser(MultiBase)
+  val singleMethodParser = Parser(SingleBase)
+  val classParser = Parser[ClassBase]
   val tests = Tests {
     test("runEitherMulti") {
 

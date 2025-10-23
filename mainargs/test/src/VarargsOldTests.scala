@@ -12,6 +12,6 @@ object VarargsOldTests extends VarargsBaseTests {
       first.toString + args.mkString
   }
 
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
+  val check = new Checker(Parser(Base), allowPositional = true)
   val isNewVarargsTests = false
 }

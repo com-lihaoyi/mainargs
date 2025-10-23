@@ -37,7 +37,7 @@ case class LargeArgs(
 )
 
 object LargeClassTests extends TestSuite{
-  val largeArgsParser = ParserForClass[LargeArgs]
+  val largeArgsParser = Parser[LargeArgs]
 
   val tests = Tests {
     test("simple") {
