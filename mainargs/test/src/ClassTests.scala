@@ -43,11 +43,11 @@ object ClassTests extends TestSuite {
     ) = new Compat(home, silent, leftoverArgs)
   }
 
-  implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
-  implicit val barParser: ParserForClass[Bar] = ParserForClass[Bar]
-  implicit val quxParser: ParserForClass[Qux] = ParserForClass[Qux]
-  implicit val cliParser: ParserForClass[Cli] = ParserForClass[Cli]
-  implicit val compatParser: ParserForClass[Compat] = ParserForClass[Compat]
+  implicit val fooParser: ParserForClass[Foo] = Parser[Foo]
+  implicit val barParser: ParserForClass[Bar] = Parser[Bar]
+  implicit val quxParser: ParserForClass[Qux] = Parser[Qux]
+  implicit val cliParser: ParserForClass[Cli] = Parser[Cli]
+  implicit val compatParser: ParserForClass[Compat] = Parser[Compat]
 
   class PathWrap {
     @main
@@ -60,7 +60,7 @@ object ClassTests extends TestSuite {
       }
     }
 
-    implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
+    implicit val fooParser: ParserForClass[Foo] = Parser[Foo]
   }
 
   object Main {
@@ -204,7 +204,7 @@ object ClassTests extends TestSuite {
         Qux("cow", Bar(Flag(true), Foo(1, 2), "xxx"))
     }
     test("success") {
-      ParserForMethods(Main).runOrThrow(
+      Parser(Main).runOrThrow(
         Seq("-x", "1", "-y", "2", "-z", "hello")
       ) ==> "false 1 2 hello false"
     }
@@ -225,7 +225,7 @@ object ClassTests extends TestSuite {
       }
       test("path-dependent-default-method") {
         val p = new PathWrap
-        ParserForMethods(p.Main).runOrThrow(
+        Parser(p.Main).runOrThrow(
           Seq("-x", "1", "-y", "2", "-z", "hello")
         ) ==> "false 1 2 hello false"
       }

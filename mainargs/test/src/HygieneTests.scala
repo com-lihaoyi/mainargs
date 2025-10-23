@@ -20,7 +20,7 @@ object HygieneTests extends TestSuite {
   val tests = Tests {
     import scala.collection.mutable._
     test("importingSeqShouldntFailCompile") {
-      ParserForMethods(Main)
+      Parser(Main)
     }
 
   }

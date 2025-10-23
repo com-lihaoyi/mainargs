@@ -5,6 +5,7 @@ import acyclic.skipped
 import scala.language.experimental.macros
 import java.io.PrintStream
 
+object Parser extends ParserForMethodsCompanionVersionSpecific with ParserForClassCompanionVersionSpecific
 object ParserForMethods extends ParserForMethodsCompanionVersionSpecific
 class ParserForMethods[B](val mains: MethodMains[B]) {
   @deprecated("Binary Compatibility Shim", "mainargs 0.6.0")

@@ -258,7 +258,7 @@ object CorePositionalDisabledOnlyTests extends TestSuite {
 }
 
 object CorePositionalEnabledOnlyTests extends TestSuite {
-  val check = new Checker(ParserForMethods(CoreBase), allowPositional = true)
+  val check = new Checker(Parser(CoreBase), allowPositional = true)
 
   val tests = Tests {
     test("invoke") {

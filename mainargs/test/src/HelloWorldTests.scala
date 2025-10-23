@@ -19,27 +19,27 @@ object HelloWorldTests extends TestSuite {
 
   val tests = Tests {
     test("explicit") {
-      ParserForMethods(Main).runOrThrow(Array("--foo", "bar", "--my-num", "3")) ==>
+      Parser(Main).runOrThrow(Array("--foo", "bar", "--my-num", "3")) ==>
         "barbarbar false"
     }
     test("short") {
-      ParserForMethods(Main).runOrThrow(Array("-f", "bar")) ==>
+      Parser(Main).runOrThrow(Array("-f", "bar")) ==>
         "barbar false"
     }
     test("default") {
-      ParserForMethods(Main).runOrThrow(Array("--foo", "bar")) ==>
+      Parser(Main).runOrThrow(Array("--foo", "bar")) ==>
         "barbar false"
     }
     test("positional") {
-      ParserForMethods(Main).runOrThrow(Array("qux", "4"), allowPositional = true) ==>
+      Parser(Main).runOrThrow(Array("qux", "4"), allowPositional = true) ==>
         "quxquxquxqux false"
     }
     test("flags") {
-      ParserForMethods(Main).runOrThrow(Array("qux", "4", "--bool"), allowPositional = true) ==>
+      Parser(Main).runOrThrow(Array("qux", "4", "--bool"), allowPositional = true) ==>
         "quxquxquxqux true"
     }
     test("either") {
-      ParserForMethods(Main).runEither(Array("qux", "4", "--bool"), allowPositional = true) ==>
+      Parser(Main).runEither(Array("qux", "4", "--bool"), allowPositional = true) ==>
         Right("quxquxquxqux true")
     }
   }

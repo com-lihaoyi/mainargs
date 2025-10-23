@@ -1,5 +1,5 @@
 package example.classarg
-import mainargs.{main, arg, ParserForMethods, ParserForClass, Flag}
+import mainargs.{main, arg, Parser, ParserForClass, Flag}
 
 object Main {
   @main
@@ -11,7 +11,7 @@ object Main {
       @arg(doc = "Example flag")
       bool: Flag = Flag()
   )
-  implicit def configParser = ParserForClass[Config]
+  implicit def configParser = Parser[Config]
 
   @main
   def bar(
@@ -26,5 +26,5 @@ object Main {
     println((config.foo * config.myNum + " " + config.bool.value + "\n") * n)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }

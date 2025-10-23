@@ -16,8 +16,8 @@ object DashedArgumentName extends TestSuite {
     @main(name = "camelOptFor29NameForce")
     def camelOptFor29NameForce(@arg(name = "camelOptFor29ArgForce") camelOptFor29ArgForce: Boolean) = camelOptFor29ArgForce
   }
-  val check = new Checker(ParserForMethods(Base), allowPositional = true)
-  val snakeCaseCheck = new Checker(ParserForMethods(Base), allowPositional = true, nameMapper = Util.snakeCaseNameMapper)
+  val check = new Checker(Parser(Base), allowPositional = true)
+  val snakeCaseCheck = new Checker(Parser(Base), allowPositional = true, nameMapper = Util.snakeCaseNameMapper)
 
   val tests = Tests {
     test("backticked") {

@@ -6,14 +6,14 @@ object ClassWithDefaultTests extends TestSuite {
   @main
   case class Foo(x: Int, y: Int = 1)
 
-  implicit val fooParser: ParserForClass[Foo] = ParserForClass[Foo]
+  implicit val fooParser: ParserForClass[Foo] = Parser[Foo]
 
   object Main {
     @main
     def run(foo: Foo, bool: Boolean = false) = s"${foo.x} ${foo.y} $bool"
   }
 
-  val mainParser = ParserForMethods(Main)
+  val mainParser = Parser(Main)
 
   val tests = Tests {
     test("simple") {

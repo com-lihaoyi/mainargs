@@ -1,5 +1,5 @@
 package example.optseq
-import mainargs.{main, arg, ParserForMethods, TokensReader}
+import mainargs.{main, arg, Parser, TokensReader}
 
 object Main {
   @main
@@ -11,5 +11,5 @@ object Main {
   @main
   def runVec(seq: Vector[Int]) = println(seq)
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }

@@ -60,7 +60,7 @@ object Main{
           bool: Flag) = {
     println(foo * myNum + " " + bool.value)
   }
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -99,7 +99,7 @@ Setting default values for the method arguments makes them optional, with the
 default value being used if an explicit value was not passed in from the
 command-line arguments list.
 
-After calling `ParserForMethods(...)` on the `object` containing your `@main`
+After calling `Parser(...)` on the `object` containing your `@main`
 methods, you can call the following methods to perform the argument parsing and
 dispatch:
 
@@ -132,7 +132,7 @@ with `@main`. Each entrypoint can have their own set of arguments:
 
 ```scala
 package testhello2
-import mainargs.{main, arg, ParserForMethods, Flag}
+import mainargs.{main, arg, Parser, Flag}
 
 object Main{
   @main
@@ -150,7 +150,7 @@ object Main{
           s: String  = "lols") = {
     println(s * i)
   }
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -168,11 +168,11 @@ lolslolslolslolslolslolslolslolslolslols
 ## Parsing Case Class Parameters
 
 If you want to construct a configuration object instead of directly calling a
-method, you can do so via `ParserForClass[T]` and `constructOrExit:
+method, you can do so via `Parser[T]` and `constructOrExit:
 
 ```scala
 package testclass
-import mainargs.{main, arg, ParserForClass, Flag}
+import mainargs.{main, arg, Parser, Flag}
 
 object Main{
   @main
@@ -183,7 +183,7 @@ object Main{
                     @arg(doc = "Example flag")
                     bool: Flag)
   def main(args: Array[String]): Unit = {
-    val config = ParserForClass[Config].constructOrExit(args)
+    val config = Parser[Config].constructOrExit(args)
     println(config)
   }
 }
@@ -201,19 +201,19 @@ Expected Signature: apply
   --bool          Example flag
 ```
 
-`ParserForClass[T]` also provides corresponding `constructOrThrow`,
+`Parser[T]` also provides corresponding `constructOrThrow`,
 `constructEither`, or `constructRaw` methods for you to handle the error cases
 in whichever style you prefer.
 
 ## Re-using Argument Sets
 
 You can share arguments between different `@main` methods by defining them in a
-`@main case class` configuration object with an implicit `ParserForClass[T]`
+`@main case class` configuration object with an implicit `Parser[T]`
 defined:
 
 ```scala
 package testclassarg
-import mainargs.{main, arg, ParserForMethods, ParserForClass, Flag}
+import mainargs.{main, arg, Parser, Parser, Flag}
 
 object Main{
   @main
@@ -223,7 +223,7 @@ object Main{
                     myNum: Int = 2,
                     @arg(doc = "Example flag")
                     bool: Flag)
-  implicit def configParser = ParserForClass[Config]
+  implicit def configParser = Parser[Config]
 
   @main
   def bar(config: Config,
@@ -237,7 +237,7 @@ object Main{
     println((config.foo * config.myNum + " " + config.bool.value + "\n") * n)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -265,7 +265,7 @@ optional parameters without defaults or repeatable parameters
 
 ```scala
 package testoptseq
-import mainargs.{main, arg, ParserForMethods}
+import mainargs.{main, arg, Parser}
 
 object Main{
   @main
@@ -277,7 +277,7 @@ object Main{
   @main
   def runVec(seq: Vector[Int]) = println(seq)
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -423,7 +423,7 @@ customize your usage:
 ## Customization
 
 Apart from taking the name of the main `object` or config `case class`,
-`ParserForMethods` and `ParserForClass` both have methods that support a number
+`Parser` has methods that support a number
 of useful configuration values:
 
 - `allowPositional: Boolean`: allows you to pass CLI arguments "positionally"
@@ -468,7 +468,7 @@ you can do so by defining an implicit `TokensReader[T]` for that type:
 
 ```scala
 package testcustom
-import mainargs.{main, arg, ParserForMethods, TokensReader}
+import mainargs.{main, arg, Parser, TokensReader}
 
 object Main{
   implicit object PathRead extends TokensReader.Simple[os.Path]{
@@ -482,7 +482,7 @@ object Main{
     println("to:   " + to)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -512,7 +512,7 @@ not consumed by other parsers:
 
 ```scala
 package testvararg
-import mainargs.{main, arg, ParserForMethods, Leftover}
+import mainargs.{main, arg, Parser, Leftover}
 
 object Main{
   @main
@@ -522,7 +522,7 @@ object Main{
     println(foo * myNum + " " + rest.value)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
@@ -567,7 +567,7 @@ of the tokens passed to the CLI:
 
 ```scala
 package testvararg
-import mainargs.{main, arg, ParserForMethods, Leftover}
+import mainargs.{main, arg, Parser, Leftover}
 
 object Main{
   @main
@@ -577,7 +577,7 @@ object Main{
     println(foo * myNum + " " + rest.value)
   }
 
-  def main(args: Array[String]): Unit = ParserForMethods(this).runOrExit(args)
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
 }
 ```
 
