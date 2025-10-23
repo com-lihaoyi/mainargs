@@ -70,7 +70,7 @@ object OptionSeqTests extends TestSuite {
           456
       }
       test("false") {
-        assertThrows[Exception] {
+        intercept[Exception] {
           Parser(Main)
             .runOrThrow(Array("runInt", "--int", "123", "--int", "456"), allowRepeats = false)
         }
