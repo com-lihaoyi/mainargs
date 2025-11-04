@@ -18,12 +18,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: ${{ matrix.java }}
+
       - name: Run tests
-        run: ./mill -i -k __.publishArtifacts + __.test
+        run: |
+          sed -i 's#//| mill-jvm-version: 11#//| mill-jvm-version: ${{ matrix.java }}#' build.mill
+          head build.mill
+          ./mill -i -k __.publishArtifacts + __.test
+
   check-binary-compatibility:
     runs-on: ubuntu-latest
     steps:
