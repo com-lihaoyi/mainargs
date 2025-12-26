@@ -13,7 +13,37 @@ class Macros(val c: Context) {
   import c.universe._
 
   def parserForMethods[B: c.WeakTypeTag](base: c.Expr[B]): c.Tree = {
-    val allRoutes = getAllRoutesForClass(weakTypeOf[B])
+    val annotatedRoutes = getAllRoutesForClass(weakTypeOf[B])
+    val allRoutes = if (annotatedRoutes.nonEmpty) annotatedRoutes
+    else {
+      // Fallback: look for a unique method named "main"
+      // Exclude the standard JVM entry point signature: def main(args: Array[String])
+      def isStandardJvmMain(m: MethodSymbol): Boolean = {
+        val params = m.paramLists.flatten
+        params.size == 1 && params.head.typeSignature =:= typeOf[Array[String]]
+      }
+      val mainMethods = getValsOrMeths(weakTypeOf[B])
+        .filter(_.name.toString == "main")
+        .filterNot(isStandardJvmMain)
+        .toList
+      if (mainMethods.size == 1) {
+        val m = mainMethods.head
+        Seq(extractMethod(
+          m.name,
+          m.paramss.flatten,
+          m.pos,
+          m.annotations.find(_.tpe =:= typeOf[main]),
+          weakTypeOf[B],
+          weakTypeOf[Any]
+        ))
+      } else if (mainMethods.size > 1) {
+        c.abort(
+          c.enclosingPosition,
+          s"Multiple methods named 'main' found in ${weakTypeOf[B].typeSymbol.fullName}. " +
+          "Please annotate one with @mainargs.main to select it as the entrypoint."
+        )
+      } else Seq.empty
+    }
     q"""
       new _root_.mainargs.ParserForMethods(
         _root_.mainargs.MethodMains[${weakTypeOf[B]}](_root_.scala.List(..$allRoutes), () => $base)
