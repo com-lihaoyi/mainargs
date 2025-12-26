@@ -654,6 +654,7 @@ command-line friendly tool.
 
 - Accept a method named `def main` without the `@main` annotation to treat as the program
   entry-point, if there is only one such method and it is ambiguous
+  [#204](http://github.com/com-lihaoyi/mainargs/pull/204)
 
 ## 0.7.7
 
