@@ -11,7 +11,30 @@ object Macros {
     val annotatedMethodsWithMainAnnotations = allMethods.flatMap { methodSymbol =>
       methodSymbol.getAnnotation(mainAnnotation).map(methodSymbol -> _)
     }.sortBy(_._1.pos.map(_.start))
-    val mainDatas = Expr.ofList(annotatedMethodsWithMainAnnotations.map { (annotatedMethod, mainAnnotationInstance) =>
+
+    val methodsToUse = if (annotatedMethodsWithMainAnnotations.nonEmpty) {
+      annotatedMethodsWithMainAnnotations
+    } else {
+      // Fallback: look for a unique method named "main"
+      // Exclude the standard JVM entry point signature: def main(args: Array[String])
+      def isStandardJvmMain(m: Symbol): Boolean = {
+        val params = m.paramSymss.flatten
+        params.size == 1 && params.head.tree.asInstanceOf[ValDef].tpt.tpe =:= TypeRepr.of[Array[String]]
+      }
+      val mainMethods = allMethods.filter(_.name == "main").filterNot(isStandardJvmMain)
+      if (mainMethods.size == 1) {
+        val m = mainMethods.head
+        val defaultAnnotation = '{new mainargs.main()}.asTerm
+        List(m -> defaultAnnotation)
+      } else if (mainMethods.size > 1) {
+        report.errorAndAbort(
+          s"Multiple methods named 'main' found in ${TypeRepr.of[B].typeSymbol.fullName}. " +
+          "Please annotate one with @mainargs.main to select it as the entrypoint."
+        )
+      } else List.empty
+    }
+
+    val mainDatas = Expr.ofList(methodsToUse.map { (annotatedMethod, mainAnnotationInstance) =>
       createMainData[Any, B](annotatedMethod, mainAnnotationInstance)
     })
 

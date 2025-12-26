@@ -44,11 +44,11 @@ ivy"com.lihaoyi::mainargs:0.7.7"
 ## Parsing Main Method Parameters
 
 You can parse command line arguments and use them to call a main method via
-`ParserForMethods(...)`:
+`Parser(...)`:
 
 ```scala
 package testhello
-import mainargs.{main, arg, ParserForMethods, Flag}
+import mainargs.{main, arg, Parser, Flag}
 
 object Main{
   @main
@@ -93,6 +93,26 @@ Expected Signature: run
   -f --foo <str>  String to print repeatedly
   --my-num <int>  How many times to print string
   --bool          Example flag
+```
+
+The main entrypoint can be annotated with `@mainargs.main`, or it can be named
+`main` if there is a single entrypoint in use:
+
+```scala
+package testhello
+import mainargs.{arg, Parser, Flag}
+
+object Main{
+  def main(@arg(short = 'f', doc = "String to print repeatedly")
+           foo: String,
+           @arg(doc = "How many times to print string")
+           myNum: Int = 2,
+           @arg(doc = "Example flag, can be passed without any value to become true")
+           bool: Flag) = {
+    println(foo * myNum + " " + bool.value)
+  }
+  def main(args: Array[String]): Unit = Parser(this).runOrExit(args)
+}
 ```
 
 Setting default values for the method arguments makes them optional, with the
@@ -531,11 +551,11 @@ $ ./mill example.vararg --foo bar i am cow
 barbar List(i, am, cow)
 ```
 
-This also works with `ParserForClass`:
+This also works with `Parser`:
 
 ```scala
 package testvararg2
-import mainargs.{main, arg, ParserForClass, Leftover}
+import mainargs.{main, arg, Parser, Leftover}
 
 object Main{
   @main
@@ -544,7 +564,7 @@ object Main{
                     rest: Leftover[String])
 
   def main(args: Array[String]): Unit = {
-    val config = ParserForClass[Config].constructOrExit(args)
+    val config = Parser[Config].constructOrExit(args)
     println(config)
   }
 }
@@ -629,6 +649,11 @@ method annotated with `@main` is all you need to turn your program into a
 command-line friendly tool.
 
 # Changelog
+
+## 0.7.8
+
+- Accept a method named `def main` without the `@main` annotation to treat as the program
+  entry-point, if there is only one such method and it is ambiguous
 
 ## 0.7.7
 
