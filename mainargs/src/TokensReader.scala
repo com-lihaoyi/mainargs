@@ -157,24 +157,35 @@ object TokensReader {
     def shortName = wrapped.shortName
   }
 
-  implicit def OptionRead[T: TokensReader.Simple]: TokensReader[Option[T]] = new OptionRead[T]
+  implicit def OptionRead[T: TokensReader.Simple]: TokensReader.Simple[Option[T]] = new OptionRead[T]
   class OptionRead[T: TokensReader.Simple] extends Simple[Option[T]] {
     def shortName = implicitly[TokensReader.Simple[T]].shortName
     def read(strs: Seq[String]) = {
-      strs.lastOption match {
-        case None => Right(None)
-        case Some(s) => implicitly[TokensReader.Simple[T]].read(Seq(s)) match {
+      if (implicitly[TokensReader.Simple[T]].alwaysRepeatable) {
+        Option(strs).filter(_.nonEmpty) match{
+          case None => Right(None)
+          case Some(strs) => implicitly[TokensReader.Simple[T]].read(strs) match{
             case Left(s) => Left(s)
             case Right(s) => Right(Some(s))
           }
+        }
+      } else {
+        strs.lastOption match{
+          case None => Right(None)
+          case Some(s) => implicitly[TokensReader.Simple[T]].read(Seq(s)) match{
+            case Left(s) => Left(s)
+            case Right(s) => Right(Some(s))
+          }
+        }
       }
     }
+    override def alwaysRepeatable = implicitly[TokensReader.Simple[T]].alwaysRepeatable
     override def allowEmpty = true
   }
 
   implicit def SeqRead[C[_] <: Iterable[_], T: TokensReader.Simple](implicit
       factory: Factory[T, C[T]]
-  ): TokensReader[C[T]] =
+  ): TokensReader.Simple[C[T]] =
     new SeqRead[C, T]
 
   class SeqRead[C[_] <: Iterable[_], T: TokensReader.Simple](implicit factory: Factory[T, C[T]])
@@ -198,7 +209,7 @@ object TokensReader {
     override def allowEmpty = true
   }
 
-  implicit def MapRead[K: TokensReader.Simple, V: TokensReader.Simple]: TokensReader[Map[K, V]] =
+  implicit def MapRead[K: TokensReader.Simple, V: TokensReader.Simple]: TokensReader.Simple[Map[K, V]] =
     new MapRead[K, V]
   class MapRead[K: TokensReader.Simple, V: TokensReader.Simple] extends Simple[Map[K, V]] {
     def shortName = "k=v"
