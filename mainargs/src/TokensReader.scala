@@ -157,7 +157,7 @@ object TokensReader {
     def shortName = wrapped.shortName
   }
 
-  implicit def OptionRead[T: TokensReader.Simple]: TokensReader[Option[T]] = new OptionRead[T]
+  implicit def OptionRead[T: TokensReader.Simple]: TokensReader.Simple[Option[T]] = new OptionRead[T]
   class OptionRead[T: TokensReader.Simple] extends Simple[Option[T]] {
     def shortName = implicitly[TokensReader.Simple[T]].shortName
     def read(strs: Seq[String]) = {
@@ -174,7 +174,7 @@ object TokensReader {
 
   implicit def SeqRead[C[_] <: Iterable[_], T: TokensReader.Simple](implicit
       factory: Factory[T, C[T]]
-  ): TokensReader[C[T]] =
+  ): TokensReader.Simple[C[T]] =
     new SeqRead[C, T]
 
   class SeqRead[C[_] <: Iterable[_], T: TokensReader.Simple](implicit factory: Factory[T, C[T]])
@@ -198,7 +198,7 @@ object TokensReader {
     override def allowEmpty = true
   }
 
-  implicit def MapRead[K: TokensReader.Simple, V: TokensReader.Simple]: TokensReader[Map[K, V]] =
+  implicit def MapRead[K: TokensReader.Simple, V: TokensReader.Simple]: TokensReader.Simple[Map[K, V]] =
     new MapRead[K, V]
   class MapRead[K: TokensReader.Simple, V: TokensReader.Simple] extends Simple[Map[K, V]] {
     def shortName = "k=v"
