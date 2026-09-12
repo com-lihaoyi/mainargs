@@ -45,6 +45,28 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       customDocs: Map[String, String]
   ): String = helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted = true)
 
+  private def formatErrorWithHelpOnExit(
+      errorMessage: String,
+      printHelpOnExit: Boolean,
+      totalWidth: Int,
+      docsOnNewLine: Boolean,
+      customNames: Map[String, String],
+      customDocs: Map[String, String],
+      sorted: Boolean,
+      nameMapper: String => Option[String]
+  ): String = {
+    if (printHelpOnExit && mains.value.length > 1) {
+      errorMessage + Renderer.newLine + helpText(
+        totalWidth,
+        docsOnNewLine,
+        customNames,
+        customDocs,
+        sorted,
+        nameMapper
+      )
+    } else errorMessage
+  }
+
   def runOrExit(
       args: Seq[String],
       allowPositional: Boolean = false,
@@ -177,20 +199,42 @@ class ParserForMethods[B](val mains: MethodMains[B]) {
       outputStream.println(helpText(totalWidth, docsOnNewLine, customNames, customDocs, sorted, nameMapper))
       Compat.exit(exitCode)
     } else runRaw0(args, allowPositional, allowRepeats, nameMapper) match {
-      case Left(err) => Left(Renderer.renderEarlyError(err))
+      case Left(err) =>
+        Left(
+          formatErrorWithHelpOnExit(
+            Renderer.renderEarlyError(err),
+            printHelpOnExit,
+            totalWidth,
+            docsOnNewLine,
+            customNames,
+            customDocs,
+            sorted,
+            nameMapper
+          )
+        )
       case Right((main, res)) =>
         res match {
           case Result.Success(v) => Right(v)
           case f: Result.Failure =>
+            val multiMain = mains.value.length > 1
             Left(
-              Renderer.renderResult(
-                main,
-                f,
-                totalWidth,
+              formatErrorWithHelpOnExit(
+                Renderer.renderResult(
+                  main,
+                  f,
+                  totalWidth,
+                  printHelpOnExit && !multiMain,
+                  docsOnNewLine,
+                  customNames.get(main.name(nameMapper)),
+                  customDocs.get(main.name(nameMapper)),
+                  sorted,
+                  nameMapper
+                ),
                 printHelpOnExit,
+                totalWidth,
                 docsOnNewLine,
-                customNames.get(main.name(nameMapper)),
-                customDocs.get(main.name(nameMapper)),
+                customNames,
+                customDocs,
                 sorted,
                 nameMapper
               )
